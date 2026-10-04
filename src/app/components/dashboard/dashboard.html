@@ -1,0 +1,67 @@
+<div class="carbon-dashboard-page">
+  <!-- Carbon Top Header -->
+  <header class="dashboard-header">
+    <div class="header-content">
+      <h1 class="carbon-headline">
+        Welcome back, <span class="agent-name">{{ currentUser()?.fullName || 'Agent' }}</span>
+      </h1>
+    </div>
+
+    <div class="header-actions">
+      <a [routerLink]="['/enquiry']" class="carbon-btn carbon-btn-secondary carbon-btn-sm">
+        View All Enquiries
+      </a>
+    </div>
+  </header>
+
+  <!-- Live Quick Stats Ribbon (Carbon Metric Tiles) -->
+  @if (metrics()) {
+    <section class="dashboard-metrics-grid">
+      <div class="metric-tile">
+        <span class="metric-label">Total Volume</span>
+        <span class="metric-value">{{ metrics()!.allEnquiries }}</span>
+        <span class="metric-hint">Active enquiries</span>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-header-row">
+          <span class="metric-label">Submitted</span>
+          <span class="metric-indicator indicator-submitted"></span>
+        </div>
+        <span class="metric-value">{{ metrics()!.submitted }}</span>
+        <span class="metric-hint">Awaiting quotation</span>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-header-row">
+          <span class="metric-label">Quoted</span>
+          <span class="metric-indicator indicator-quoted"></span>
+        </div>
+        <span class="metric-value">{{ metrics()!.quoted }}</span>
+        <span class="metric-hint">Proposal with client</span>
+      </div>
+
+      <div class="metric-tile">
+        <div class="metric-header-row">
+          <span class="metric-label">Policies Issued</span>
+          <span class="metric-indicator indicator-issued"></span>
+        </div>
+        <span class="metric-value">{{ metrics()!.policyIssued }}</span>
+        <span class="metric-hint">Successfully finalized</span>
+      </div>
+
+      <div class="metric-tile metric-tile-points">
+        <div class="metric-header-row">
+          <span class="metric-label">Reward Points</span>
+          <span class="metric-indicator indicator-points"></span>
+        </div>
+        <span class="metric-value metric-value-points">{{ metrics()!.pointsEarned | number:'1.2-2' }}</span>
+        <span class="metric-hint">Agent rewards balance</span>
+      </div>
+    </section>
+  }
+
+  <!-- Reusable Insurance Products Component -->
+  <app-insurance-products />
+  
+</div>

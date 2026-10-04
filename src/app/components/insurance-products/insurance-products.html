@@ -1,0 +1,195 @@
+<section class="products-section" [class.no-margin]="!showCardBorder">
+  <div class="carbon-card products-card" [class.no-border]="!showCardBorder">
+    @if (title || caption || (products().length > collapseThreshold)) {
+      <div class="card-header">
+        <div class="header-titles">
+          @if (title) {
+            <h2 class="card-title">{{ title }}</h2>
+          }
+          @if (caption) {
+            <span class="card-caption">{{ caption }}</span>
+          }
+        </div>
+
+        @if (products().length > collapseThreshold) {
+          <button
+            type="button"
+            class="view-toggle-btn"
+            (click)="toggleViewToggle()"
+          >
+            {{ isCollapsed() ? 'View More' : 'View Less' }}
+          </button>
+        }
+      </div>
+    }
+
+    <!-- Card Body Content -->
+    <div class="card-body">
+      @if (isLoading()) {
+        <div class="carbon-loading-container">
+          <div class="carbon-spinner"></div>
+          <span class="loading-text">Loading insurance products...</span>
+        </div>
+      } @else if (errorMessage()) {
+        <div class="carbon-inline-notification carbon-inline-notification-error">
+          <div class="notification-details">
+            <span class="notification-title">Failed to Load Products</span>
+            <span class="notification-subtitle">{{ errorMessage() }}</span>
+          </div>
+          <button type="button" class="carbon-btn carbon-btn-ghost retry-btn" (click)="loadProducts()">
+            Retry
+          </button>
+        </div>
+      } @else if (products().length === 0) {
+        <div class="empty-products-state">
+          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3.75 6.75h16.5M3.75 12h16.5m-16.5 5.25H12"/>
+          </svg>
+          <p class="empty-text">No insurance products available currently.</p>
+        </div>
+      } @else {
+        <div class="products-grid">
+          @for (product of displayedProducts(); track product.id) {
+            <div
+              class="product-item"
+              (click)="onProductClick(product)"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="product.name + ' ' + (product.subtitle || 'Insurance')"
+            >
+              <div class="icon-container">
+                <!-- Optional Promotional / Feature Badge -->
+                @if (product.badgeText) {
+                  <span
+                    class="product-badge"
+                    [ngClass]="getBadgeClass(product.badgeColor)"
+                  >
+                    {{ product.badgeText }}
+                  </span>
+                }
+
+                <!-- Product Category SVG Icon -->
+                <div class="product-icon-wrapper">
+                  @switch (getIconType(product)) {
+                    @case ('car') {
+                      <!-- Car Icon -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10s-1.3-1.4-2.2-2.3c-.5-.4-1.1-.7-1.8-.7H7c-.6 0-1.1.2-1.5.6L3.3 10C2.6 10.2 2 10.9 2 11.7V16c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                        <path d="M5 12h14"/>
+                      </svg>
+                    }
+                    @case ('bike') {
+                      <!-- Motorcycle / Bike Icon -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="5.5" cy="16.5" r="3.5"/>
+                        <circle cx="18.5" cy="16.5" r="3.5"/>
+                        <path d="M12 16.5l-3-7 4-2.5h3.5"/>
+                        <path d="M18.5 16.5l-2.5-6h-3"/>
+                        <path d="M16 6h2"/>
+                      </svg>
+                    }
+                    @case ('health') {
+                      <!-- Health Icon (Heart with Cross) -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M19 14c1.49-1.46 3-3.21 3-5.5A5.5 5.5 0 0 0 16.5 3c-1.76 0-3 .5-4.5 2-1.5-1.5-2.74-2-4.5-2A5.5 5.5 0 0 0 2 8.5c0 2.3 1.5 4.05 3 5.5l7 7Z"/>
+                        <path d="M12 8v4m-2-2h4"/>
+                      </svg>
+                    }
+                    @case ('life') {
+                      <!-- Life Icon (Umbrella) -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M22 12A10.02 10.02 0 0 0 12 2a10.02 10.02 0 0 0-10 10c0 .6.4 1 1 1h18c.6 0 1-.4 1-1Z"/>
+                        <path d="M12 13v7a2 2 0 0 0 4 0"/>
+                        <path d="M12 2v1"/>
+                      </svg>
+                    }
+                    @case ('gcv') {
+                      <!-- GCV (Goods Commercial Vehicle / Truck) -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/>
+                        <path d="M14 8h4l3 3v6a1 1 0 0 1-1 1h-2"/>
+                        <circle cx="7" cy="18" r="2"/>
+                        <circle cx="17" cy="18" r="2"/>
+                      </svg>
+                    }
+                    @case ('pcv') {
+                      <!-- PCV (Passenger Commercial Vehicle / Taxi) -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M10 2h4v2h-4z"/>
+                        <path d="M19 17h2c.6 0 1-.4 1-1v-3c0-.9-.7-1.7-1.5-1.9C18.7 10.6 16 10 16 10l-2-4H10L8 10C8 10 5.3 10.6 4.5 11.1 3.7 11.3 3 12.1 3 13v3c0 .6.4 1 1 1h2"/>
+                        <circle cx="7" cy="17" r="2"/>
+                        <circle cx="17" cy="17" r="2"/>
+                      </svg>
+                    }
+                    @case ('sme') {
+                      <!-- SME / Fire / Business Insurance -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/>
+                      </svg>
+                    }
+                    @case ('investment') {
+                      <!-- Investment / Rupee Coin -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="12" r="9"/>
+                        <path d="M8 8h8M8 11.5h8M8 8h4.5a2.5 2.5 0 0 1 0 5H8l6 5"/>
+                      </svg>
+                    }
+                    @case ('travel') {
+                      <!-- Travel / Airplane -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M17.8 19.2 16 11l3.5-3.5C21 6 21.5 4 21 3.5c-.5-.5-2.5 0-4 1.5L13.5 8.5 5.3 6.7c-.7-.1-1.3.3-1.5.9l-.3 1.2c-.2.7.1 1.4.7 1.8l5.2 3.6-2.6 2.6-2.5-.5c-.4-.1-.8.1-1.1.4l-.8.8c-.3.3-.3.8 0 1.1l3.2 2.4 2.4 3.2c.3.3.8.3 1.1 0l.8-.8c.3-.3.5-.7.4-1.1l-.5-2.5 2.6-2.6 3.6 5.2c.4.6 1.1.9 1.8.7l1.2-.3c.6-.2 1-.8.9-1.5z"/>
+                      </svg>
+                    }
+                    @case ('pet') {
+                      <!-- Pet / Paw -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="6.5" cy="9.5" r="1.5"/>
+                        <circle cx="10" cy="5.5" r="1.5"/>
+                        <circle cx="14" cy="5.5" r="1.5"/>
+                        <circle cx="17.5" cy="9.5" r="1.5"/>
+                        <path d="M12 12c-2.5 0-4.5 1.5-4.5 3.5 0 1.8 1.5 3 4.5 3s4.5-1.2 4.5-3c0-2-2-3.5-4.5-3.5z"/>
+                      </svg>
+                    }
+                    @case ('misc') {
+                      <!-- Misc / Grid -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="8" cy="8" r="2"/>
+                        <circle cx="16" cy="8" r="2"/>
+                        <circle cx="8" cy="16" r="2"/>
+                        <circle cx="16" cy="16" r="2"/>
+                      </svg>
+                    }
+                    @case ('personal_accident') {
+                      <!-- Personal Accident / Shield -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <circle cx="12" cy="7" r="3"/>
+                        <path d="M6 21v-2a4 4 0 0 1 4-4h4a4 4 0 0 1 4 4v2"/>
+                        <path d="M10 15l4 4m0-4l-4 4"/>
+                      </svg>
+                    }
+                    @default {
+                      <!-- Default Shield Icon -->
+                      <svg class="product-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                        <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+                      </svg>
+                    }
+                  }
+                </div>
+              </div>
+
+              <!-- Product Name & Subtitle -->
+              <div class="product-labels">
+                <span class="product-name">{{ product.name }}</span>
+                @if (product.subtitle) {
+                  <span class="product-subtitle">{{ product.subtitle }}</span>
+                }
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+</section>

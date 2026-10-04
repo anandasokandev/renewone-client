@@ -1,0 +1,157 @@
+<div class="login-container">
+  <aside class="brand-aside">
+    <div class="brand-content">
+      <div class="brand-header">
+        <div class="brand-icon-wrapper">
+          <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <span class="brand-company">RenewOne</span>
+          <!-- <h2 class="brand-division">Risk & Assurance Agency</h2> -->
+        </div>
+      </div>
+
+      <h1 class="hero-title">
+        Institutional-Grade Protection for What Matters Most.
+      </h1>
+
+      <p class="hero-description">
+        Perfect Insurance Partner
+      </p>
+    </div>
+  </aside>
+
+  <main class="login-main">
+    <div class="auth-card">
+      <div class="mobile-brand">
+        <div class="brand-icon-wrapper mobile-icon-box">
+          <svg class="brand-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+          </svg>
+        </div>
+        <div>
+          <span class="mobile-brand-company">RenewOne</span>
+          <h2 class="mobile-brand-division">Insurance Portal</h2>
+        </div>
+      </div>
+
+      <!-- Error Alert -->
+      @if (errorMessage()) {
+        <div class="error-banner">
+          <svg class="error-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+          </svg>
+          <span>{{ errorMessage() }}</span>
+        </div>
+      }
+
+      <form class="auth-form" [formGroup]="loginForm" (ngSubmit)="onSubmit()">
+        <!-- Username / Email -->
+        <div class="form-group">
+          <label for="username" class="form-label">
+            Username / Email
+          </label>
+          <div class="input-wrapper">
+            <div class="input-icon-left">
+              <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+            </div>
+            <input
+              id="username"
+              type="text"
+              formControlName="username"
+              placeholder="e.g., broker.id@veritasrisk.com"
+              class="form-input"
+              [class.input-error]="loginForm.get('username')?.invalid && loginForm.get('username')?.touched"
+            />
+          </div>
+          @if (loginForm.get('username')?.invalid && loginForm.get('username')?.touched) {
+            <span class="field-error">Username is required</span>
+          }
+        </div>
+
+        <!-- Password -->
+        <div class="form-group">
+          <div class="label-row">
+            <label for="password" class="form-label">
+              Password
+            </label>
+            <button type="button" class="forgot-btn">
+              Forgot password?
+            </button>
+          </div>
+          <div class="input-wrapper">
+            <div class="input-icon-left">
+              <svg class="field-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+              </svg>
+            </div>
+            <input
+              id="password"
+              [type]="showPassword() ? 'text' : 'password'"
+              formControlName="password"
+              placeholder="••••••••••••"
+              class="form-input form-input-password"
+              [class.input-error]="loginForm.get('password')?.invalid && loginForm.get('password')?.touched"
+            />
+            <button
+              type="button"
+              class="password-toggle-btn"
+              (click)="togglePasswordVisibility()"
+              [attr.aria-label]="showPassword() ? 'Hide password' : 'Show password'"
+            >
+              <span class="password-toggle-text">{{ showPassword() ? 'Hide' : 'Show' }}</span>
+            </button>
+          </div>
+          @if (loginForm.get('password')?.invalid && loginForm.get('password')?.touched) {
+            <span class="field-error">Password is required</span>
+          }
+        </div>
+
+        <!-- Remember Me -->
+        <div class="options-row">
+          <label class="checkbox-label">
+            <input
+              type="checkbox"
+              formControlName="rememberMe"
+              class="form-checkbox"
+            />
+            <span class="checkbox-text">Remember Me</span>
+          </label>
+        </div>
+
+        <!-- Submit Button -->
+        <button
+          type="submit"
+          class="submit-btn"
+          [disabled]="isLoading()"
+        >
+          @if (!isLoading()) {
+            <span>Authenticate to Portal</span>
+          } @else {
+            <span class="btn-loading-content">
+              <span class="spinner"></span>
+              Verifying Credentials...
+            </span>
+          }
+        </button>
+
+        <div class="divider-row">
+          <div class="divider-line"></div>
+        </div>
+
+        <div class="signup-nav">
+          <p class="signup-prompt">
+            Need insurance policy access?
+            <button type="button" [routerLink]="['/signup']" class="signup-link">
+              Signup for an account
+            </button>
+          </p>
+        </div>
+      </form>
+    </div>
+  </main>
+</div>

@@ -1,0 +1,140 @@
+*, h1, h2, h3 {
+    margin: 0;
+    padding: 0;
+}
+p {
+    margin: 0 !important;
+}
+.smartcard-back-panel {
+    background: url(../../../../assets/rc-back-background.png) no-repeat !important;
+    background-size: contain !important;
+}
+.back-panel-detail-section {
+    display: flex;
+    justify-content: space-between;
+}
+.smartcard-back-panel, .smartcard-front-panel {
+    position: relative;
+    width: 422px !important;
+    height: 264px !important;
+    margin: 0 auto !important;
+    padding: 0 !important;
+    box-sizing: border-box;
+}
+.top-align, .ui-panel-content td {
+    vertical-align: top !important;
+}
+.inline-section {
+    display: inline-block !important;
+}
+.ui-widget .ui-widget {
+    font-size: 1em;
+}
+.back-left-section {
+    vertical-align: top;
+    margin: 10px 0 0 12px;
+    width: 115px;
+}
+.smartcard-left-section {
+    box-sizing: border-box;
+    display: inline-block;
+}
+.top-space-5 {
+    margin-top: 5px !important;
+}
+.text-label-7size {
+    font-size: 7pt !important;
+}
+.bottom-space {
+    margin-bottom: 10px;
+}
+.datatable-eight-column-header-left th:nth-child(8), .datatable-eight-column-left td:nth-child(8), .datatable-fifth-column-header-left th:nth-child(5), .datatable-fifth-column-left td:nth-child(5), .datatable-first-column-header-left th:nth-child(1), .datatable-first-column-left td:nth-child(1), .datatable-fourth-column-header-left th:nth-child(4), .datatable-fourth-column-left td:nth-child(4), .datatable-nine-column-header-left th:nth-child(9), .datatable-nine-column-left td:nth-child(9), .datatable-second-column-header-left th:nth-child(2), .datatable-second-column-left td:nth-child(2), .datatable-seven-column-header-left th:nth-child(7), .datatable-seven-column-left td:nth-child(7), .datatable-six-column-header-left th:nth-child(6), .datatable-six-column-left td:nth-child(6), .datatable-third-column-header-left th:nth-child(3), .datatable-third-column-left td:nth-child(3), .left-position {
+    text-align: left !important;
+}
+.smartcard-back-panel .circled-section, .smartcard-back-panel-side .circled-section, .smartcard-front-panel .circled-section, .smartcard-front-panel-side .circled-section {
+    width: 20px;
+    height: 20px;
+}
+.smartcard-vehicle-type-color-code {
+    background: #44c7f1 !important;
+}
+.circled-section {
+    border: 1px solid #000;
+    border-radius: 10pt;
+    line-height: 20px;
+    font-weight: 400 !important;
+    display: inline-block;
+    text-align: center;
+    vertical-align: middle;
+}
+.smartcard-state-color-code {
+    background: #f8951d !important;
+}
+.text-label-6size {
+    font-size: 7pt !important;
+}
+.font-bold {
+    font-weight: 700 !important;
+}
+.qr-code-section {
+    /* margin: 4px 4px 0 0; */
+    vertical-align: top;
+}
+.qr-code-section img {
+    width: 110px !important;
+    height: 110px !important;
+}
+.smartcard-back-panel .text-label-5size {
+    font-size: 7pt !important;
+}
+.ui-widget {
+    font-family: Arial, Helvetica, sans-serif;
+    font-size: 1.1em;
+}
+.smartcard-right-section {
+    margin: 8px 0 0;
+    box-sizing: border-box;
+    display: inline-block;
+}
+.position-relative {
+    position: relative !important;
+}
+.smartcard-back-panel .back-absolute-position {
+    margin: 140px 0 0 255px;
+}
+.right-absolute-content {
+    position: absolute;
+    font-weight: 400;
+    -webkit-transform: rotate(-90deg);
+    -moz-transform: rotate(-90deg);
+    -ms-transform: rotate(-90deg);
+    -o-transform: rotate(-90deg);
+    transform: rotate(-90deg);
+    white-space: nowrap;
+}
+.minimum-height-24 {
+    min-height: 24px !important;
+}
+.top-space {
+    margin-top: 10px;
+}
+.top-space-2 {
+    margin-top: 2px !important;
+}
+.smartcard-back-panel .width-cubic-capacity {
+    width: 50px;
+}
+.inline-section {
+    display: inline-block !important;
+}
+.smartcard-back-panel .width-financer-position {
+    width: 200px;
+}
+.smartcard-back-panel .reg-authority-position {
+    width: 285px;
+    word-wrap: break-word;
+    margin: -24px 14px 0 0;
+}
+.smartcard-back-panel .text-label-5size {
+    font-size: 7pt !important;
+}

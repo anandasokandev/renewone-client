@@ -1,0 +1,639 @@
+<div class="carbon-modal-overlay" role="dialog" aria-modal="true" aria-labelledby="enquiry-details-title" (click)="closeModal()">
+  <div class="carbon-modal-dialog" (click)="$event.stopPropagation()">
+    
+    <!-- Modal Header Strip -->
+    <header class="modal-header">
+      <div class="header-titles">
+        <span class="carbon-eyebrow">
+          ENQUIRY {{ effectiveEnquiryNumber() }}
+        </span>
+        <h2 id="enquiry-details-title" class="modal-headline">
+          {{ headlineTitle() }}
+        </h2>
+      </div>
+
+      <div class="header-actions">
+        <!-- Action: Upload Documents Modal -->
+        @if (!isPolicyIssued()) {
+          <button
+            type="button"
+            class="carbon-btn btn-header-action"
+            [class.carbon-btn-primary]="isCreated()"
+            [class.carbon-btn-secondary]="!isCreated()"
+            (click)="openUploadDocsModal()"
+            title="Upload or manage documents"
+          >
+            <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>Upload Documents</span>
+            @if (documents().length > 0) {
+              <span class="action-counter">{{ documents().length }}</span>
+            }
+          </button>
+        }
+
+        <!-- Action: Open Quotes Modal -->
+        <button
+          type="button"
+          class="carbon-btn btn-header-action"
+          [class.carbon-btn-primary]="!isCreated() && hasQuote()"
+          [class.carbon-btn-secondary]="isCreated() || !hasQuote()"
+          [disabled]="!hasQuote()"
+          (click)="openQuotes()"
+          [title]="hasQuote() ? 'Open Quotation Proposals' : 'No quote proposals available'"
+        >
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+          </svg>
+          <span>View Quotes</span>
+          @if (hasQuote()) {
+            <span class="action-counter">{{ quotesCount() }}</span>
+          }
+        </button>
+
+        <button
+          type="button"
+          class="carbon-btn carbon-btn-tertiary btn-header-action"
+          [disabled]="!hasPolicy()"
+          (click)="openPolicy()"
+          [title]="hasPolicy() ? 'Open Policy Certificate and Details' : 'No policy details available'"
+        >
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/>
+          </svg>
+          <span>View Policy Details</span>
+        </button>
+
+        <button
+          type="button"
+          class="carbon-modal-close"
+          (click)="closeModal()"
+          aria-label="Close modal"
+          title="Close (Esc)"
+        >
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          </svg>
+        </button>
+      </div>
+    </header>
+
+    <!-- Top - Center Status Lifecycle Section -->
+    <section class="modal-top-lifecycle-section" aria-label="Status Lifecycle">
+      <div class="lifecycle-center-box">
+        
+        <!-- Status Badge & Percentage Row -->
+        <div class="status-badge-row">
+          <span
+            class="status-pill"
+            [class.status-pill-green]="!isCancelled(activeStatus()) && !isIssued(activeStatus())"
+            [class.status-pill-issued]="isIssued(activeStatus())"
+            [class.status-pill-cancelled]="isCancelled(activeStatus())"
+          >
+            <span
+              class="status-dot-green"
+              [class.status-dot-cancelled]="isCancelled(activeStatus())"
+            ></span>
+            {{ getStatusLabel(activeStatus()) }}
+          </span>
+
+          @if (!isCancelled(activeStatus())) {
+            <span class="progress-percent-label">
+              {{ getProgressPercentage(activeStatus()) }}% complete
+            </span>
+          } @else {
+            <span class="progress-percent-label label-cancelled">
+              Terminated
+            </span>
+          }
+        </div>
+
+        <!-- Stepped Milestone Tracker -->
+        @if (isCancelled(activeStatus())) {
+          <div class="cancelled-progress-banner">
+            <span class="cancelled-banner-text">Lifecycle Closed &bull; Enquiry Cancelled</span>
+          </div>
+        } @else {
+          <div
+            class="stepped-progress-container"
+            [attr.aria-label]="'Status progress: ' + getStatusLabel(activeStatus())"
+          >
+            <!-- Continuous Green Track Underlay -->
+            <div class="progress-track-bg">
+              <div
+                class="progress-track-fill-green"
+                [style.width.%]="getProgressPercentage(activeStatus())"
+              ></div>
+            </div>
+
+            <!-- 7 Milestone Steps -->
+            <div class="progress-steps-row">
+              @for (stage of progressiveSequence; track stage; let idx = $index) {
+                <div
+                  class="step-node"
+                  [class.completed]="isStageCompletedOrCurrent(activeStatus(), idx)"
+                  [class.current]="isStageCurrent(activeStatus(), idx)"
+                  [title]="(idx + 1) + '. ' + getStatusLabel(stage)"
+                >
+                  <div class="step-circle">
+                    @if (isStageCompletedOrCurrent(activeStatus(), idx + 1)) {
+                      <svg class="step-check-icon" viewBox="0 0 12 12" fill="currentColor">
+                        <path d="M10.28 2.28L3.989 8.575 1.707 6.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 00-1.414-1.414z"/>
+                      </svg>
+                    } @else {
+                      <span class="step-number">{{ idx + 1 }}</span>
+                    }
+                  </div>
+                  <span class="step-text">{{ getStepShortLabel(stage) }}</span>
+                </div>
+              }
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+
+    <!-- Modal Body (Scrollable Workspace) -->
+    <div class="modal-body-canvas">
+      <!-- Agency Core Summary Grid: 3 Focused Tiles -->
+      <div class="details-summary-grid">
+        
+        <!-- Tile 1: Customer & Vehicle/Insurance Details -->
+        <div class="carbon-tile">
+          <div class="tile-header-row">
+            <h3 class="tile-title">{{ isVehicleInsurance() ? 'Customer & Vehicle Details' : 'Customer & Insurance Details' }}</h3>
+            <span class="tile-tag">{{ isVehicleInsurance() ? 'Vehicle' : 'General' }}</span>
+          </div>
+          <div class="tile-data-list">
+            <div class="data-row">
+              <span class="data-label">Customer Name</span>
+              <span class="data-val font-semibold">{{ customerName() }}</span>
+            </div>
+            @if (customerPhone()) {
+              <div class="data-row">
+                <span class="data-label">Phone Number</span>
+                <a [href]="'tel:' + customerPhone()" class="data-val data-link font-semibold">
+                  {{ customerPhone() }}
+                </a>
+              </div>
+            }
+            <div class="data-row">
+              <span class="data-label">Insurance Line</span>
+              <span class="type-pill">{{ insuranceType() }}</span>
+            </div>
+
+            <!-- Vehicle-Specific Details (Only rendered for vehicle insurance) -->
+            @if (isVehicleInsurance() || hasVehicleNumber()) {
+              <div class="data-row">
+                <span class="data-label">Vehicle Plate Number</span>
+                <span class="data-val mono-val plate-badge">{{ vehicleNumber() || 'Pending Registration' }}</span>
+              </div>
+            }
+            @if (isVehicleInsurance() || hasEngineNumber()) {
+              <div class="data-row">
+                <span class="data-label">Engine Number</span>
+                <span class="data-val mono-val">{{ engineNumber() || 'Pending Inspection' }}</span>
+              </div>
+            }
+            @if (isVehicleInsurance() || hasChasisNumber()) {
+              <div class="data-row">
+                <span class="data-label">Chassis Number</span>
+                <span class="data-val mono-val">{{ chasisNumber() || 'Pending Inspection' }}</span>
+              </div>
+            }
+
+            <!-- Non-Vehicle details if present -->
+            @if (!isVehicleInsurance() && enquiry?.policyType) {
+              <div class="data-row">
+                <span class="data-label">Policy Form</span>
+                <span class="data-val">{{ enquiry?.policyType }}</span>
+              </div>
+            }
+            @if (!isVehicleInsurance() && enquiry?.coverageAmount) {
+              <div class="data-row">
+                <span class="data-label">Coverage Amount</span>
+                <span class="data-val font-semibold">{{ enquiry?.coverageAmount }}</span>
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Tile 2: Creation & Assignment Details -->
+        <div class="carbon-tile">
+          <div class="tile-header-row">
+            <h3 class="tile-title">Creation & Assignment</h3>
+            <span class="tile-tag">Audit</span>
+          </div>
+          <div class="tile-data-list">
+            <div class="data-row">
+              <span class="data-label">Created By</span>
+              <div class="data-row-inline">
+                <span class="data-val font-semibold">{{ createdBy() }}</span>
+                @if (createdByNumber()) {
+                  <a [href]="'tel:' + createdByNumber()" class="creator-phone-link">
+                    ({{ createdByNumber() }})
+                  </a>
+                }
+              </div>
+            </div>
+            <div class="data-row">
+              <span class="data-label">Created At</span>
+              <span class="data-val">{{ createdAt() | date:'medium' }}</span>
+            </div>
+
+            <!-- Assigned Agent Row with WhatsApp Action -->
+            <div class="data-row data-row-flex assignment-group">
+              <div class="agent-info-group">
+                <span class="data-label">Assigned Staff</span>
+                <span class="data-val font-semibold">{{ assignedAgent() }}</span>
+                @if (assignedAgentRole()) {
+                  <span class="agent-role-caption">{{ assignedAgentRole() }}</span>
+                }
+              </div>
+              <button
+                type="button"
+                class="whatsapp-btn"
+                [disabled]="!hasAssignedAgent()"
+                (click)="openWhatsApp($event)"
+                [title]="hasAssignedAgent() ? 'Chat on WhatsApp Web with prefilled enquiry details' : 'Disabled: No agent assigned'"
+                aria-label="Chat on WhatsApp"
+              >
+                <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm5.82 14.07c-.24.68-1.4 1.33-1.93 1.39-.49.05-1.12.08-3.23-.79-2.7-1.12-4.45-3.87-4.58-4.05-.14-.18-1.1-1.46-1.1-2.79 0-1.32.69-1.97.94-2.24.25-.26.54-.33.72-.33.18 0 .36.002.52.01.17.01.4.06.62.53.24.57.81 1.98.88 2.12.07.15.12.33.02.53-.1.2-.15.33-.3.51-.15.18-.31.4-.44.54-.15.15-.31.31-.13.62.18.31.78 1.29 1.68 2.09 1.15 1.03 2.12 1.35 2.43 1.5.31.15.49.13.67-.08.18-.21.78-.9.99-1.22.21-.31.42-.26.7-.16.29.1.18.88.94 1.26.16.08.31.12.44.17.15.06.44.17.62.43.18.26.18 1.5-.06 2.18z"/>
+                </svg>
+                <span>WhatsApp</span>
+              </button>
+            </div>
+
+            @if (assignedAgentPhone()) {
+              <div class="data-row">
+                <span class="data-label">Agent Contact</span>
+                <a [href]="'tel:' + assignedAgentPhone()" class="data-val data-link mono-val font-semibold">
+                  {{ assignedAgentPhone() }}
+                </a>
+              </div>
+            }
+
+            @if (updatedAt()) {
+              <div class="data-row">
+                <span class="data-label">Last Updated</span>
+                <span class="data-val text-muted">{{ updatedAt() | date:'medium' }}</span>
+              </div>
+            }
+
+            <!-- Assignment History Accordion -->
+            @if (assignmentHistory().length > 0) {
+              <div class="assignment-history-box">
+                <button
+                  type="button"
+                  class="history-toggle-header"
+                  (click)="toggleHistory()"
+                  [attr.aria-expanded]="showHistory()"
+                >
+                  <span class="data-label">Assignment History ({{ assignmentHistory().length }})</span>
+                  <span class="history-toggle-icon">{{ showHistory() ? '▲ Hide' : '▼ View' }}</span>
+                </button>
+
+                @if (showHistory()) {
+                  <div class="history-timeline-list">
+                    @for (item of assignmentHistory(); track item.id) {
+                      <div class="history-timeline-item">
+                        <div class="history-bullet"></div>
+                        <div class="history-item-details">
+                          <div class="history-item-main">
+                            @if (item.toEmployeeName) {
+                              <span>Assigned to <strong>{{ item.toEmployeeName }}</strong></span>
+                              @if (item.fromEmployeeName) {
+                                <span class="text-muted"> (from {{ item.fromEmployeeName }})</span>
+                              }
+                            } @else {
+                              <span>Status updated: {{ item.toStatus }}</span>
+                            }
+                          </div>
+                          @if (item.remarks) {
+                            <div class="history-remarks-text">{{ item.remarks }}</div>
+                          }
+                          <div class="history-item-meta">
+                            <span>By {{ item.changedByUserName || 'System' }}</span> &bull;
+                            <span>{{ item.createdAt | date:'short' }}</span>
+                          </div>
+                        </div>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- Tile 3: Operations & Quick Actions Hub -->
+        <div class="carbon-tile action-hub-tile">
+          <div class="tile-header-row">
+            <h3 class="tile-title">Operations & Actions</h3>
+            <span class="tile-tag">Quick Action</span>
+          </div>
+
+          <div class="action-hub-content">
+            <div class="hub-status-box">
+              <span class="data-label">Lifecycle Stage</span>
+              <span class="hub-status-value">{{ getStatusLabel(activeStatus()) }}</span>
+              <div class="hub-status-pills-row">
+                <span class="hub-mini-pill" [class.pill-active]="hasQuote()">
+                  {{ hasQuote() ? '✓ Quotes Available' : '○ Quote In Progress' }}
+                </span>
+                <span class="hub-mini-pill" [class.pill-active]="hasPolicy()">
+                  {{ hasPolicy() ? '✓ Policy Issued' : '○ Policy Pending' }}
+                </span>
+              </div>
+            </div>
+
+            <div class="hub-actions-stack">
+              <!-- View Quotes CTA Button -->
+              <button
+                type="button"
+                class="carbon-btn carbon-btn-primary hub-btn"
+                [disabled]="!hasQuote()"
+                (click)="openQuotes()"
+                [title]="hasQuote() ? 'Open Quotes Comparison' : 'No quotes available for this enquiry'"
+              >
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2h-3a1 1 0 01-1-1v-2a1 1 0 00-1-1H9a1 1 0 00-1 1v2a1 1 0 01-1 1H4a1 1 0 110-2V4zm3 1h2v2H7V5zm2 4H7v2h2V9zm2-4h2v2h-2V5zm2 4h-2v2h2V9z" clip-rule="evenodd"/>
+                </svg>
+                <span class="hub-btn-label">View Quote Proposals</span>
+                @if (hasQuote()) {
+                  <span class="hub-badge">{{ quotesCount() }} Available</span>
+                } @else {
+                  <span class="hub-badge-disabled">No Quotes</span>
+                }
+              </button>
+
+              <!-- View Policy Details CTA Button -->
+              <button
+                type="button"
+                class="carbon-btn carbon-btn-tertiary hub-btn"
+                [disabled]="!hasPolicy()"
+                (click)="openPolicy()"
+                [title]="hasPolicy() ? 'Open Policy Details and Document' : 'No policy issued yet'"
+              >
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 1.944A11.954 11.954 0 012.166 5C2.056 5.649 2 6.319 2 7c0 5.225 3.34 9.67 8 11.317C14.66 16.67 18 12.225 18 7c0-.682-.057-1.35-.166-2.001A11.954 11.954 0 0110 1.944zM11 14a1 1 0 11-2 0 1 1 0 012 0zm0-7a1 1 0 10-2 0v3a1 1 0 102 0V7z" clip-rule="evenodd"/>
+                </svg>
+                <span class="hub-btn-label">View Policy Details</span>
+                @if (hasPolicy()) {
+                  <span class="hub-badge-policy">Issued</span>
+                } @else {
+                  <span class="hub-badge-disabled">Not Issued</span>
+                }
+              </button>
+            </div>
+
+            <p class="hub-helper-note">
+              Quotes display market premium comparisons. Policy Details shows issued certificate, period, and underwriter specs.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Uploaded Document List Section -->
+      @if (hasUploadedDocuments()) {
+        <section class="documents-section" aria-label="Uploaded Documents">
+          <div class="carbon-tile doc-list-tile">
+            <div class="doc-list-header">
+              <div class="doc-list-title-group">
+                <svg class="doc-header-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                </svg>
+                <div>
+                  <h3 class="tile-title no-border">Uploaded Documents</h3>
+                  <span class="tile-subtitle">Mandatory verification and policy underwriting documents</span>
+                </div>
+              </div>
+              <div class="doc-header-actions">
+                <span class="doc-count-tag">{{ documents().length }} Documents</span>
+                @if (!isPolicyIssued()) {
+                  <button
+                    type="button"
+                    class="carbon-btn carbon-btn-secondary doc-upload-more-btn"
+                    (click)="openUploadDocsModal()"
+                    title="Upload additional documents"
+                  >
+                    <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                    </svg>
+                    <span>Upload Documents</span>
+                  </button>
+                }
+              </div>
+            </div>
+
+            <!-- Carbon Data Table for Uploaded Documents -->
+            <div class="carbon-table-container">
+              <table class="carbon-data-table">
+                <thead>
+                  <tr>
+                    <th>Doc Name</th>
+                    <th>Uploaded At</th>
+                    <th class="table-actions-col">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  @for (doc of documents(); track doc.id) {
+                    <tr>
+                      <td class="cell-doc-name">
+                        <div class="doc-name-wrapper">
+                          @if (doc.iconType === 'pdf') {
+                            <span class="doc-icon-badge pdf-badge">PDF</span>
+                          } @else {
+                            <span class="doc-icon-badge img-badge">IMG</span>
+                          }
+                          <span class="doc-file-title" [title]="doc.docName">{{ doc.docName }}</span>
+                        </div>
+                      </td>
+                      <td class="text-muted">{{ doc.uploadedAt | date:'medium' }}</td>
+                      <td class="table-actions-col">
+                        <div class="doc-row-actions">
+                          <button
+                            type="button"
+                            class="carbon-btn-icon"
+                            [disabled]="isPolicyIssued()"
+                            (click)="!isPolicyIssued() && openDocPreview(doc, $event)"
+                            [title]="isPolicyIssued() ? 'Actions disabled as Policy is Issued' : 'Preview document'"
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                              <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>View</span>
+                          </button>
+                          <button
+                            type="button"
+                            class="carbon-btn-icon icon-download"
+                            [disabled]="isPolicyIssued()"
+                            (click)="!isPolicyIssued() && downloadDoc(doc, $event)"
+                            [title]="isPolicyIssued() ? 'Actions disabled as Policy is Issued' : 'Download document'"
+                          >
+                            <svg viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm3.293-7.707a1 1 0 011.414 0L9 10.586V3a1 1 0 112 0v7.586l1.293-1.293a1 1 0 111.414 1.414l-3 3a1 1 0 01-1.414 0l-3-3a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                            </svg>
+                            <span>Download</span>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  }
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </section>
+      } @else {
+        <!-- Upload Document CTA Section when no document is uploaded -->
+        <section class="documents-section" aria-label="Uploaded Documents">
+          <div class="carbon-tile doc-list-tile empty-doc-tile">
+            <div class="doc-empty-state-card">
+              <div class="empty-doc-icon-box">
+                <svg viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h4.586A2 2 0 0112 2.586L15.414 6A2 2 0 0116 7.414V16a2 2 0 01-2 2H6a2 2 0 01-2-2V4zm2 6a1 1 0 011-1h6a1 1 0 110 2H7a1 1 0 01-1-1zm1 3a1 1 0 100 2h6a1 1 0 100-2H7z" clip-rule="evenodd"/>
+                </svg>
+              </div>
+              <div class="empty-doc-info">
+                <h4 class="empty-doc-heading">No Documents Uploaded</h4>
+                <p class="empty-doc-sub">No verification or underwriting documents have been uploaded for this enquiry yet.</p>
+              </div>
+              @if (!isPolicyIssued()) {
+                <button
+                  type="button"
+                  class="carbon-btn carbon-btn-primary upload-doc-cta-btn"
+                  (click)="openUploadDocsModal()"
+                  title="Upload verification documents"
+                >
+                  <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M3 17a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM6.293 6.707a1 1 0 010-1.414l3-3a1 1 0 011.414 0l3 3a1 1 0 01-1.414 1.414L11 5.414V13a1 1 0 11-2 0V5.414L7.707 6.707a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>Upload Documents</span>
+                </button>
+              }
+            </div>
+          </div>
+        </section>
+      }
+    </div>
+
+    <!-- Modal Footer -->
+    <footer class="modal-footer">
+      <div class="footer-left">
+        <span class="footer-meta">
+          @if (isVehicleInsurance() && vehicleNumber()) {
+            Vehicle: <strong class="text-ink mono-val">{{ vehicleNumber() }}</strong> &bull;
+          } @else {
+            Line: <strong class="text-ink">{{ insuranceType() }}</strong> &bull;
+          }
+          Status: <strong class="text-ink">{{ getStatusLabel(activeStatus()) }}</strong>
+        </span>
+      </div>
+      <div class="footer-right">
+        <button
+          type="button"
+          class="carbon-btn carbon-btn-secondary"
+          (click)="closeModal()"
+        >
+          Close
+        </button>
+      </div>
+    </footer>
+  </div>
+</div>
+
+<!-- ========================================================================= -->
+<!-- NESTED MODAL: Quotes Comparison (@Quotes)                                   -->
+<!-- ========================================================================= -->
+@if (showQuotesModal()) {
+  <div class="nested-modal-backdrop" role="dialog" aria-modal="true" (click)="closeQuotes()">
+    <div class="nested-modal-window quotes-window" (click)="$event.stopPropagation()">
+      <app-quotes
+        [enquiryId]="effectiveEnquiryId()"
+        [isModalView]="true"
+        (dismissed)="closeQuotes()"
+      ></app-quotes>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- NESTED MODAL: Policy Details & Certificate (@Policy)                       -->
+<!-- ========================================================================= -->
+@if (showPolicyModal()) {
+  <app-policy
+    [enquiryId]="effectiveEnquiryId()"
+    [enquiryNumber]="effectiveEnquiryNumber()"
+    [isModal]="true"
+    (close)="closePolicy()"
+  ></app-policy>
+}
+
+<!-- ========================================================================= -->
+<!-- NESTED MODAL: Document Previewer                                          -->
+<!-- ========================================================================= -->
+@if (showDocPreviewModal() && previewDoc()) {
+  <div class="nested-modal-backdrop" role="dialog" aria-modal="true" (click)="closeDocPreview()">
+    <div class="nested-modal-window doc-preview-window" (click)="$event.stopPropagation()">
+      <header class="doc-preview-header">
+        <div class="doc-preview-title-box">
+          <span class="carbon-eyebrow">{{ previewDoc()?.docName || previewDoc()?.type }}</span>
+          <h3 class="doc-preview-title">{{ previewDoc()?.docName || previewDoc()?.name }}</h3>
+        </div>
+        <div class="doc-preview-actions">
+          <button
+            type="button"
+            class="carbon-btn carbon-btn-secondary"
+            (click)="previewDoc() && downloadDoc(previewDoc()!, $event)"
+          >
+            Download
+          </button>
+          <button
+            type="button"
+            class="carbon-modal-close"
+            (click)="closeDocPreview()"
+            aria-label="Close document preview"
+          >
+            &times;
+          </button>
+        </div>
+      </header>
+      <div class="doc-preview-body">
+        @if (previewDoc()?.iconType === 'pdf') {
+          <iframe
+            class="preview-iframe"
+            [src]="getSafeDocPreviewUrl(previewDoc()?.url)"
+            title="Document PDF Preview"
+          ></iframe>
+        } @else {
+          <div class="preview-img-container">
+            <img [src]="previewDoc()?.url" [alt]="previewDoc()?.docName || previewDoc()?.name" class="preview-img" />
+          </div>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ========================================================================= -->
+<!-- NESTED MODAL: Document Upload & Verification (@EnquiryUploadModal)        -->
+<!-- ========================================================================= -->
+@if (showUploadDocsModal()) {
+  <app-enquiry-upload-modal
+    [enquiryId]="effectiveEnquiryId()"
+    [enquiryNumber]="effectiveEnquiryNumber()"
+    [customerName]="customerName()"
+    [customerPhone]="customerPhone()"
+    [vehicleNumber]="vehicleNumber()"
+    [insuranceType]="insuranceType()"
+    [vehicleType]="vehicleType()"
+    (close)="closeUploadDocsModal()"
+    (documentsUpdated)="onDocumentsUpdated()"
+    (submitted)="onUploadSubmitted($event)"
+  ></app-enquiry-upload-modal>
+}
+

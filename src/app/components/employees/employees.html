@@ -1,0 +1,424 @@
+<div class="carbon-employees-page">
+  <!-- Toast Notification -->
+  @if (toastMessage()) {
+    <div class="carbon-toast" role="status">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="toastMessage.set(null)" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  <!-- Header Area -->
+  <header class="page-header">
+    <div class="header-top">
+      <h1 class="carbon-headline">Employees</h1>
+
+      <div class="header-right-actions">
+        <!-- Search Input -->
+        <div class="search-box header-search-box">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            type="text"
+            class="carbon-input header-search-input"
+            placeholder="Search name, username, email..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+          @if (searchQuery()) {
+            <button type="button" class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
+          }
+        </div>
+
+        <!-- New Staff Button -->
+        <button type="button" class="carbon-btn-create" (click)="openCreateModal()">
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          New Staff
+        </button>
+      </div>
+    </div>
+
+    <!-- Quick Status KPI Metric Tiles -->
+    <div class="metrics-grid">
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="statusFilter() === null"
+        (click)="setStatus(null)"
+      >
+        <span class="metric-label">All Staff</span>
+        <span class="metric-value">{{ allStaffCount() }}</span>
+        <span class="metric-hint">Total registered accounts</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="statusFilter() === true"
+        (click)="setStatus(true)"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">Active Staff</span>
+          <span class="metric-indicator indicator-active"></span>
+        </div>
+        <span class="metric-value">{{ activeCount() }}</span>
+        <span class="metric-hint">Operational accounts</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="statusFilter() === false"
+        (click)="setStatus(false)"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">Inactive Staff</span>
+          <span class="metric-indicator indicator-inactive"></span>
+        </div>
+        <span class="metric-value">{{ inactiveCount() }}</span>
+        <span class="metric-hint">Deactivated / suspended</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- Filter & Controls Toolbar -->
+  <section class="toolbar-section compact-toolbar">
+    <div class="toolbar-row">
+      <span class="results-count">
+        Showing <strong>{{ staffItems().length }}</strong> of <strong>{{ totalRecords() }}</strong> staff members
+      </span>
+
+      <div class="filter-controls">
+        <!-- Status Dropdown -->
+        <div class="select-group">
+          <label class="select-label" for="filter-status">Status</label>
+          <select
+            id="filter-status"
+            class="carbon-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="setStatus($event)"
+          >
+            <option [ngValue]="null">All Statuses</option>
+            <option [ngValue]="true">Active</option>
+            <option [ngValue]="false">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Page Size Dropdown -->
+        <div class="select-group">
+          <label class="select-label" for="filter-pagesize">Rows</label>
+          <select
+            id="filter-pagesize"
+            class="carbon-select"
+            [ngModel]="pageSize()"
+            (ngModelChange)="setPageSize($event)"
+          >
+            <option [ngValue]="4">4 per page</option>
+            <option [ngValue]="10">10 per page</option>
+            <option [ngValue]="20">20 per page</option>
+          </select>
+        </div>
+
+        @if (searchQuery() || statusFilter() !== null) {
+          <button type="button" class="carbon-btn carbon-btn-ghost reset-btn" (click)="clearSearch(); setStatus(null)">
+            Reset
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Staff Data Table -->
+  <main class="table-container">
+    @if (loading()) {
+      <div class="loading-container">
+        <div class="carbon-spinner"></div>
+        <span class="loading-text">Loading staff records...</span>
+      </div>
+    } @else if (staffItems().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon-box">
+          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M15 19.128a9.38 9.38 0 002.625.372 9.337 9.337 0 004.121-.952 4.125 4.125 0 00-7.533-2.493M15 19.128v-.003c0-1.113-.285-2.16-.786-3.07M15 19.128v.106A12.318 12.318 0 018.624 21c-2.331 0-4.512-.645-6.374-1.766l-.001-.109a6.375 6.375 0 0111.964-3.07M12 6.375a3.375 3.375 0 11-6.75 0 3.375 3.375 0 016.75 0zm8.25 2.25a2.625 2.625 0 11-5.25 0 2.625 2.625 0 015.25 0z"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">No staff members found</h3>
+        <p class="empty-desc">There are no staff matching your current filter criteria.</p>
+        <button type="button" class="carbon-btn carbon-btn-secondary" (click)="clearSearch(); setStatus(null)">
+          Clear Filters
+        </button>
+      </div>
+    } @else {
+      <div class="table-scroll-wrapper">
+        <table class="carbon-table">
+          <thead>
+            <tr>
+              <th class="th-user">Staff Member</th>
+              <th class="th-email">Email Address</th>
+              <th class="th-phone">Phone Number</th>
+              <th class="th-status">Status</th>
+              <th class="th-joined">Created Date</th>
+              <th class="th-actions">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (staff of staffItems(); track staff.id) {
+              <tr class="table-row">
+                <!-- User Profile & Avatar -->
+                <td class="td-user">
+                  <div class="user-cell">
+                    <div class="user-avatar" [class.avatar-inactive]="!staff.isActive">
+                      {{ getInitials(staff.fullName) }}
+                    </div>
+                    <div class="user-meta">
+                      <span class="user-fullname">{{ staff.fullName }}</span>
+                      <span class="user-username">&#64;{{ staff.userName }}</span>
+                    </div>
+                  </div>
+                </td>
+
+                <!-- Email -->
+                <td class="td-email">
+                  <a [href]="'mailto:' + staff.email" class="data-link" (click)="$event.stopPropagation()">
+                    <svg class="meta-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                      <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                    </svg>
+                    {{ staff.email }}
+                  </a>
+                </td>
+
+                <!-- Phone -->
+                <td class="td-phone">
+                  <a [href]="'tel:' + staff.phoneNumber" class="data-link" (click)="$event.stopPropagation()">
+                    <svg class="meta-icon" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                    </svg>
+                    {{ staff.phoneNumber }}
+                  </a>
+                </td>
+
+                <!-- Status Toggle -->
+                <td class="td-status">
+                  <div class="status-toggle-wrapper">
+                    <button
+                      type="button"
+                      class="carbon-toggle-switch"
+                      [class.checked]="staff.isActive"
+                      [class.loading]="togglingId() === staff.id"
+                      [disabled]="togglingId() === staff.id"
+                      (click)="onToggleStatus(staff, $event)"
+                      role="switch"
+                      [attr.aria-checked]="staff.isActive"
+                      [title]="staff.isActive ? 'Click to deactivate staff' : 'Click to activate staff'"
+                    >
+                      <span class="toggle-slider"></span>
+                    </button>
+                    <span
+                      class="status-text"
+                      [class.text-active]="staff.isActive"
+                      [class.text-inactive]="!staff.isActive"
+                    >
+                      {{ staff.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+                </td>
+
+                <!-- Created Date -->
+                <td class="td-joined">
+                  <span class="joined-date">{{ staff.createdAt | date:'mediumDate' }}</span>
+                  <span class="joined-time">{{ staff.createdAt | date:'shortTime' }}</span>
+                </td>
+
+                <!-- Actions -->
+                <td class="td-actions">
+                  <button
+                    type="button"
+                    class="copy-btn"
+                    (click)="copyToClipboard(staff.email, $event)"
+                    title="Copy staff email"
+                  >
+                    <svg viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"/>
+                      <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-2V5H5v14h6v2H5a2 2 0 01-2-2V5z"/>
+                      <path d="M15 8h2a1 1 0 011 1v9a1 1 0 01-1 1h-7a1 1 0 01-1-1V9a1 1 0 011-1h2v1a1 1 0 001 1h2a1 1 0 001-1V8z"/>
+                    </svg>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Bar -->
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Page <strong>{{ pageNumber() }}</strong> of <strong>{{ totalPages() }}</strong>
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="!hasPreviousPage()"
+            (click)="previousPage()"
+          >
+            &larr; Previous
+          </button>
+
+          <span class="page-current">{{ pageNumber() }}</span>
+
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="!hasNextPage()"
+            (click)="nextPage()"
+          >
+            Next &rarr;
+          </button>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- Create New Staff Modal -->
+  @if (isCreateModalOpen()) {
+    <div class="modal-backdrop" (click)="closeCreateModal()">
+      <div class="carbon-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <h2 class="modal-title">Create New Staff</h2>
+          <button type="button" class="modal-close-btn" (click)="closeCreateModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        @if (createError()) {
+          <div class="modal-error-banner">
+            <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ createError() }}</span>
+          </div>
+        }
+
+        <form class="modal-form" (ngSubmit)="submitNewStaff()">
+          <div class="form-grid">
+            <!-- Full Name -->
+            <div class="form-group">
+              <label class="form-label" for="staff-fullName">Full Name *</label>
+              <input
+                id="staff-fullName"
+                type="text"
+                class="carbon-input"
+                placeholder="e.g. John Doe"
+                [(ngModel)]="newStaff.fullName"
+                name="fullName"
+                required
+              />
+            </div>
+
+            <!-- Username -->
+            <div class="form-group">
+              <label class="form-label" for="staff-userName">Username *</label>
+              <input
+                id="staff-userName"
+                type="text"
+                class="carbon-input"
+                placeholder="e.g. jdoe"
+                [(ngModel)]="newStaff.userName"
+                name="userName"
+                required
+              />
+            </div>
+
+            <!-- Email -->
+            <div class="form-group">
+              <label class="form-label" for="staff-email">Email Address *</label>
+              <input
+                id="staff-email"
+                type="email"
+                class="carbon-input"
+                placeholder="e.g. jdoe@agency.com"
+                [(ngModel)]="newStaff.email"
+                name="email"
+                required
+              />
+            </div>
+
+            <!-- Phone Number -->
+            <div class="form-group">
+              <label class="form-label" for="staff-phone">Phone Number *</label>
+              <input
+                id="staff-phone"
+                type="tel"
+                class="carbon-input"
+                placeholder="e.g. 9876543210"
+                [(ngModel)]="newStaff.phoneNumber"
+                name="phoneNumber"
+                required
+              />
+            </div>
+
+            <!-- Password -->
+            <div class="form-group full-col">
+              <label class="form-label" for="staff-password">Password *</label>
+              <div class="password-input-wrapper">
+                <input
+                  id="staff-password"
+                  [type]="showPassword() ? 'text' : 'password'"
+                  class="carbon-input"
+                  placeholder="Enter temporary or permanent password"
+                  [(ngModel)]="newStaff.password"
+                  name="password"
+                  required
+                />
+                <button
+                  type="button"
+                  class="toggle-pwd-btn"
+                  (click)="toggleShowPassword()"
+                  aria-label="Toggle password visibility"
+                >
+                  @if (showPassword()) {
+                    Hide
+                  } @else {
+                    Show
+                  }
+                </button>
+              </div>
+            </div>
+
+            <!-- Account ID (Informational confirmation) -->
+            <div class="form-group full-col">
+              <span class="account-hint">
+                Staff will be provisioned under Account: <code>{{ getAccountId() }}</code>
+              </span>
+            </div>
+          </div>
+
+          <div class="modal-footer">
+            <button type="button" class="carbon-btn carbon-btn-secondary" (click)="closeCreateModal()">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="carbon-btn carbon-btn-primary"
+              [disabled]="isSubmitting() || !newStaff.fullName || !newStaff.userName || !newStaff.email || !newStaff.password || !newStaff.phoneNumber"
+            >
+              @if (isSubmitting()) {
+                Creating...
+              } @else {
+                Create Staff
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

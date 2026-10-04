@@ -1,0 +1,1857 @@
+/* IBM Carbon Design System - Create Enquiry Multi-Step UI */
+
+:host {
+  display: block;
+  min-height: calc(100vh - 53px);
+  background-color: #ffffff;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #161616;
+  letter-spacing: 0.16px;
+  box-sizing: border-box;
+}
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  border-radius: 0px !important; /* Strict Carbon flat geometry */
+}
+
+.carbon-create-enquiry-page {
+  max-width: 1440px;
+  min-height: calc(100vh - 53px);
+  margin: 0 auto;
+  padding: 10px 28px 16px;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+}
+
+/* Toast */
+.carbon-toast {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  z-index: 9999;
+  background-color: #161616;
+  color: #ffffff;
+  border-left: 4px solid #24a148;
+  padding: 12px 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+  min-width: 320px;
+  animation: slideIn 0.2s ease-out;
+}
+
+.toast-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+}
+
+.toast-icon {
+  width: 20px;
+  height: 20px;
+  color: #24a148;
+  flex-shrink: 0;
+}
+
+.btn-toast-close {
+  background: none;
+  border: none;
+  color: #ffffff;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0.75;
+  transition: opacity 0.15s ease;
+}
+
+.btn-toast-close:hover {
+  opacity: 1;
+}
+
+.btn-toast-close svg {
+  width: 14px;
+  height: 14px;
+}
+
+@keyframes slideIn {
+  from {
+    transform: translateY(12px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Top Navigation & Context Header */
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 6px;
+  margin-bottom: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+/* Breadcrumbs */
+.carbon-breadcrumb {
+  margin-bottom: 0;
+}
+
+.breadcrumb-list {
+  display: flex;
+  align-items: center;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  font-size: 13px;
+  color: #525252;
+}
+
+.breadcrumb-item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumb-link {
+  color: #0f62fe;
+  text-decoration: none;
+}
+
+.breadcrumb-link:hover {
+  text-decoration: underline;
+  color: #0043ce;
+}
+
+.breadcrumb-separator {
+  margin: 0 8px;
+  color: #8c8c8c;
+}
+
+.breadcrumb-current {
+  color: #161616;
+  font-weight: 500;
+}
+
+.breadcrumb-badge {
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #161616;
+}
+
+/* Context Ribbon - Aligned to the Right on Large Screen */
+.context-ribbon {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin: 0 0 0 auto; /* Pushes to the right on large screen */
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+.context-item {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 13px;
+}
+
+.context-label {
+  color: #525252;
+  font-size: 12px;
+}
+
+.context-tag {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.16px;
+}
+
+.context-tag.primary-tag {
+  background-color: #edf5ff;
+  color: #0f62fe;
+  border: 1px solid #d0e2ff;
+}
+
+.context-tag.secondary-tag {
+  background-color: #f4f4f4;
+  color: #161616;
+  border: 1px solid #e0e0e0;
+}
+
+.context-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: #f4f4f4;
+  padding: 2px 6px;
+  border: 1px solid #e0e0e0;
+  color: #525252;
+}
+
+/* Progress Indicator - Green Round Stage */
+.carbon-stepper-container {
+  margin-bottom: 12px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 8px 18px;
+}
+
+.carbon-stepper {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  position: relative;
+  gap: 16px;
+}
+
+.stepper-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  position: relative;
+}
+
+.stepper-badge {
+  width: 30px;
+  height: 30px;
+  border-radius: 50% !important;
+  background-color: #ffffff;
+  border: 2px solid #c6c6c6;
+  color: #525252;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  flex-shrink: 0;
+  transition: all 0.25s ease;
+}
+
+.stepper-text {
+  display: flex;
+  flex-direction: column;
+}
+
+.step-label {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #525252;
+  text-transform: uppercase;
+  letter-spacing: 0.32px;
+  font-weight: 500;
+}
+
+.step-title {
+  font-size: 14px;
+  font-weight: 500;
+  color: #161616;
+  white-space: nowrap;
+}
+
+.step-tag-pill {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: #f4f4f4;
+  color: #525252;
+  border: 1px solid #e0e0e0;
+  padding: 1px 6px;
+  margin-top: 2px;
+  width: fit-content;
+}
+
+.stepper-line {
+  flex: 1;
+  height: 2px;
+  background-color: #e0e0e0;
+  margin: 0 16px;
+  transition: background-color 0.25s ease;
+}
+
+/* Green Round Stage States */
+.stepper-item.active .stepper-badge {
+  background-color: #24a148;
+  border-color: #24a148;
+  color: #ffffff;
+  box-shadow: 0 0 0 4px rgba(36, 161, 72, 0.2);
+}
+
+.stepper-item.active .step-label {
+  color: #24a148;
+  font-weight: 600;
+}
+
+.stepper-item.active .step-title {
+  color: #161616;
+  font-weight: 600;
+}
+
+.stepper-item.completed .stepper-badge {
+  background-color: #24a148;
+  border-color: #24a148;
+  color: #ffffff;
+}
+
+.stepper-item.completed .stepper-line {
+  background-color: #24a148;
+}
+
+.stepper-item.completed .step-label {
+  color: #24a148;
+  font-weight: 500;
+}
+
+.stepper-item.completed .step-title {
+  color: #161616;
+}
+
+.stepper-item.upcoming .stepper-badge {
+  background-color: #f4f4f4;
+  border-color: #c6c6c6;
+  color: #8c8c8c;
+}
+
+.stepper-item.upcoming .step-title {
+  color: #8c8c8c;
+}
+
+.step-check-icon {
+  width: 18px;
+  height: 18px;
+}
+
+/* Main Workflow Content Area */
+.workflow-main-area {
+  width: 100%;
+  flex: 1;
+  margin-top: 12px;
+}
+
+/* Single-row Form for Large Screens (No extra text, no cards) */
+.carbon-single-row-form {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr auto;
+  align-items: flex-start;
+  gap: 20px;
+  width: 100%;
+  background: transparent;
+  padding: 8px 0 28px;
+}
+
+.form-field-item,
+.form-btn-item {
+  display: flex;
+  flex-direction: column;
+  position: relative;
+  width: 100%;
+}
+
+.form-field-item .carbon-label,
+.form-btn-item .carbon-label {
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 18px;
+  height: 18px;
+  color: #161616;
+  margin-bottom: 8px;
+  letter-spacing: 0.16px;
+  display: block;
+}
+
+.btn-label-spacer {
+  visibility: hidden;
+  user-select: none;
+  pointer-events: none;
+}
+
+/* Carbon Text Input Chrome */
+.carbon-input {
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+  padding: 11px 16px;
+  background-color: #f4f4f4;
+  border: none;
+  border-bottom: 1px solid #8d8d8d;
+  font-family: "IBM Plex Sans", -apple-system, sans-serif;
+  font-size: 14px;
+  color: #161616;
+  outline: none;
+  transition: all 0.15s ease;
+}
+
+.carbon-input:focus {
+  border-bottom: 2px solid #0f62fe;
+  background-color: #ffffff;
+  box-shadow: inset 0 0 0 1px #0f62fe;
+}
+
+.carbon-input::placeholder {
+  color: #8c8c8c;
+}
+
+.uppercase-input {
+  text-transform: uppercase;
+  font-weight: 500;
+  letter-spacing: 0.5px;
+}
+
+/* Prefix Input */
+.input-with-prefix {
+  display: flex;
+  align-items: stretch;
+  width: 100%;
+  height: 44px;
+  box-sizing: border-box;
+}
+
+.prefix-addon {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background-color: #e0e0e0;
+  padding: 0 12px;
+  border-bottom: 1px solid #8d8d8d;
+  font-size: 13px;
+  color: #161616;
+  font-weight: 500;
+  flex-shrink: 0;
+  user-select: none;
+}
+
+.prefix-input {
+  flex: 1;
+}
+
+/* Error States */
+.has-error .carbon-input,
+.has-error .prefix-addon {
+  border-bottom: 2px solid #da1e28 !important;
+}
+
+.carbon-form-error {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  color: #da1e28;
+  margin-top: 4px;
+  white-space: nowrap;
+}
+
+.row-submit-btn {
+  height: 44px;
+  box-sizing: border-box;
+  padding: 0 28px;
+  background-color: #0f62fe;
+  color: #ffffff;
+  border: none;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  white-space: nowrap;
+  transition: background-color 0.15s ease;
+}
+
+.row-submit-btn:hover:not(:disabled) {
+  background-color: #0050e6;
+}
+
+.row-submit-btn:active:not(:disabled) {
+  background-color: #002d9c;
+}
+
+.row-submit-btn:disabled {
+  background-color: #e0e0e0;
+  color: #8c8c8c;
+  cursor: not-allowed;
+}
+
+.btn-icon-right {
+  width: 16px;
+  height: 16px;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* Carbon Card (Used for Step 2 & 3) */
+.carbon-card {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 14px 22px;
+  box-sizing: border-box;
+}
+
+/* Step 1 Compact Mini Summary */
+.step1-mini-summary {
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 6px 14px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 35px;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.summary-details {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.summary-item .lbl {
+  color: #525252;
+  margin-right: 4px;
+}
+
+.summary-item strong {
+  color: #161616;
+}
+
+.summary-divider {
+  color: #8c8c8c;
+}
+
+.plate-code-sm {
+  font-family: "IBM Plex Mono", monospace;
+  background-color: #ffffff;
+  border: 1px solid #161616;
+  padding: 1px 6px;
+  font-weight: 700;
+  color: #161616;
+  letter-spacing: 0.8px;
+  font-size: 12px;
+}
+
+.btn-edit-step1 {
+  background: none;
+  border: none;
+  color: #0f62fe;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  text-decoration: underline;
+}
+
+.btn-edit-step1:hover {
+  color: #0043ce;
+}
+
+.edit-icon {
+  width: 12px;
+  height: 12px;
+}
+
+/* Step 2 Controls 2-Column Grid: Fits 100vh Without Vertical Scrolling */
+.step2-controls-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px 24px;
+  margin-bottom: 10px;
+}
+
+.step2-control-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+.label-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.control-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: #161616;
+  letter-spacing: 0.16px;
+}
+
+.label-subtext {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8c8c8c;
+  letter-spacing: 0.16px;
+}
+
+.ncb-reset-tag {
+  display: inline-block;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #da1e28;
+  margin-left: 6px;
+}
+
+/* Carbon Content Switcher (Segmented Control) */
+.carbon-content-switcher {
+  display: flex;
+  align-items: stretch;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  height: 36px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.switcher-item {
+  flex: 1;
+  height: 100%;
+  background-color: transparent;
+  border: none;
+  border-right: 1px solid #e0e0e0;
+  color: #525252;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 13px;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  border-radius: 0px !important;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 10px;
+  white-space: nowrap;
+}
+
+.switcher-item:last-child {
+  border-right: none;
+}
+
+.switcher-item:hover:not(.selected) {
+  background-color: #e8e8e8;
+  color: #161616;
+}
+
+.switcher-item.selected {
+  background-color: #24a148 !important;
+  border-color: #24a148 !important;
+  color: #ffffff !important;
+  font-weight: 600;
+  box-shadow: 0 2px 4px rgba(36, 161, 72, 0.25);
+}
+
+.ncb-switcher .ncb-item {
+  min-width: 0;
+  font-weight: 500;
+}
+
+/* Carbon Checkbox Tiles */
+.checkbox-tiles-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+  height: 36px;
+}
+
+.checkbox-tiles-row.single-tile {
+  grid-template-columns: 1fr;
+}
+
+.carbon-checkbox-tile {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 14px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.15s ease;
+  box-sizing: border-box;
+}
+
+.carbon-checkbox-tile:hover {
+  background-color: #eaeaea;
+  border-color: #c6c6c6;
+}
+
+.carbon-checkbox-tile.is-checked {
+  background-color: #f0fdf4;
+  border-color: #24a148;
+}
+
+.sr-checkbox {
+  position: absolute;
+  opacity: 0;
+  pointer-events: none;
+  width: 0;
+  height: 0;
+}
+
+.carbon-checkbox-box {
+  width: 16px;
+  height: 16px;
+  border: 1px solid #161616;
+  background-color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: all 0.15s ease;
+  border-radius: 0px !important;
+}
+
+.carbon-checkbox-tile.is-checked .carbon-checkbox-box {
+  background-color: #24a148;
+  border-color: #24a148;
+  color: #ffffff;
+}
+
+.check-mark-icon {
+  width: 12px;
+  height: 12px;
+  color: #ffffff;
+}
+
+.checkbox-tile-text {
+  font-size: 13px;
+  font-weight: 500;
+  color: #161616;
+  white-space: nowrap;
+}
+
+/* NCB Claimed Zero Bar */
+.ncb-claimed-bar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 36px;
+  padding: 0 12px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  box-sizing: border-box;
+}
+
+.zero-pill {
+  background-color: #e0e0e0;
+  color: #161616;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  padding: 2px 6px;
+  letter-spacing: 0.3px;
+}
+
+.zero-text {
+  font-size: 12px;
+  color: #525252;
+}
+
+/* Actions Footer: Compact */
+.form-actions-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid #e0e0e0;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+
+.step3-footer {
+  justify-content: flex-end;
+}
+
+.actions-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.actions-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-left: auto;
+}
+
+.create-enquiry-btn {
+  height: 38px;
+  padding: 0 22px;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.carbon-spinner {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  border: 2px solid rgba(255, 255, 255, 0.3);
+  border-radius: 50% !important;
+  border-top-color: #ffffff;
+  animation: spin 0.6s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+.btn-primary {
+  background-color: #0f62fe;
+  color: #ffffff;
+  border: none;
+  height: 38px;
+  padding: 0 20px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background-color: #0050e6;
+}
+
+.btn-primary:active:not(:disabled) {
+  background-color: #002d9c;
+}
+
+.btn-primary:disabled {
+  background-color: #e0e0e0;
+  color: #8c8c8c;
+  cursor: not-allowed;
+}
+
+.btn-secondary {
+  background-color: #161616;
+  color: #ffffff;
+  border: none;
+  height: 38px;
+  padding: 0 18px;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 14px;
+  font-weight: 400;
+  letter-spacing: 0.16px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  transition: background-color 0.15s ease;
+  box-sizing: border-box;
+}
+
+.btn-secondary:hover {
+  background-color: #393939;
+}
+
+/* Step 3 Vehicle Details & Confirmation Card */
+.step3-card {
+  padding: 16px 24px;
+}
+
+.step3-header-strip {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e0e0e0;
+  margin-bottom: 12px;
+}
+
+.step3-icon-badge {
+  width: 38px;
+  height: 38px;
+  background-color: #24a148;
+  color: #ffffff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50% !important;
+  flex-shrink: 0;
+}
+
+.step3-icon-badge svg {
+  width: 22px;
+  height: 22px;
+}
+
+.step3-title-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.step3-title {
+  font-size: 18px;
+  font-weight: 500;
+  color: #161616;
+  margin: 0;
+}
+
+.enquiry-id-pill {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: #edf5ff;
+  color: #0f62fe;
+  border: 1px solid #d0e2ff;
+  padding: 2px 8px;
+  font-weight: 600;
+  letter-spacing: 0.2px;
+}
+
+.step3-subtitle {
+  font-size: 12px;
+  color: #525252;
+  margin: 2px 0 0;
+}
+
+/* Step 3 Mini Context Strip */
+.step3-mini-context-bar {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 6px 14px;
+  margin-bottom: 14px;
+  font-size: 13px;
+  flex-wrap: wrap;
+}
+
+.context-pill {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.context-pill .lbl {
+  color: #525252;
+}
+
+.context-pill strong {
+  color: #161616;
+}
+
+.divider {
+  color: #8c8c8c;
+}
+
+.policy-tag {
+  background-color: #ffffff;
+  border: 1px solid #161616;
+  color: #161616;
+  padding: 2px 8px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+}
+
+/* 4-Column Step 3 Inputs Grid (Displays 3-4 inputs per row) */
+.step3-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px 18px;
+  margin-bottom: 14px;
+}
+
+.step3-input-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.input-field-label {
+  font-size: 12px;
+  font-weight: 600;
+  color: #161616;
+  letter-spacing: 0.16px;
+  margin-bottom: 1px;
+}
+
+.readonly-input {
+  background-color: #f4f4f4 !important;
+  border: 1px solid #e0e0e0 !important;
+  border-bottom: 2px solid #8d8d8d !important;
+  color: #161616 !important;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  height: 38px !important;
+  padding: 0 12px !important;
+  cursor: default !important;
+  user-select: all;
+}
+
+.readonly-input:focus {
+  outline: none !important;
+  border-bottom-color: #0f62fe !important;
+}
+
+/* Document Upload Section in Step 3 */
+.step3-section-divider {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  border-top: 1px solid #e0e0e0;
+  padding-top: 14px;
+  margin-top: 10px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.divider-title-group {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.section-title {
+  font-size: 15px;
+  font-weight: 600;
+  color: #161616;
+  letter-spacing: 0.16px;
+  margin: 0;
+}
+
+.divider-title-with-badge {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.upload-badge {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 2px 8px;
+  color: #0f62fe;
+}
+
+.upload-badge.success-badge {
+  background-color: #defbe6;
+  border-color: #24a148;
+  color: #198038;
+  font-weight: 600;
+}
+
+/* Inline Error Notification */
+.carbon-inline-notification {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  font-size: 13px;
+}
+
+.error-notification {
+  background-color: #fff1f1;
+  border-left: 3px solid #da1e28;
+  color: #da1e28;
+}
+
+.notification-icon {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+}
+
+/* 4-Card Document Grid */
+.doc-upload-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px 16px;
+  margin-bottom: 14px;
+}
+
+.doc-card {
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.doc-card-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.doc-card-title-group {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.btn-add-doc-slot {
+  background-color: transparent;
+  border: 1px dashed #0f62fe;
+  color: #0f62fe;
+  font-family: "IBM Plex Sans", sans-serif;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  padding: 3px 8px;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.btn-add-doc-slot:hover {
+  background-color: #edf5ff;
+  border-color: #0043ce;
+  color: #0043ce;
+}
+
+.btn-add-doc-slot .plus-icon {
+  width: 12px;
+  height: 12px;
+}
+
+.doc-card-title {
+  font-size: 13px;
+  font-weight: 600;
+  color: #161616;
+}
+
+.doc-badge-required {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #fff1f1;
+  color: #da1e28;
+  border: 1px solid #ffd7d9;
+  padding: 2px 6px;
+}
+
+.doc-badge-policy {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #edf5ff;
+  color: #0f62fe;
+  border: 1px solid #d0e2ff;
+  padding: 2px 6px;
+}
+
+.doc-badge-optional {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  background-color: #ffffff;
+  color: #525252;
+  border: 1px solid #e0e0e0;
+  padding: 2px 6px;
+}
+
+.doc-slots-row {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 10px;
+}
+
+.doc-slots-row.single-slot {
+  grid-template-columns: 1fr;
+}
+
+/* Individual Document Slot */
+.doc-slot {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  padding: 8px 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-height: 108px;
+  box-sizing: border-box;
+  transition: border-color 0.15s ease;
+}
+
+.doc-slot.has-file {
+  border-color: #24a148;
+}
+
+.slot-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.slot-header-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.btn-remove-slot-pill {
+  background: none;
+  border: none;
+  color: #8d8d8d;
+  cursor: pointer;
+  padding: 2px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  transition: color 0.15s ease;
+  line-height: 1;
+}
+
+.btn-remove-slot-pill:hover {
+  color: #da1e28;
+}
+
+.btn-remove-slot-pill svg {
+  width: 13px;
+  height: 13px;
+}
+
+.slot-label {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 600;
+  color: #525252;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+
+.uploaded-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #24a148;
+  letter-spacing: 0.3px;
+}
+
+.check-icon {
+  width: 13px;
+  height: 13px;
+}
+
+/* Slot Dropzone */
+.file-input-hidden {
+  display: none !important;
+}
+
+.slot-dropzone {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  border: 1px dashed #8d8d8d;
+  background-color: #f4f4f4;
+  padding: 10px 8px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+.slot-dropzone:hover {
+  background-color: #e8e8e8;
+  border-color: #0f62fe;
+}
+
+.upload-cloud-icon {
+  width: 20px;
+  height: 20px;
+  color: #0f62fe;
+}
+
+.dropzone-action {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #161616;
+}
+
+.dropzone-hint {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8c8c8c;
+}
+
+/* Uploading State */
+.slot-uploading-box {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  padding: 10px;
+}
+
+.doc-spinner {
+  width: 18px;
+  height: 18px;
+  border-color: rgba(15, 98, 254, 0.2);
+  border-top-color: #0f62fe;
+}
+
+.uploading-text {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #161616;
+}
+
+.uploading-filename {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #525252;
+  max-width: 140px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Uploaded State */
+.slot-uploaded-content {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+}
+
+.thumbnail-wrapper {
+  position: relative;
+  width: 60px;
+  height: 60px;
+  background-color: #f4f4f4;
+  border: 1px solid #e0e0e0;
+  overflow: hidden;
+  flex-shrink: 0;
+  cursor: pointer;
+}
+
+.image-thumbnail {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.pdf-thumbnail {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background-color: #fee2e2;
+  color: #da1e28;
+}
+
+.pdf-icon {
+  width: 24px;
+  height: 24px;
+}
+
+.pdf-text {
+  font-size: 12px;
+  line-height: 1.3;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.zoom-overlay {
+  position: absolute;
+  inset: 0;
+  background-color: rgba(22, 22, 22, 0.45);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.15s ease;
+  color: #ffffff;
+}
+
+.thumbnail-wrapper:hover .zoom-overlay {
+  opacity: 1;
+}
+
+.zoom-icon {
+  width: 18px;
+  height: 18px;
+}
+
+.slot-meta-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  flex: 1;
+  min-width: 0;
+}
+
+.doc-filename {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  color: #161616;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.doc-filesize {
+  font-size: 12px;
+  line-height: 1.4;
+  color: #8c8c8c;
+}
+
+.slot-actions {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 2px;
+}
+
+.btn-slot-action {
+  background: none;
+  border: none;
+  color: #0f62fe;
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+}
+
+.btn-slot-action:hover {
+  color: #0043ce;
+}
+
+.replace-trigger {
+  display: inline-flex;
+  cursor: pointer;
+}
+
+.btn-slot-action.delete-action {
+  color: #da1e28;
+}
+
+.btn-slot-action.delete-action:hover {
+  color: #ba1b23;
+}
+
+.action-divider {
+  color: #e0e0e0;
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+/* Lightbox Modal */
+.carbon-modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background-color: rgba(22, 22, 22, 0.7);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+
+.carbon-modal-dialog {
+  background-color: #ffffff;
+  border: 1px solid #161616;
+  width: 100%;
+  max-width: 780px;
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.3);
+}
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f4f4f4;
+}
+
+.modal-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-badge {
+  font-size: 12px;
+  line-height: 1.4;
+  font-weight: 700;
+  background-color: #0f62fe;
+  color: #ffffff;
+  padding: 2px 8px;
+  letter-spacing: 0.3px;
+}
+
+.modal-title {
+  font-size: 15px;
+  line-height: 1.35;
+  font-weight: 600;
+  color: #161616;
+  margin: 0;
+  max-width: 500px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.btn-modal-close {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #161616;
+  width: 28px;
+  height: 28px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.btn-modal-close:hover {
+  background-color: #e0e0e0;
+}
+
+.btn-modal-close svg {
+  width: 16px;
+  height: 16px;
+}
+
+.modal-body {
+  flex: 1;
+  padding: 16px;
+  overflow: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #161616;
+  min-height: 320px;
+}
+
+.modal-preview-img {
+  max-width: 100%;
+  max-height: 56vh;
+  object-fit: contain;
+}
+
+.modal-pdf-iframe {
+  width: 100%;
+  height: 56vh;
+  border: none;
+  background-color: #ffffff;
+}
+
+.modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 18px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f4f4f4;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.modal-meta {
+  font-size: 12px;
+  color: #525252;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.meta-dot {
+  color: #8c8c8c;
+}
+
+.doc-id-code {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #0f62fe;
+}
+
+.modal-buttons {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.modal-btn {
+  height: 36px !important;
+  padding: 0 16px !important;
+  font-size: 13px !important;
+  text-decoration: none;
+}
+
+/* Instant Quote Modal */
+.quote-redirect-dialog {
+  max-width: 520px;
+}
+
+.instant-quote-badge {
+  background-color: #24a148 !important;
+  color: #ffffff !important;
+}
+
+.quote-modal-body {
+  padding: 20px 24px;
+  background-color: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.quote-modal-message {
+  font-size: 14px;
+  color: #161616;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.countdown-card {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  background-color: #f4f4f4;
+  border-left: 4px solid #0f62fe;
+  padding: 12px 16px;
+}
+
+.countdown-circle {
+  width: 44px;
+  height: 44px;
+  border: 2px solid #0f62fe;
+  border-radius: 50% !important;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background-color: #edf5ff;
+  color: #0f62fe;
+  font-family: "IBM Plex Mono", monospace;
+  flex-shrink: 0;
+}
+
+.countdown-number {
+  font-size: 18px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.countdown-unit {
+  font-size: 12px;
+  font-weight: 600;
+  margin-left: 1px;
+}
+
+.countdown-text-col {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.countdown-headline {
+  font-size: 13px;
+  font-weight: 600;
+  color: #161616;
+}
+
+.countdown-subline {
+  font-size: 12px;
+  color: #525252;
+}
+
+.quote-enquiry-ref {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: #525252;
+}
+
+.ref-value {
+  font-family: "IBM Plex Mono", monospace;
+  font-size: 12px;
+  line-height: 1.4;
+  color: #0f62fe;
+  background-color: #edf5ff;
+  padding: 2px 6px;
+  border: 1px solid #d0e2ff;
+}
+
+.quote-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  padding: 12px 20px;
+  border-top: 1px solid #e0e0e0;
+  background-color: #f4f4f4;
+}
+
+/* Responsive Breakpoints */
+@media (max-width: 992px) {
+  .carbon-single-row-form {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+
+  .step2-controls-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .step3-inputs-grid {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px 14px;
+  }
+
+  .doc-upload-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .btn-label-spacer {
+    display: none;
+  }
+
+  .carbon-form-error {
+    position: static;
+    margin-top: 6px;
+  }
+
+  .form-btn-item {
+    width: 100%;
+  }
+
+  .row-submit-btn {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+@media (max-width: 672px) {
+  .carbon-stepper {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .stepper-line {
+    display: none;
+  }
+
+  .carbon-create-enquiry-page {
+    padding: 10px 16px 24px;
+  }
+
+  .checkbox-tiles-row {
+    grid-template-columns: 1fr;
+    height: auto;
+  }
+
+  .step3-inputs-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .doc-slots-row {
+    grid-template-columns: 1fr;
+  }
+
+  .form-actions-footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .actions-left, .actions-right {
+    width: 100%;
+    flex-direction: column;
+  }
+
+  .btn-primary, .btn-secondary {
+    width: 100%;
+    justify-content: center;
+  }
+}
+
+

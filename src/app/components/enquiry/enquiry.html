@@ -1,0 +1,567 @@
+<div class="carbon-enquiry-page">
+  <!-- Toast Notification -->
+  @if (statusUpdateNotice()) {
+    <div class="carbon-toast" role="status">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ statusUpdateNotice() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="statusUpdateNotice.set(null)" aria-label="Close notification">×</button>
+    </div>
+  }
+
+  <!-- Page Header Area -->
+  <header class="page-header">
+    <div class="header-top">
+      <h1 class="carbon-headline">Enquiries</h1>
+
+      <div class="header-right-actions">
+        <!-- Common Search Input near New Enquiry button -->
+        <div class="search-box header-search-box">
+          <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            id="enquiry-search-input"
+            type="text"
+            class="carbon-input header-search-input"
+            placeholder="Search ID, customer, phone, vehicle..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchInput($event)"
+          />
+          @if (searchQuery()) {
+            <button type="button" class="clear-search-btn" (click)="clearSearch()" aria-label="Clear search">×</button>
+          }
+        </div>
+
+        <button type="button" class="carbon-btn-create" (click)="openProductsModal()">
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          New Enquiry
+        </button>
+      </div>
+    </div>
+
+    <!-- Status Milestone KPI Metric Strip (Quick Filters & Reward Points) -->
+    <div class="metrics-grid">
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="selectedStatusFilter() === 'All'"
+        (click)="setStatusFilter('All')"
+      >
+        <span class="metric-label">All Enquiries</span>
+        <span class="metric-value">{{ totalCount() }}</span>
+        <span class="metric-hint">Total volume</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="selectedStatusFilter() === 'Created'"
+        (click)="setStatusFilter('Created')"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">1. Created</span>
+          <span class="metric-indicator indicator-created"></span>
+        </div>
+        <span class="metric-value">{{ createdCount() }}</span>
+        <span class="metric-hint">Draft / New</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="selectedStatusFilter() === 'Submitted'"
+        (click)="setStatusFilter('Submitted')"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">2. Submitted</span>
+          <span class="metric-indicator indicator-step1"></span>
+        </div>
+        <span class="metric-value">{{ submittedCount() }}</span>
+        <span class="metric-hint">Awaiting quote</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="selectedStatusFilter() === 'Quoted'"
+        (click)="setStatusFilter('Quoted')"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">4. Quoted</span>
+          <span class="metric-indicator indicator-step2"></span>
+        </div>
+        <span class="metric-value">{{ quotedCount() }}</span>
+        <span class="metric-hint">Proposal with client</span>
+      </button>
+
+      <button
+        type="button"
+        class="metric-tile"
+        [class.active]="selectedStatusFilter() === 'PolicyIssued'"
+        (click)="setStatusFilter('PolicyIssued')"
+      >
+        <div class="metric-header-row">
+          <span class="metric-label">7. Policy Issued</span>
+          <span class="metric-indicator indicator-step4"></span>
+        </div>
+        <span class="metric-value">{{ policyIssuedCount() }}</span>
+        <span class="metric-hint">Policy finalized</span>
+      </button>
+
+      <div class="metric-tile metric-tile-points">
+        <div class="metric-header-row">
+          <span class="metric-label">Points Earned</span>
+          <span class="metric-indicator indicator-points"></span>
+        </div>
+        <span class="metric-value metric-value-points">{{ pointsEarned() | number:'1.2-2' }}</span>
+        <span class="metric-hint">Agent reward pts</span>
+      </div>
+    </div>
+  </header>
+
+  <!-- Compact Filter Bar Below Metrics Grid -->
+  <section class="toolbar-section compact-toolbar">
+    <div class="toolbar-row">
+      <span class="results-count">
+        Showing <strong>{{ enquiries().length }}</strong> of <strong>{{ totalRecords() }}</strong> enquiries
+        @if (totalPages() > 1) {
+          <span class="results-page-sub">(Page {{ pageNumber() }} of {{ totalPages() }})</span>
+        }
+      </span>
+
+      <!-- Filters Group -->
+      <div class="filter-controls">
+        <!-- Insurance Type Filter -->
+        <div class="select-group">
+          <label class="select-label" for="filter-type">Type</label>
+          <select
+            id="filter-type"
+            class="carbon-select"
+            [ngModel]="selectedInsuranceTypeId()"
+            (ngModelChange)="setTypeFilter($event)"
+          >
+            <option value="All">All Types</option>
+            @for (type of insuranceTypes(); track type.id) {
+              <option [value]="type.id">{{ type.name }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Conditional Vehicle Type Filter (Visible only when Insurance Type is Vehicle Insurance) -->
+        @if (isVehicleInsuranceSelected()) {
+          <div class="select-group vehicle-type-select-group">
+            <label class="select-label" for="filter-vehicle-type">Vehicle</label>
+            <select
+              id="filter-vehicle-type"
+              class="carbon-select"
+              [ngModel]="selectedVehicleTypeId()"
+              (ngModelChange)="setVehicleTypeFilter($event)"
+            >
+              <option value="All">All Vehicles</option>
+              @for (vt of vehicleTypes(); track vt.id) {
+                <option [value]="vt.id">{{ vt.typeName }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- Status Filter -->
+        <div class="select-group">
+          <label class="select-label" for="filter-status">Status</label>
+          <select
+            id="filter-status"
+            class="carbon-select"
+            [ngModel]="selectedStatusFilter()"
+            (ngModelChange)="setStatusFilter($event)"
+          >
+            <option value="All">All Statuses</option>
+            @for (st of statusOptions; track st.id) {
+              <option [value]="st.key">{{ st.id }}. {{ st.label }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Staff Filter (Visible only when logged in user is Agent) -->
+        @if (isAgent()) {
+          <div class="select-group staff-select-group">
+            <label class="select-label" for="filter-staff">Staff</label>
+            <select
+              id="filter-staff"
+              class="carbon-select"
+              [ngModel]="selectedAgentId()"
+              (ngModelChange)="setStaffFilter($event)"
+            >
+              <option value="All">All Staff</option>
+              @for (staff of staffMembers(); track (staff.id || staff.userName)) {
+                <option [value]="staff.id">{{ staff.fullName || staff.userName }}</option>
+              }
+            </select>
+          </div>
+        }
+
+        <!-- Sort Order -->
+        <div class="select-group">
+          <label class="select-label" for="filter-sort">Sort</label>
+          <select
+            id="filter-sort"
+            class="carbon-select"
+            [ngModel]="sortDirection()"
+            (ngModelChange)="setSortDirection($event)"
+          >
+            <option value="desc">Newest First</option>
+            <option value="asc">Oldest First</option>
+          </select>
+        </div>
+
+        <!-- Rows Per Page Filter -->
+        <div class="select-group">
+          <label class="select-label" for="filter-pagesize">Rows</label>
+          <select
+            id="filter-pagesize"
+            class="carbon-select"
+            [ngModel]="pageSize()"
+            (ngModelChange)="setPageSize($event)"
+          >
+            <option [ngValue]="5">5 per page</option>
+            <option [ngValue]="10">10 per page</option>
+            <option [ngValue]="20">20 per page</option>
+            <option [ngValue]="50">50 per page</option>
+          </select>
+        </div>
+
+        @if (searchQuery() || selectedStatusFilter() !== 'All' || selectedInsuranceTypeId() !== 'All' || selectedVehicleTypeId() !== 'All' || selectedAgentId() !== 'All') {
+          <button type="button" class="carbon-btn carbon-btn-ghost reset-btn" (click)="resetFilters()">
+            Reset
+          </button>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- Enquiries Data Table -->
+  <main class="table-container">
+    @if (isLoading()) {
+      <div class="carbon-loading-container">
+        <div class="carbon-spinner"></div>
+        <span class="loading-text">Loading enquiries from server...</span>
+      </div>
+    } @else if (errorMessage()) {
+      <div class="carbon-inline-notification carbon-inline-notification-error">
+        <div class="notification-details">
+          <span class="notification-title">Failed to Load Enquiries</span>
+          <span class="notification-subtitle">{{ errorMessage() }}</span>
+        </div>
+        <button type="button" class="carbon-btn carbon-btn-ghost retry-btn" (click)="loadEnquiries()">
+          Retry
+        </button>
+      </div>
+    } @else if (enquiries().length === 0) {
+      <div class="empty-state">
+        <div class="empty-icon-box">
+          <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m5.231 13.481L15 17.25m-4.5-15H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">No enquiries match your search criteria</h3>
+        <p class="empty-desc">Try resetting active filters, clearing the search term, or create a new enquiry.</p>
+        <button type="button" class="carbon-btn carbon-btn-secondary" (click)="resetFilters()">
+          Clear All Filters
+        </button>
+      </div>
+    } @else {
+      <div class="table-scroll-wrapper">
+        <table class="carbon-table">
+          <thead>
+            <tr>
+              <th class="th-id">Enquiry ID</th>
+              <th class="th-customer">Customer</th>
+              <th class="th-type">Insurance Details</th>
+              <th class="th-status">Status Lifecycle</th>
+              <th class="th-assigned">Assigned Agent</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (enquiry of enquiries(); track enquiry.enquiryId) {
+              <tr class="table-row" (click)="openDetailDrawer(enquiry)">
+                <!-- Enquiry ID / Number -->
+                <td class="td-id">
+                  <div class="enquiry-id-box">
+                    <span class="enquiry-code" [title]="enquiry.enquiryNumber">{{ enquiry.enquiryNumber }}</span>
+                    <button
+                      type="button"
+                      class="copy-btn"
+                      (click)="copyToClipboard(enquiry.enquiryNumber || enquiry.enquiryId, $event)"
+                      title="Copy Enquiry Number"
+                    >
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M8 2a1 1 0 000 2h2a1 1 0 100-2H8z"/>
+                        <path d="M3 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v6h-2V5H5v14h6v2H5a2 2 0 01-2-2V5z"/>
+                        <path d="M15 8h2a1 1 0 011 1v9a1 1 0 01-1 1h-7a1 1 0 01-1-1V9a1 1 0 011-1h2v1a1 1 0 001 1h2a1 1 0 001-1V8z"/>
+                      </svg>
+                    </button>
+                  </div>
+                  <span class="td-sub-meta">
+                    {{ enquiry.createdAt | date:'mediumDate' }}
+                  </span>
+                </td>
+
+                <!-- Customer: Name + Phone + Vehicle Plate -->
+                <td class="td-customer">
+                  <div class="customer-cell">
+                    <span class="customer-name" [title]="enquiry.customerName">{{ enquiry.customerName }}</span>
+                    <a
+                      [href]="'tel:' + (enquiry.phoneNumber || enquiry.customerPhone)"
+                      class="customer-phone"
+                      (click)="$event.stopPropagation()"
+                      [title]="'Call ' + (enquiry.phoneNumber || enquiry.customerPhone)"
+                    >
+                      <svg class="phone-icon" viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                      </svg>
+                      {{ enquiry.phoneNumber || enquiry.customerPhone }}
+                    </a>
+                    @if (enquiry.vehicleNumber) {
+                      <div class="vehicle-plate-pill" [title]="enquiry.vehicleNumber">
+                        <span class="plate-label">Plate</span>
+                        <span class="plate-code">{{ enquiry.vehicleNumber }}</span>
+                      </div>
+                    }
+                    @if (enquiry.customerEmail) {
+                      <span class="customer-email" [title]="enquiry.customerEmail">{{ enquiry.customerEmail }}</span>
+                    }
+                  </div>
+                </td>
+
+                <!-- Insurance Type & Policy Details -->
+                <td class="td-type">
+                  <span class="type-badge">{{ enquiry.insuranceType }}</span>
+                  @if (enquiry.vehicleType) {
+                    <span class="vehicle-type-sub">{{ enquiry.vehicleType }}</span>
+                  }
+                  @if (enquiry.policyType) {
+                    <span class="policy-type-sub">{{ enquiry.policyType }}</span>
+                  }
+                  @if (enquiry.coverageAmount) {
+                    <span class="coverage-amount">{{ enquiry.coverageAmount }} limit</span>
+                  }
+                </td>
+
+                <!-- Status Progress Bar (Green Stepped Milestone Tracker) -->
+                <td class="td-status">
+                  <div class="status-cell">
+                    <!-- Current Status Header Badge -->
+                    <div class="status-badge-row">
+                      <span
+                        class="status-pill"
+                        [class.status-pill-green]="!isCancelled(enquiry.status) && !isIssued(enquiry.status)"
+                        [class.status-pill-issued]="isIssued(enquiry.status)"
+                        [class.status-pill-cancelled]="isCancelled(enquiry.status)"
+                        [class.status-pill-clickable]="enquiry.status === 'Quoted' || isIssued(enquiry.status)"
+                        [title]="enquiry.status === 'Quoted' ? 'Status: Quoted — Click to open /quote' : (isIssued(enquiry.status) ? 'Status: Policy Issued — Click to view policy' : '')"
+                        (click)="enquiry.status === 'Quoted' ? navigateToQuotes(enquiry, $event) : (isIssued(enquiry.status) ? openPolicyModal(enquiry, $event) : null)"
+                      >
+                        <span
+                          class="status-dot-green"
+                          [class.status-dot-cancelled]="isCancelled(enquiry.status)"
+                        ></span>
+                        {{ getStatusLabel(enquiry.status) }}
+                      </span>
+                      @if (!isCancelled(enquiry.status)) {
+                        <span class="progress-percent-label">
+                          {{ getProgressPercentage(enquiry.status) }}% complete
+                        </span>
+                      } @else {
+                        <span class="progress-percent-label label-cancelled">
+                          Terminated
+                        </span>
+                      }
+                    </div>
+
+                    <!-- Stepped Milestone Tracker -->
+                    @if (isCancelled(enquiry.status)) {
+                      <div class="cancelled-progress-banner">
+                        <span class="cancelled-banner-text">Lifecycle Closed &bull; Enquiry Cancelled</span>
+                      </div>
+                    } @else {
+                      <div
+                        class="stepped-progress-container"
+                        [attr.aria-label]="'Status progress: ' + getStatusLabel(enquiry.status)"
+                      >
+                        <!-- Continuous Green Track Underlay -->
+                        <div class="progress-track-bg">
+                          <div
+                            class="progress-track-fill-green"
+                            [style.width.%]="getProgressPercentage(enquiry.status)"
+                          ></div>
+                        </div>
+
+                        <!-- 7 Milestone Steps -->
+                        <div class="progress-steps-row">
+                          @for (stage of progressiveSequence; track stage; let idx = $index) {
+                            <div
+                              class="step-node"
+                              [class.completed]="isStageCompletedOrCurrent(enquiry.status, idx)"
+                              [class.current]="isStageCurrent(enquiry.status, idx)"
+                              [class.step-quoted-interactive]="stage === 'Quoted'"
+                              [class.step-issued-interactive]="stage === 'PolicyIssued' && isIssued(enquiry.status)"
+                              [title]="stage === 'Quoted' ? 'Step 4: Quoted — Click to open /quote' : ((stage === 'PolicyIssued' && isIssued(enquiry.status)) ? 'Policy Issued — Click to view policy' : (idx + 1) + '. ' + getStatusLabel(stage))"
+                              (click)="stage === 'Quoted' ? navigateToQuotes(enquiry, $event) : ((stage === 'PolicyIssued' && isIssued(enquiry.status)) ? openPolicyModal(enquiry, $event) : null)"
+                            >
+                              <div class="step-circle">
+                                @if (isStageCompletedOrCurrent(enquiry.status, idx + 1)) {
+                                  <svg class="step-check-icon" viewBox="0 0 12 12" fill="currentColor">
+                                    <path d="M10.28 2.28L3.989 8.575 1.707 6.293a1 1 0 00-1.414 1.414l3 3a1 1 0 001.414 0l7-7a1 1 0 00-1.414-1.414z"/>
+                                  </svg>
+                                } @else {
+                                  <span class="step-number">{{ idx + 1 }}</span>
+                                }
+                              </div>
+                              <span class="step-text">{{ getStepShortLabel(stage) }}</span>
+                            </div>
+                          }
+                        </div>
+                      </div>
+                    }
+                  </div>
+                </td>
+
+                <!-- Assigned Agent -->
+                <td class="td-assigned">
+                  <div class="staff-box">
+                    <span class="staff-name">{{ enquiry.assignedStaff }}</span>
+                    <span class="staff-role-sub">
+                      @if (enquiry.assignedStaff === 'Unassigned') {
+                        Unassigned
+                      } @else {
+                        Assigned Agent
+                      }
+                    </span>
+
+                    <!-- Assigned Agent Number & WhatsApp Web Action -->
+                    <div class="staff-contact-row">
+                      @if (enquiry.assigedAgentNumber || enquiry.assignedAgentNumber) {
+                        <a
+                          [href]="'tel:' + (enquiry.assigedAgentNumber || enquiry.assignedAgentNumber)"
+                          class="staff-phone"
+                          (click)="$event.stopPropagation()"
+                          title="Call Assigned Agent"
+                        >
+                          <svg class="phone-mini-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                          </svg>
+                          <span>{{ enquiry.assigedAgentNumber || enquiry.assignedAgentNumber }}</span>
+                        </a>
+                      }
+                      <button
+                        type="button"
+                        class="whatsapp-icon-btn"
+                        [disabled]="!hasAssignedAgent(enquiry)"
+                        (click)="hasAssignedAgent(enquiry) && openWhatsApp(enquiry, $event)"
+                        [title]="hasAssignedAgent(enquiry) ? 'Chat on WhatsApp Web with prefilled enquiry details' : 'Disabled: No agent assigned to this enquiry'"
+                        aria-label="Chat on WhatsApp Web"
+                      >
+                        <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12.04 2c-5.46 0-9.91 4.45-9.91 9.91 0 1.75.46 3.45 1.32 4.95L2.05 22l5.25-1.38c1.45.79 3.08 1.21 4.74 1.21 5.46 0 9.91-4.45 9.91-9.91 0-2.65-1.03-5.14-2.9-7.01A9.816 9.816 0 0012.04 2zm5.82 14.07c-.24.68-1.4 1.33-1.93 1.39-.49.05-1.12.08-3.23-.79-2.7-1.12-4.45-3.87-4.58-4.05-.14-.18-1.1-1.46-1.1-2.79 0-1.32.69-1.97.94-2.24.25-.26.54-.33.72-.33.18 0 .36.002.52.01.17.01.4.06.62.53.24.57.81 1.98.88 2.12.07.15.12.33.02.53-.1.2-.15.33-.3.51-.15.18-.31.4-.44.54-.15.15-.31.31-.13.62.18.31.78 1.29 1.68 2.09 1.15 1.03 2.12 1.35 2.43 1.5.31.15.49.13.67-.08.18-.21.78-.9.99-1.22.21-.31.42-.26.7-.16.29.1.18.88.94 1.26.16.08.31.12.44.17.15.06.44.17.62.43.18.26.18 1.5-.06 2.18z"/>
+                        </svg>
+                        <span class="whatsapp-btn-text">WhatsApp</span>
+                      </button>
+                    </div>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination Bar -->
+      <div class="pagination-bar">
+        <div class="pagination-info">
+          Page <strong>{{ pageNumber() }}</strong> of <strong>{{ totalPages() }}</strong>
+          <span class="pagination-total">({{ totalRecords() }} total enquiries)</span>
+        </div>
+
+        <div class="pagination-controls">
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="!hasPreviousPage()"
+            (click)="previousPage()"
+          >
+            &larr; Prev
+          </button>
+
+          <span class="page-current">{{ pageNumber() }}</span>
+
+          <button
+            type="button"
+            class="pagination-btn"
+            [disabled]="!hasNextPage()"
+            (click)="nextPage()"
+          >
+            Next &rarr;
+          </button>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- Enquiry Details Modal (Replaces old side tab) -->
+  @if (selectedEnquiry()) {
+    <app-enquiry-details
+      [enquiry]="selectedEnquiry()"
+      (close)="closeDetailDrawer()"
+    ></app-enquiry-details>
+  }
+
+  <!-- Insurance Products Selection Modal (Carbon Spec) -->
+  @if (isProductsModalOpen()) {
+    <div class="modal-backdrop" (click)="closeProductsModal()">
+      <div class="carbon-modal products-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true">
+        <div class="modal-header">
+          <div>
+            <h2 class="modal-title">Select Insurance Line</h2>
+            <p class="modal-subtitle">Choose a line of business to initiate an enquiry or instant quote</p>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeProductsModal()" aria-label="Close modal">&times;</button>
+        </div>
+
+        <div class="products-modal-body">
+          <app-insurance-products
+            [title]="''"
+            [caption]="''"
+            [showCardBorder]="false"
+            [collapseThreshold]="20"
+            [navigateOnClick]="false"
+            (productSelected)="onProductSelectedFromModal($event)"
+          />
+        </div>
+
+        <div class="modal-footer products-modal-footer">
+          <button type="button" class="carbon-btn carbon-btn-ghost skip-to-blank-btn" (click)="openManualCreateModal()">
+            Skip to Blank Form &rarr;
+          </button>
+          <button type="button" class="carbon-btn carbon-btn-secondary" (click)="closeProductsModal()">
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+
+  <!-- Policy Preview & Certificate Modal -->
+  @if (isPolicyModalOpen()) {
+    <app-policy
+      [enquiryId]="selectedPolicyEnquiryId()"
+      [enquiryNumber]="selectedPolicyEnquiryNumber()"
+      (close)="closePolicyModal()"
+    ></app-policy>
+  }
+</div>

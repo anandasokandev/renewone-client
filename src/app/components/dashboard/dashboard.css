@@ -1,0 +1,458 @@
+:host {
+  display: block;
+  min-height: calc(100vh - 58px);
+  background-color: #ffffff;
+  font-family: "IBM Plex Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  color: #161616;
+  letter-spacing: 0.16px;
+  box-sizing: border-box;
+}
+
+.carbon-dashboard-page {
+  max-width: 1584px;
+  margin: 0 auto;
+  padding: 24px 32px 64px;
+  box-sizing: border-box;
+}
+
+/* --- Carbon Header --- */
+.dashboard-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 16px;
+  margin-bottom: 24px;
+  flex-wrap: nowrap;
+}
+
+.header-content {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1;
+}
+
+.carbon-headline {
+  font-size: 24px;
+  font-weight: 400;
+  color: #161616;
+  line-height: 1.25;
+  margin: 0;
+  letter-spacing: -0.2px;
+}
+
+.agent-name {
+  color: #0f62fe;
+  font-weight: 400;
+}
+
+.carbon-subhead {
+  font-size: 16px;
+  color: #525252;
+  margin: 0;
+  line-height: 1.4;
+}
+
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-shrink: 0;
+}
+
+/* Carbon Buttons */
+.carbon-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  padding: 11px 16px;
+  border-radius: 0;
+  cursor: pointer;
+  text-decoration: none;
+  box-sizing: border-box;
+  white-space: nowrap;
+  transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.carbon-btn-primary {
+  background-color: #0f62fe;
+  color: #ffffff;
+  border: 1px solid #0f62fe;
+}
+.carbon-btn-primary:hover {
+  background-color: #0050e6;
+  border-color: #0050e6;
+}
+
+.carbon-btn-secondary {
+  background-color: #161616;
+  color: #ffffff;
+  border: 1px solid #161616;
+}
+.carbon-btn-secondary:hover {
+  background-color: #262626;
+}
+
+.carbon-btn-sm {
+  font-size: 13px;
+  padding: 7px 12px;
+}
+
+.carbon-btn-ghost {
+  background: transparent;
+  color: #0f62fe;
+  border: 1px solid transparent;
+  padding: 6px 10px;
+}
+.carbon-btn-ghost:hover {
+  background-color: #f4f4f4;
+}
+
+.btn-icon {
+  width: 16px;
+  height: 16px;
+}
+
+/* --- Quick Stats Ribbon --- */
+.dashboard-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  gap: 16px;
+  margin-bottom: 32px;
+}
+
+.metric-tile {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  padding: 14px 18px;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  transition: border-color 0.15s ease, background-color 0.15s ease;
+}
+.metric-tile:hover {
+  border-color: #161616;
+  background-color: #fcfcfc;
+}
+
+.metric-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.metric-label {
+  font-size: 13px;
+  font-weight: 500;
+  color: #525252;
+  margin-bottom: 4px;
+}
+
+.metric-value {
+  font-size: 26px;
+  font-weight: 300;
+  color: #161616;
+  line-height: 1.1;
+  margin-bottom: 2px;
+}
+
+.metric-hint {
+  font-size: 12px;
+  color: #8c8c8c;
+}
+
+.metric-indicator {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+}
+.indicator-submitted { background-color: #24a148; opacity: 0.6; }
+.indicator-quoted { background-color: #24a148; opacity: 0.8; }
+.indicator-issued { background-color: #24a148; }
+.indicator-points { background-color: #f1c21b; }
+
+.metric-tile-points {
+  border-left: 3px solid #f1c21b;
+  background-color: #fafafa;
+}
+.metric-value-points {
+  color: #b28600;
+  font-weight: 400;
+}
+
+/* --- Quick Access Feature Cards --- */
+.quick-access-section {
+  margin-top: 36px;
+}
+
+.access-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+.access-tile {
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0;
+  padding: 24px;
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  text-decoration: none;
+  cursor: pointer;
+  position: relative;
+  transition: all 0.15s ease;
+}
+
+.access-tile:hover {
+  border-color: #161616;
+  background-color: #f9f9f9;
+}
+
+.tile-icon-box {
+  width: 42px;
+  height: 42px;
+  background-color: #f4f4f4;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: #0f62fe;
+}
+
+.tile-icon-box svg {
+  width: 22px;
+  height: 22px;
+}
+
+.tile-text {
+  flex: 1;
+}
+
+.tile-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #161616;
+  margin: 0 0 6px 0;
+}
+
+.tile-desc {
+  font-size: 13px;
+  color: #525252;
+  line-height: 1.4;
+  margin: 0;
+}
+
+.tile-arrow {
+  font-size: 18px;
+  color: #8c8c8c;
+  transition: transform 0.15s ease, color 0.15s ease;
+}
+
+.access-tile:hover .tile-arrow {
+  transform: translateX(4px);
+  color: #0f62fe;
+}
+
+/* --- Responsive Breakpoints --- */
+@media (max-width: 1200px) {
+  .dashboard-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+  }
+
+  .metric-tile-points {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 18px;
+    gap: 16px;
+  }
+
+  .metric-tile-points .metric-header-row {
+    margin-bottom: 0;
+    gap: 8px;
+  }
+
+  .metric-tile-points .metric-label {
+    margin-bottom: 0;
+    font-size: 13px;
+  }
+
+  .metric-tile-points .metric-value {
+    font-size: 22px;
+    margin-bottom: 0;
+    line-height: 1;
+  }
+
+  .metric-tile-points .metric-hint {
+    margin-bottom: 0;
+    font-size: 12px;
+  }
+}
+
+@media (max-width: 1056px) {
+  .carbon-headline {
+    font-size: 18px;
+  }
+  .access-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 768px) {
+  .carbon-headline {
+    font-size: 16px;
+  }
+}
+
+@media (max-width: 672px) {
+  .carbon-dashboard-page {
+    padding: 16px 16px 40px;
+  }
+  .dashboard-header {
+    gap: 12px;
+    padding-bottom: 12px;
+    margin-bottom: 16px;
+  }
+  .carbon-headline {
+    font-size: 15px;
+    line-height: 1.3;
+  }
+  .header-actions {
+    flex-shrink: 0;
+  }
+  .header-actions .carbon-btn {
+    font-size: 12px;
+    padding: 6px 10px;
+  }
+
+  /* 4 cards in same row and profit card in next row with reduced height */
+  .dashboard-metrics-grid {
+    grid-template-columns: repeat(4, 1fr);
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) {
+    padding: 10px 8px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-label {
+    font-size: 11px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-value {
+    font-size: 20px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-hint {
+    font-size: 10px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .metric-tile-points {
+    grid-column: 1 / -1;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    padding: 8px 14px;
+    gap: 12px;
+  }
+
+  .metric-tile-points .metric-header-row {
+    margin-bottom: 0;
+    gap: 6px;
+  }
+
+  .metric-tile-points .metric-label {
+    font-size: 12px;
+    margin-bottom: 0;
+  }
+
+  .metric-tile-points .metric-value {
+    font-size: 18px;
+    margin-bottom: 0;
+  }
+
+  .metric-tile-points .metric-hint {
+    font-size: 11px;
+    margin-bottom: 0;
+  }
+
+  .products-grid {
+    justify-content: center;
+  }
+}
+
+@media (max-width: 440px) {
+  .dashboard-header {
+    gap: 8px;
+  }
+  .carbon-headline {
+    font-size: 13.5px;
+  }
+  .header-actions .carbon-btn {
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .dashboard-metrics-grid {
+    gap: 6px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) {
+    padding: 8px 4px;
+    text-align: center;
+    align-items: center;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-header-row {
+    justify-content: center;
+    width: 100%;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-label {
+    font-size: 10px;
+    margin-bottom: 2px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-value {
+    font-size: 17px;
+  }
+
+  .dashboard-metrics-grid .metric-tile:not(.metric-tile-points) .metric-hint {
+    font-size: 9px;
+  }
+
+  .metric-tile-points {
+    padding: 6px 10px;
+    gap: 8px;
+  }
+
+  .metric-tile-points .metric-label {
+    font-size: 11px;
+  }
+
+  .metric-tile-points .metric-value {
+    font-size: 16px;
+  }
+
+  .metric-tile-points .metric-hint {
+    display: none;
+  }
+}

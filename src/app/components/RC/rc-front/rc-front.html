@@ -1,0 +1,81 @@
+<div id="j_idt11"
+    class="ui-outputpanel ui-widget smartcard-front-panel inline-section myriadpro-font position-relative">
+    <div class="front-panel-header">
+        <div class="front-panel-header-section inline-section">
+            <div class="text-label-8size font-bold" style="line-height: 1.25 !important">
+                {{ headerTitle }} <br>Issued by {{ issuedBy }}
+            </div>
+        </div>
+        <div class="inline-section vehicle-type text-label-7size">
+            <div class="circled-section smartcard-vehicle-type-color-code" style="margin-right: 2.6px;">{{ vehicleType }}</div>
+            <div class="circled-section smartcard-state-color-code">{{ stateCode }}</div>
+        </div>
+    </div>
+    <div class="front-panel-detail-section">
+        <div class="smartcard-left-section front-left-section text-label-7size" style="line-height: 1.25 !important;">
+            <div class="smartcard-details-section position-absolute abs-bottom-position" style="width: 85px !important">
+                <p class="bottom-space-none font-bold">Fuel</p>
+                <p class="bottom-space-2">{{ fuel }}</p>
+                <p class="bottom-space-none font-bold">Emission Norms</p>
+                <p class="bottom-space-2 emission-norms-section">{{ emissionNorms }}</p>
+            </div>
+        </div>
+        <div class="smartcard-right-section front-right-section text-label-7size" style="line-height: 1.25 !important;">
+            <div class="smartcard-details-section top-space-negative-4">
+                <table class="table-width-four datatable-panel-100 text-label-7size">
+                    <tbody>
+                        <tr>
+                            <td class="left-position">
+                                <p class="bottom-space-none font-bold">Regn No</p>
+                                <p class="bottom-space-2 font-bold">{{ regnNumber }}</p>
+                            </td>
+                            <td class="left-position">
+                                <p class="bottom-space-none font-bold">Date of Regn.</p>
+                                <p class="bottom-space-2 font-bold">{{ regnDate }}</p>
+                            </td>
+                            <td class="left-position">
+                                <div id="j_idt27" class="ui-outputpanel ui-widget">
+                                    <p class="text-label-7size myriadpro-font bottom-space-none font-bold">Regn. Validity</p>
+                                    <p class="bottom-space-2">
+                                        <span class="text-label-7size myriadpro-font font-bold">{{ regnValidity }}</span>
+                                    </p>
+                                </div>
+                            </td>
+                            <td class="left-position">
+                                <p class="text-label-7size myriadpro-font bottom-space-none font-bold" style="margin-left: 4px">
+                                    Owner<br>Serial
+                                </p>
+                                <div class="circled-section inline-section owner-serial-position smartcard-owner-serial-color-code">
+                                    <p class="bottom-space-2">{{ ownerSerial }}</p>
+                                </div>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+                <p class="bottom-space-none font-bold">Chassis No</p>
+                <p class="bottom-space-2">{{ chassisNo }}</p>
+
+                <p class="bottom-space-none font-bold">Engine/Motor No</p>
+                <p class="bottom-space-2">{{ engineNo }}</p>
+
+                <p class="bottom-space-none font-bold">Owner Name</p>
+                <p class="bottom-space-2 text-uppercase">{{ ownerName }}</p>
+
+                <p class="bottom-space-none font-bold">Son/Wife/Daughter of (In case of Individual Owner)</p>
+                <p class="bottom-space-2 text-uppercase">{{ sonWifeDaughterOf }}</p>
+
+                <p class="bottom-space-none font-bold">Ownership</p>
+                <p class="bottom-space-2 text-uppercase">{{ ownership }}</p>
+
+                <p class="bottom-space-none font-bold">Address</p>
+                <p class="bottom-space-2 address-section">
+                    <span style="letter-spacing:-0.5px !important">{{ address }}</span>
+                </p>
+
+            </div>
+        </div>
+    </div>
+    <div class="right-absolute-content front-absolute-position text-label-6size" style="line-height: 1.25 !important;">
+        <p>Card Issue Date ({{ cardIssueDate }})</p>
+    </div>
+</div>

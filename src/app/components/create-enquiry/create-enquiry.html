@@ -1,0 +1,911 @@
+<div class="carbon-create-enquiry-page">
+  <!-- Toast Notification -->
+  @if (successMessage()) {
+    <div class="carbon-toast" role="status">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" class="btn-toast-close" (click)="dismissToast()" aria-label="Close notification" title="Close">
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
+    </div>
+  }
+
+  <!-- Top Navigation & Context Header -->
+  <header class="page-header">
+    <!-- Breadcrumb Navigation -->
+    <nav class="carbon-breadcrumb" aria-label="Breadcrumb">
+      <ol class="breadcrumb-list">
+        <li class="breadcrumb-item">
+          <a routerLink="/enquiry" class="breadcrumb-link">Enquiries</a>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item">
+          <span class="breadcrumb-current">Create Enquiry</span>
+        </li>
+        <li class="breadcrumb-separator">/</li>
+        <li class="breadcrumb-item">
+          <span class="breadcrumb-badge">{{ insuranceTypeName() }}</span>
+        </li>
+      </ol>
+    </nav>
+
+    <!-- Metadata Context Badges -->
+    <div class="context-ribbon">
+      <div class="context-item">
+        <span class="context-label">Insurance Type:</span>
+        <span class="context-tag primary-tag">{{ insuranceTypeName() }}</span>
+      </div>
+
+      @if (vehicleTypeName()) {
+        <div class="context-item">
+          <span class="context-label">Vehicle Category:</span>
+          <span class="context-tag secondary-tag">{{ vehicleTypeName() }}</span>
+        </div>
+      }
+    </div>
+  </header>
+
+  <!-- Carbon Progress Indicator (Stepper) -->
+  <section class="carbon-stepper-container" aria-label="Progress Stepper">
+    <div class="carbon-stepper">
+      <!-- Step 1 -->
+      <div class="stepper-item" [class.active]="currentStep() === 1" [class.completed]="currentStep() > 1">
+        <div class="stepper-badge">
+          @if (currentStep() > 1) {
+            <svg class="step-check-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          } @else {
+            <span>1</span>
+          }
+        </div>
+        <div class="stepper-text">
+          <span class="step-label">Step 1</span>
+          <span class="step-title">Customer & Vehicle</span>
+        </div>
+        <div class="stepper-line"></div>
+      </div>
+
+      <!-- Step 2 -->
+      <div class="stepper-item" [class.active]="currentStep() === 2" [class.completed]="currentStep() > 2" [class.upcoming]="currentStep() < 2">
+        <div class="stepper-badge">
+          @if (currentStep() > 2) {
+            <svg class="step-check-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          } @else {
+            <span>2</span>
+          }
+        </div>
+        <div class="stepper-text">
+          <span class="step-label">Step 2</span>
+          <span class="step-title">Vehicle & Policy Details</span>
+        </div>
+        <div class="stepper-line"></div>
+      </div>
+
+      <!-- Step 3 -->
+      <div class="stepper-item" [class.active]="currentStep() === 3" [class.completed]="currentStep() > 3" [class.upcoming]="currentStep() < 3">
+        <div class="stepper-badge">
+          @if (currentStep() === 3) {
+            <svg class="step-check-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+            </svg>
+          } @else {
+            <span>3</span>
+          }
+        </div>
+        <div class="stepper-text">
+          <span class="step-label">Step 3</span>
+          <span class="step-title">Enquiry Created</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Workflow Content Area -->
+  <main class="workflow-main-area">
+    @if (currentStep() === 1) {
+      <form [formGroup]="step1Form" (ngSubmit)="proceedToStep2()" class="carbon-single-row-form" novalidate>
+        <!-- Field 1: Customer Name -->
+        <div class="form-field-item" [class.has-error]="customerNameControl.invalid && (customerNameControl.dirty || customerNameControl.touched)">
+          <label for="customerName" class="carbon-label">Customer Name</label>
+          <input
+            id="customerName"
+            type="text"
+            class="carbon-input"
+            placeholder="Enter customer name"
+            formControlName="customerName"
+            autocomplete="name"
+          />
+          @if (customerNameControl.invalid && (customerNameControl.dirty || customerNameControl.touched)) {
+            <div class="carbon-form-error" role="alert">
+              <span>Customer name required</span>
+            </div>
+          }
+        </div>
+
+        <!-- Field 2: Contact Number -->
+        <div class="form-field-item" [class.has-error]="contactNumberControl.invalid && (contactNumberControl.dirty || contactNumberControl.touched)">
+          <label for="contactNumber" class="carbon-label">Contact Number</label>
+          <div class="input-with-prefix">
+            <div class="prefix-addon">
+              <span class="prefix-text">+91</span>
+            </div>
+            <input
+              id="contactNumber"
+              type="tel"
+              class="carbon-input prefix-input"
+              placeholder="10-digit mobile"
+              maxlength="10"
+              inputmode="numeric"
+              formControlName="contactNumber"
+              (input)="onContactNumberInput($event)"
+              autocomplete="tel-national"
+            />
+          </div>
+          @if (contactNumberControl.invalid && (contactNumberControl.dirty || contactNumberControl.touched)) {
+            <div class="carbon-form-error" role="alert">
+              <span>Exact 10 digits required</span>
+            </div>
+          }
+        </div>
+
+        <!-- Field 3: Registration Number -->
+        <div class="form-field-item" [class.has-error]="registrationNumberControl.invalid && (registrationNumberControl.dirty || registrationNumberControl.touched)">
+          <label for="registrationNumber" class="carbon-label">Registration Number</label>
+          <input
+            id="registrationNumber"
+            type="text"
+            class="carbon-input uppercase-input"
+            placeholder="e.g. KL02CB1234"
+            maxlength="15"
+            formControlName="registrationNumber"
+            (input)="onRegistrationInput($event)"
+            autocomplete="off"
+          />
+          @if (registrationNumberControl.invalid && (registrationNumberControl.dirty || registrationNumberControl.touched)) {
+            <div class="carbon-form-error" role="alert">
+              <span>Registration number required</span>
+            </div>
+          }
+        </div>
+
+        <!-- Action Button -->
+        <div class="form-btn-item">
+          <label class="carbon-label btn-label-spacer" aria-hidden="true">&nbsp;</label>
+          <button type="submit" class="btn-primary row-submit-btn" [disabled]="isSubmitting()">
+            <span>Continue to Step 2</span>
+            <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </div>
+      </form>
+    } @else if (currentStep() === 2) {
+      <!-- Step 2 Policy Configuration Card -->
+      <div class="carbon-card step2-card">
+        <!-- Compact Step 1 Mini Summary Strip -->
+        <div class="step1-mini-summary">
+          <div class="summary-details">
+            <span class="summary-item">
+              <span class="lbl">Customer:</span>
+              <strong>{{ step1Form.value.customerName }}</strong>
+            </span>
+            <span class="summary-divider">•</span>
+            <span class="summary-item">
+              <span class="lbl">Phone:</span>
+              <strong>+91 {{ step1Form.value.contactNumber }}</strong>
+            </span>
+            <span class="summary-divider">•</span>
+            <span class="summary-item">
+              <span class="lbl">Plate:</span>
+              <span class="plate-code-sm">{{ step1Form.value.registrationNumber }}</span>
+            </span>
+          </div>
+          <button type="button" class="btn-edit-step1" (click)="backToStep1()" title="Edit customer & vehicle details">
+            <svg class="edit-icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M12.146.146a.5.5 0 0 1 .708 0l2.999 3a.5.5 0 0 1 0 .708l-9.5 9.5a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l9.5-9.5zM11.207 2.5 13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175-.828 2.07 2.07-.828L4.854 11.5H4.5a.5.5 0 0 1-.5-.5v-.5h-.5a.5.5 0 0 1-.5-.5v-.5l-.468-.468z"/>
+            </svg>
+            Edit Step 1
+          </button>
+        </div>
+
+        <!-- 2-Column Controls Grid: Fully optimized for zero-scroll on laptop viewports -->
+        <div class="step2-controls-grid">
+          <!-- Item 1: Policy Type Content Switcher -->
+          <div class="step2-control-block">
+            <div class="label-header">
+              <label class="carbon-label control-label">Policy Type</label>
+              <span class="label-subtext">Coverage tier</span>
+            </div>
+            <div class="carbon-content-switcher" role="tablist" aria-label="Policy Type">
+              @for (type of policyTypeOptions; track type) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="switcher-item"
+                  [class.selected]="selectedPolicyType() === type"
+                  (click)="selectPolicyType(type)"
+                >
+                  {{ formatPolicyType(type) }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Item 2: Priority Content Switcher -->
+          <div class="step2-control-block">
+            <div class="label-header">
+              <label class="carbon-label control-label">Priority Level</label>
+            </div>
+            <div class="carbon-content-switcher" role="tablist" aria-label="Priority">
+              @for (p of priorityOptions; track p) {
+                <button
+                  type="button"
+                  role="tab"
+                  class="switcher-item"
+                  [class.selected]="selectedPriority() === p"
+                  (click)="selectPriority(p)"
+                >
+                  {{ p }}
+                </button>
+              }
+            </div>
+          </div>
+
+          <!-- Item 3: Ownership & Claims Carbon Checkbox Tiles -->
+          <div class="step2-control-block">
+            <div class="label-header">
+              <label class="carbon-label control-label">{{ isThirdParty() ? 'Vehicle History' : 'Vehicle & Claim History' }}</label>
+            </div>
+            <div class="checkbox-tiles-row" [class.single-tile]="isThirdParty()">
+              <label class="carbon-checkbox-tile" [class.is-checked]="ownerChanged()">
+                <input
+                  type="checkbox"
+                  class="sr-checkbox"
+                  [checked]="ownerChanged()"
+                  (change)="toggleOwnerChanged($event)"
+                />
+                <span class="carbon-checkbox-box" aria-hidden="true">
+                  @if (ownerChanged()) {
+                    <svg class="check-mark-icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                  }
+                </span>
+                <span class="checkbox-tile-text">Owner Changed</span>
+              </label>
+
+              @if (!isThirdParty()) {
+                <label class="carbon-checkbox-tile" [class.is-checked]="previousClaim()">
+                  <input
+                    type="checkbox"
+                    class="sr-checkbox"
+                    [checked]="previousClaim()"
+                    (change)="togglePreviousClaim($event)"
+                  />
+                  <span class="carbon-checkbox-box" aria-hidden="true">
+                    @if (previousClaim()) {
+                      <svg class="check-mark-icon" viewBox="0 0 16 16" fill="currentColor">
+                        <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                      </svg>
+                    }
+                  </span>
+                  <span class="checkbox-tile-text">Previous Claim</span>
+                </label>
+              }
+            </div>
+          </div>
+
+          <!-- Item 4: No Claim Bonus (NCB) Switcher (Hidden for Third Party) -->
+          @if (!isThirdParty()) {
+            <div class="step2-control-block">
+              <div class="label-header">
+                <label class="carbon-label control-label">
+                  No Claim Bonus (NCB)
+                  @if (previousClaim()) {
+                    <span class="ncb-reset-tag">0% (Previous Claim)</span>
+                  }
+                </label>
+                <span class="label-subtext">Renewal bonus</span>
+              </div>
+
+              @if (!previousClaim()) {
+                <div class="carbon-content-switcher ncb-switcher" role="tablist" aria-label="No Claim Bonus">
+                  @for (val of ncbOptions; track val) {
+                    <button
+                      type="button"
+                      role="tab"
+                      class="switcher-item ncb-item"
+                      [class.selected]="selectedNcb() === val"
+                      (click)="selectNcb(val)"
+                    >
+                      {{ val }}%
+                    </button>
+                  }
+                </div>
+              } @else {
+                <div class="ncb-claimed-bar">
+                  <span class="zero-pill">0% NCB</span>
+                  <span class="zero-text">Previous claims reset renewal discount eligibility</span>
+                </div>
+              }
+            </div>
+          }
+        </div>
+
+        @if (errorMessage()) {
+          <div class="carbon-inline-notification error-notification" role="alert" style="margin-top: 1rem;">
+            <svg class="notification-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ errorMessage() }}</span>
+          </div>
+        }
+
+        <!-- Step 2 Actions Footer: Kept strictly within view -->
+        <div class="form-actions-footer step2-footer">
+          <div class="actions-left">
+            <button type="button" class="btn-secondary" (click)="backToStep1()">
+              <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M9.707 14.707a1 1 0 01-1.414 0l-5-5a1 1 0 010-1.414l5-5a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+              </svg>
+              Back to Step 1
+            </button>
+          </div>
+
+          <div class="actions-right">
+            <button type="button" class="btn-primary create-enquiry-btn" (click)="createEnquiry()" [disabled]="isSubmitting()">
+              @if (isSubmitting()) {
+                <span class="carbon-spinner"></span>
+                <span>Submitting to API...</span>
+              } @else {
+                <span>Create Enquiry</span>
+                <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    } @else if (currentStep() === 3) {
+      <!-- Step 3 Vehicle Specification & Confirmation Card -->
+      <div class="carbon-card step3-card">
+        <!-- Compact Header Strip -->
+        <div class="step3-header-strip">
+          <div class="step3-icon-badge">
+            <svg viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+            </svg>
+          </div>
+          <div class="step3-header-text">
+            <div class="step3-title-row">
+              <h2 class="step3-title">Vehicle Enquiry Registered</h2>
+              @if (createdEnquiryResult()?.enquiryId) {
+                <span class="enquiry-id-pill">ID: {{ createdEnquiryResult()?.enquiryId }}</span>
+              }
+            </div>
+            <p class="step3-subtitle">Vehicle specification details retrieved from registration pipeline.</p>
+          </div>
+        </div>
+
+        <!-- Customer & Registration Mini Context Strip -->
+        <div class="step3-mini-context-bar">
+          <div class="context-pill">
+            <span class="lbl">Customer:</span>
+            <strong>{{ step1Form.value.customerName }}</strong>
+          </div>
+          <span class="divider">•</span>
+          <div class="context-pill">
+            <span class="lbl">Phone:</span>
+            <strong>+91 {{ step1Form.value.contactNumber }}</strong>
+          </div>
+          <span class="divider">•</span>
+          <div class="context-pill">
+            <span class="lbl">Registration:</span>
+            <span class="plate-code-sm">{{ step1Form.value.registrationNumber }}</span>
+          </div>
+          <span class="divider">•</span>
+          <div class="context-pill">
+            <span class="lbl">Policy:</span>
+            <span class="policy-tag">{{ createdEnquiryResult()?.submissionType || formatPolicyType(selectedPolicyType()) }}</span>
+          </div>
+          @if (!isThirdParty()) {
+            <span class="divider">•</span>
+            <div class="context-pill">
+              <span class="lbl">NCB:</span>
+              <strong>{{ previousClaim() ? 0 : selectedNcb() }}%</strong>
+            </div>
+          }
+        </div>
+
+        <!-- 8 Vehicle Specification Input Boxes (4 per row) -->
+        <div class="step3-inputs-grid">
+          <!-- Row 1 Field 1: Brand -->
+          <div class="step3-input-block">
+            <label for="resBrand" class="carbon-label input-field-label">Brand / Manufacturer</label>
+            <input
+              id="resBrand"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.brand || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 1 Field 2: Model -->
+          <div class="step3-input-block">
+            <label for="resModel" class="carbon-label input-field-label">Model Variant</label>
+            <input
+              id="resModel"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.model || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 1 Field 3: Manufacture Year -->
+          <div class="step3-input-block">
+            <label for="resMfgYear" class="carbon-label input-field-label">Manufacture Year</label>
+            <input
+              id="resMfgYear"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.manufactureYear || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 1 Field 4: Cubic Capacity -->
+          <div class="step3-input-block">
+            <label for="resCc" class="carbon-label input-field-label">Cubic Capacity (CC)</label>
+            <input
+              id="resCc"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.cubicCapacity || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 2 Field 1: Fuel Type -->
+          <div class="step3-input-block">
+            <label for="resFuel" class="carbon-label input-field-label">Fuel Type</label>
+            <input
+              id="resFuel"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.fuelType || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 2 Field 2: Submission Type -->
+          <div class="step3-input-block">
+            <label for="resSubmissionType" class="carbon-label input-field-label">Submission Type</label>
+            <input
+              id="resSubmissionType"
+              type="text"
+              class="carbon-input readonly-input"
+              [value]="createdEnquiryResult()?.submissionType || selectedPolicyType()"
+              readonly
+            />
+          </div>
+
+          <!-- Row 2 Field 3: Engine Number -->
+          <div class="step3-input-block">
+            <label for="resEngine" class="carbon-label input-field-label">Engine Number</label>
+            <input
+              id="resEngine"
+              type="text"
+              class="carbon-input readonly-input uppercase-input"
+              [value]="createdEnquiryResult()?.engineNumber || ''"
+              readonly
+            />
+          </div>
+
+          <!-- Row 2 Field 4: Chassis Number -->
+          <div class="step3-input-block">
+            <label for="resChassis" class="carbon-label input-field-label">Chassis Number</label>
+            <input
+              id="resChassis"
+              type="text"
+              class="carbon-input readonly-input uppercase-input"
+              [value]="createdEnquiryResult()?.chassisNumber || ''"
+              readonly
+            />
+          </div>
+        </div>
+
+        <!-- Section: Document Upload & Previous Policy -->
+        <div class="step3-section-divider">
+          <div class="divider-title-group">
+            <div class="divider-title-with-badge">
+              <h3 class="section-title">Documents & Previous Policy</h3>
+              @if (uploadedDocsCount() > 0) {
+                <span class="upload-badge success-badge">{{ uploadedDocsCount() }} Uploaded</span>
+              }
+              @if (isLoadingDocuments()) {
+                <span class="upload-badge">Syncing...</span>
+              }
+            </div>
+            <span class="section-subtitle">Upload registration certificate, identity proof, previous policies, or vehicle inspection images</span>
+          </div>
+        </div>
+
+        @if (uploadErrorMessage()) {
+          <div class="carbon-inline-notification error-notification" role="alert">
+            <svg class="notification-icon" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ uploadErrorMessage() }}</span>
+          </div>
+        }
+
+        <!-- 4 Document Upload Cards Grid -->
+        <div class="doc-upload-grid">
+          <!-- Card 1: RC (Registration Certificate) -->
+          <div class="doc-card">
+            <div class="doc-card-header">
+              <div class="doc-card-title-group">
+                <span class="doc-card-title">Registration Certificate (RC)</span>
+                <span class="doc-badge-required">1+ Pages</span>
+              </div>
+              <button
+                type="button"
+                class="btn-add-doc-slot"
+                (click)="addDocSlot('RC')"
+                title="Add back side or additional page for RC"
+              >
+                <svg class="plus-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+                </svg>
+                <span>Add More</span>
+              </button>
+            </div>
+            <div class="doc-slots-row" [class.single-slot]="docSlotsMap()['RC'].length === 1">
+              @for (slotDef of docSlotsMap()['RC']; track slotDef.docSide) {
+                <ng-container
+                  *ngTemplateOutlet="docSlotTemplate; context: { docType: 'RC', docSide: slotDef.docSide, label: slotDef.label }"
+                ></ng-container>
+              }
+            </div>
+          </div>
+
+          <!-- Card 2: Identity Proof -->
+          <div class="doc-card">
+            <div class="doc-card-header">
+              <div class="doc-card-title-group">
+                <span class="doc-card-title">Identity Proof (Aadhaar / PAN / DL)</span>
+                <span class="doc-badge-optional">1+ Pages</span>
+              </div>
+              <button
+                type="button"
+                class="btn-add-doc-slot"
+                (click)="addDocSlot('Identity')"
+                title="Add back side or additional identity document"
+              >
+                <svg class="plus-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+                </svg>
+                <span>Add More</span>
+              </button>
+            </div>
+            <div class="doc-slots-row" [class.single-slot]="docSlotsMap()['Identity'].length === 1">
+              @for (slotDef of docSlotsMap()['Identity']; track slotDef.docSide) {
+                <ng-container
+                  *ngTemplateOutlet="docSlotTemplate; context: { docType: 'Identity', docSide: slotDef.docSide, label: slotDef.label }"
+                ></ng-container>
+              }
+            </div>
+          </div>
+
+          <!-- Card 3: Previous Policy -->
+          <div class="doc-card">
+            <div class="doc-card-header">
+              <div class="doc-card-title-group">
+                <span class="doc-card-title">Previous Policy Document</span>
+                <span class="doc-badge-policy">Renewal</span>
+              </div>
+              <button
+                type="button"
+                class="btn-add-doc-slot"
+                (click)="addDocSlot('PreviousPolicy')"
+                title="Add endorsement or additional policy page"
+              >
+                <svg class="plus-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+                </svg>
+                <span>Add More</span>
+              </button>
+            </div>
+            <div class="doc-slots-row" [class.single-slot]="docSlotsMap()['PreviousPolicy'].length === 1">
+              @for (slotDef of docSlotsMap()['PreviousPolicy']; track slotDef.docSide) {
+                <ng-container
+                  *ngTemplateOutlet="docSlotTemplate; context: { docType: 'PreviousPolicy', docSide: slotDef.docSide, label: slotDef.label }"
+                ></ng-container>
+              }
+            </div>
+          </div>
+
+          <!-- Card 4: Vehicle Image (Optional) -->
+          <div class="doc-card">
+            <div class="doc-card-header">
+              <div class="doc-card-title-group">
+                <span class="doc-card-title">Vehicle Exterior Inspection</span>
+                <span class="doc-badge-optional">Optional</span>
+              </div>
+              <button
+                type="button"
+                class="btn-add-doc-slot"
+                (click)="addDocSlot('VehicleImage')"
+                title="Add additional vehicle photo or angle"
+              >
+                <svg class="plus-icon" viewBox="0 0 16 16" fill="currentColor">
+                  <path d="M8 2a.5.5 0 0 1 .5.5v5h5a.5.5 0 0 1 0 1h-5v5a.5.5 0 0 1-1 0v-5h-5a.5.5 0 0 1 0-1h5v-5A.5.5 0 0 1 8 2z"/>
+                </svg>
+                <span>Add More</span>
+              </button>
+            </div>
+            <div class="doc-slots-row" [class.single-slot]="docSlotsMap()['VehicleImage'].length === 1">
+              @for (slotDef of docSlotsMap()['VehicleImage']; track slotDef.docSide) {
+                <ng-container
+                  *ngTemplateOutlet="docSlotTemplate; context: { docType: 'VehicleImage', docSide: slotDef.docSide, label: slotDef.label }"
+                ></ng-container>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Step 3 Actions Footer -->
+        <div class="form-actions-footer step3-footer">
+          <div class="actions-right">
+            <button
+              type="button"
+              class="btn-primary"
+              (click)="submitForQuote()"
+              [disabled]="isSubmittingQuote()"
+            >
+              @if (isSubmittingQuote()) {
+                <span class="carbon-spinner"></span>
+                <span>Submitting for Quote...</span>
+              } @else {
+                <span>Submit Enquiry For Quote</span>
+                <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </div>
+      </div>
+    }
+  </main>
+
+  <!-- Reusable Document Slot Template -->
+  <ng-template #docSlotTemplate let-docType="docType" let-docSide="docSide" let-label="label">
+    @let slot = getDocSlot(docType, docSide);
+    @let uploading = isUploading(docType, docSide);
+
+    <div class="doc-slot" [class.has-file]="!!slot && slot.status === 'uploaded'" [class.is-uploading]="uploading">
+      <!-- Slot Label Header -->
+      <div class="slot-header">
+        <span class="slot-label">{{ label }}</span>
+        <div class="slot-header-actions">
+          @if (slot && slot.status === 'uploaded') {
+            <span class="uploaded-chip">
+              <svg class="check-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+              </svg>
+              Uploaded
+            </span>
+          }
+          @if (canRemoveSlot(docType, docSide)) {
+            <button
+              type="button"
+              class="btn-remove-slot-pill"
+              (click)="removeDocSlot(docType, docSide)"
+              title="Remove this upload slot"
+            >
+              <svg viewBox="0 0 16 16" fill="currentColor">
+                <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+          }
+        </div>
+      </div>
+
+      @if (!slot || slot.status === 'error') {
+        <!-- Empty / Dropzone State -->
+        <label class="slot-dropzone">
+          <input
+            type="file"
+            class="file-input-hidden"
+            accept=".jpg,.jpeg,.png,.webp,.pdf"
+            (change)="onFileSelected($event, docType, docSide)"
+          />
+          <svg class="upload-cloud-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+            <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+          </svg>
+          <span class="dropzone-action">Choose file or drag here</span>
+          <span class="dropzone-hint">JPG, PNG, PDF (max 10MB)</span>
+        </label>
+      } @else if (uploading) {
+        <!-- Uploading Spinner Box -->
+        <div class="slot-uploading-box">
+          <span class="carbon-spinner doc-spinner"></span>
+          <span class="uploading-text">Uploading {{ docType }}...</span>
+          <span class="uploading-filename">{{ slot.fileName }}</span>
+        </div>
+      } @else {
+        <!-- Uploaded State with Inline Thumbnail Preview & Actions -->
+        <div class="slot-uploaded-content">
+          <div class="thumbnail-wrapper" (click)="openPreview(slot)" title="Click to enlarge preview">
+            @if (slot.fileType.includes('pdf')) {
+              <div class="pdf-thumbnail">
+                <svg class="pdf-icon" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9.5 8.5h-2v1h2c.28 0 .5-.22.5-.5s-.22-.5-.5-.5zm5 0h-2v2h2c.28 0 .5-.22.5-.5v-1c0-.28-.22-.5-.5-.5zm-5-3h-3v5h1v-1.5h2c.83 0 1.5-.67 1.5-1.5v-.5c0-.83-.67-1.5-1.5-1.5zm5 0h-3v5h3c.83 0 1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zm4 0h-3.5v5H16v-2h2v-1h-2v-1h2.5V8.5z"/>
+                </svg>
+                <span class="pdf-text">PDF</span>
+              </div>
+            } @else {
+              <img [src]="slot.previewUrl" [alt]="slot.fileName" class="image-thumbnail" />
+            }
+            <div class="zoom-overlay">
+              <svg class="zoom-icon" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+              </svg>
+            </div>
+          </div>
+
+          <div class="slot-meta-col">
+            <span class="doc-filename" [title]="slot.fileName">{{ slot.fileName }}</span>
+            <span class="doc-filesize">{{ formatFileSize(slot.fileSize) }}</span>
+
+            <div class="slot-actions">
+              <button type="button" class="btn-slot-action" (click)="openPreview(slot)">
+                Preview
+              </button>
+              <span class="action-divider">|</span>
+              <label class="btn-slot-action replace-trigger">
+                <span>Replace</span>
+                <input
+                  type="file"
+                  class="file-input-hidden"
+                  accept=".jpg,.jpeg,.png,.webp,.pdf"
+                  (change)="onFileSelected($event, docType, docSide)"
+                />
+              </label>
+              <span class="action-divider">|</span>
+              <button type="button" class="btn-slot-action delete-action" (click)="removeDocument(docType, docSide)">
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </ng-template>
+
+  <!-- Carbon Lightbox Modal for Document Preview -->
+  @if (activePreviewDoc()) {
+    <div class="carbon-modal-backdrop" (click)="closePreview()">
+      <div class="carbon-modal-dialog" (click)="$event.stopPropagation()">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">{{ activePreviewDoc()?.docType }} ({{ activePreviewDoc()?.docSide }})</span>
+            <h3 class="modal-title">{{ activePreviewDoc()?.fileName }}</h3>
+          </div>
+          <button type="button" class="btn-modal-close" (click)="closePreview()" title="Close preview">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body Preview -->
+        <div class="modal-body">
+          @if (activePreviewDoc()?.fileType?.includes('pdf')) {
+            <iframe [src]="safeActivePreviewUrl()" class="modal-pdf-iframe" title="Document Preview"></iframe>
+          } @else {
+            <img [src]="activePreviewDoc()?.previewUrl" [alt]="activePreviewDoc()?.fileName" class="modal-preview-img" />
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="modal-footer">
+          <div class="modal-meta">
+            <span>Size: {{ formatFileSize(activePreviewDoc()?.fileSize || 0) }}</span>
+            <span class="meta-dot">•</span>
+            <span>DocType: {{ activePreviewDoc()?.docType }}</span>
+            <span class="meta-dot">•</span>
+            <span>Side: {{ activePreviewDoc()?.docSide }}</span>
+            @if (activePreviewDoc()?.id) {
+              <span class="meta-dot">•</span>
+              <span class="doc-id-code">ID: {{ activePreviewDoc()?.id }}</span>
+            }
+          </div>
+
+          <div class="modal-buttons">
+            @if (activePreviewDoc()?.previewUrl) {
+              <a [href]="activePreviewDoc()?.previewUrl" [download]="activePreviewDoc()?.fileName || 'document'" target="_blank" class="btn-secondary modal-btn">
+                Download
+              </a>
+            }
+            <button type="button" class="btn-primary modal-btn" (click)="closePreview()">
+              Done
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Carbon Modal for Instant Quote Generated Redirect -->
+  @if (showInstantQuoteModal()) {
+    <div class="carbon-modal-backdrop" (click)="cancelInstantQuoteRedirect()">
+      <div class="carbon-modal-dialog quote-redirect-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="instantQuoteTitle">
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge instant-quote-badge">Instant Quote</span>
+            <h3 id="instantQuoteTitle" class="modal-title">Instant Quote Generated</h3>
+          </div>
+          <button type="button" class="btn-modal-close" (click)="cancelInstantQuoteRedirect()" aria-label="Cancel and close" title="Cancel">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Body -->
+        <div class="quote-modal-body">
+          <p class="quote-modal-message">
+            An instant quotation has been successfully generated for this enquiry.
+          </p>
+
+          <div class="countdown-card">
+            <div class="countdown-circle">
+              <span class="countdown-number">{{ quoteCountdownSeconds() }}</span>
+              <span class="countdown-unit">s</span>
+            </div>
+            <div class="countdown-text-col">
+              <span class="countdown-headline">Redirecting to quotes in {{ quoteCountdownSeconds() }}s</span>
+              <span class="countdown-subline">Click Cancel to stay on this screen or proceed to view the quotes now.</span>
+            </div>
+          </div>
+
+          @if (quoteRedirectEnquiryId() || createdEnquiryResult()?.enquiryId) {
+            <div class="quote-enquiry-ref">
+              <span class="ref-label">Enquiry Reference:</span>
+              <span class="ref-value">{{ quoteRedirectEnquiryId() || createdEnquiryResult()?.enquiryId }}</span>
+            </div>
+          }
+        </div>
+
+        <!-- Modal Footer -->
+        <div class="quote-modal-footer">
+          <button type="button" class="btn-secondary modal-btn" (click)="cancelInstantQuoteRedirect()">
+            Cancel
+          </button>
+          <button type="button" class="btn-primary modal-btn" (click)="proceedToQuotes()">
+            <span>View Quotes Now</span>
+            <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+</div>

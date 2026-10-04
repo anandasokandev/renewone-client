@@ -1,0 +1,386 @@
+<div class="carbon-profile-page">
+  <!-- Toast Notifications -->
+  @if (successMessage()) {
+    <div class="carbon-toast toast-success" role="status" aria-live="polite">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearMessages()" aria-label="Close notification">×</button>
+    </div>
+  }
+
+  @if (errorMessage()) {
+    <div class="carbon-toast toast-error" role="alert" aria-live="assertive">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7 4a1 1 0 11-2 0 1 1 0 012 0zm-1-9a1 1 0 00-1 1v4a1 1 0 102 0V6a1 1 0 00-1-1z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ errorMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearMessages()" aria-label="Close notification">×</button>
+    </div>
+  }
+
+  <!-- Header Strip -->
+  <header class="profile-header">
+    <div class="header-left">
+      <nav class="carbon-breadcrumb" aria-label="Breadcrumb">
+        <ol class="breadcrumb-list">
+          <li class="breadcrumb-item"><a routerLink="/dashboard" class="breadcrumb-link">Dashboard</a></li>
+          <li class="breadcrumb-separator">/</li>
+          <li class="breadcrumb-item"><span class="breadcrumb-current">My Profile</span></li>
+        </ol>
+      </nav>
+
+      <div class="header-title-row">
+        <h1 class="carbon-headline">Agent Profile & Account</h1>
+        @if (isDirty()) {
+          <span class="unsaved-badge" title="You have unsaved changes">Unsaved Changes</span>
+        }
+      </div>
+      <p class="profile-subtitle">Manage personal credentials, authorized contact coordinates, and agency records</p>
+    </div>
+
+    <div class="header-actions">
+      @if (isDirty()) {
+        <button
+          type="button"
+          class="carbon-btn carbon-btn-secondary"
+          (click)="resetForm()"
+          [disabled]="isSaving()"
+        >
+          Discard
+        </button>
+      }
+      <button
+        type="button"
+        class="carbon-btn carbon-btn-primary"
+        (click)="saveProfile()"
+        [disabled]="isSaving() || (!isDirty() && !errorMessage())"
+      >
+        @if (isSaving()) {
+          <span class="btn-spinner" aria-hidden="true"></span>
+          <span>Saving...</span>
+        } @else {
+          <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+          </svg>
+          <span>Save Changes</span>
+        }
+      </button>
+    </div>
+  </header>
+
+  <!-- Loading State -->
+  @if (isLoading()) {
+    <div class="profile-loading-box" role="status">
+      <span class="carbon-spinner" aria-hidden="true"></span>
+      <span class="loading-label">Loading account coordinates...</span>
+    </div>
+  } @else if (profile()) {
+    <!-- Main Two-Column Layout -->
+    <div class="profile-grid">
+      <!-- Left Column: Identity & Avatar Card -->
+      <aside class="identity-card" aria-label="Agent Identity and Photo">
+        <div class="avatar-section">
+          <div class="avatar-wrapper">
+            @if (previewProfileUrl()) {
+              <img
+                [src]="previewProfileUrl()"
+                [alt]="profile()?.fullName || 'Agent Profile'"
+                class="avatar-image"
+              />
+            } @else {
+              <div class="avatar-fallback" aria-hidden="true">
+                {{ getUserInitials() }}
+              </div>
+            }
+
+            <label class="avatar-upload-overlay" title="Upload new photo">
+              <svg class="camera-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M6.827 6.175A2.31 2.31 0 015.186 7.23c-.38.054-.757.112-1.134.175C2.999 7.58 2.25 8.507 2.25 9.574V18a2.25 2.25 0 002.25 2.25h15A2.25 2.25 0 0021.75 18V9.574c0-1.067-.75-1.994-1.802-2.169a47.865 47.865 0 00-1.134-.175 2.31 2.31 0 01-1.64-1.055l-.822-1.316a2.192 2.192 0 00-1.736-1.039 48.774 48.774 0 00-5.232 0 2.192 2.192 0 00-1.736 1.039l-.821 1.316z"/>
+                <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 12.75a4.5 4.5 0 11-9 0 4.5 4.5 0 019 0zM18.75 10.5h.008v.008h-.008V10.5z"/>
+              </svg>
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/png,image/jpeg,image/webp"
+                (change)="onProfilePicSelected($event)"
+              />
+            </label>
+          </div>
+
+          <div class="avatar-controls">
+            <label class="carbon-btn-ghost avatar-action-label">
+              <input
+                type="file"
+                class="sr-only"
+                accept="image/png,image/jpeg,image/webp"
+                (change)="onProfilePicSelected($event)"
+              />
+              Change Photo
+            </label>
+            @if (previewProfileUrl()) {
+              <button
+                type="button"
+                class="carbon-btn-ghost btn-remove-photo"
+                (click)="removeProfilePic()"
+              >
+                Remove
+              </button>
+            }
+          </div>
+          <span class="avatar-hint">JPG, PNG or WEBP (max 5 MB)</span>
+          @if (fieldErrors()['profilePic']) {
+            <span class="field-error-text">{{ fieldErrors()['profilePic'] }}</span>
+          }
+        </div>
+
+        <div class="identity-divider"></div>
+
+        <div class="identity-info-block">
+          <h2 class="identity-name">{{ profile()?.fullName }}</h2>
+          <p class="identity-agency">{{ profile()?.agencyName }}</p>
+          <div class="identity-tags-row">
+            <span class="carbon-tag tag-role">{{ authService.currentUser()?.userType || 'Agent' }}</span>
+            <span class="carbon-tag tag-active">Verified</span>
+          </div>
+        </div>
+
+        <div class="identity-divider"></div>
+
+        <div class="identity-meta-list">
+          <div class="meta-item">
+            <span class="meta-label">System User ID</span>
+            <span class="meta-val font-mono" [title]="profile()?.userId">{{ profile()?.userId }}</span>
+          </div>
+          <div class="meta-item">
+            <span class="meta-label">Organization Account ID</span>
+            <span class="meta-val font-mono" [title]="profile()?.accountId">{{ profile()?.accountId }}</span>
+          </div>
+        </div>
+      </aside>
+
+      <!-- Right Column: Editable Profile Form Tiles -->
+      <main class="form-column">
+        <!-- Section 1: User Account Credentials -->
+        <section class="carbon-tile form-tile">
+          <div class="tile-header">
+            <div class="tile-header-text">
+              <h3 class="tile-title">Account Credentials</h3>
+              <p class="tile-desc">Your unique system username and primary notification email address</p>
+            </div>
+            <span class="tile-number">01</span>
+          </div>
+
+          <div class="form-fields-grid">
+            <!-- Username (Editable) -->
+            <div class="carbon-form-group" [class.has-error]="fieldErrors()['userName']">
+              <label for="profile-username" class="carbon-label">
+                Username <span class="required-star">*</span>
+              </label>
+              <div class="input-addon-wrapper">
+                <span class="input-addon-prefix">@</span>
+                <input
+                  id="profile-username"
+                  type="text"
+                  class="carbon-input addon-input"
+                  [ngModel]="userName()"
+                  (ngModelChange)="userName.set($event); onFieldChange()"
+                  placeholder="e.g. anand.asokan"
+                  autocomplete="username"
+                  maxlength="50"
+                />
+              </div>
+              @if (fieldErrors()['userName']) {
+                <span class="field-error-text">{{ fieldErrors()['userName'] }}</span>
+              } @else {
+                <span class="field-hint">Used for signing in and system event audit logging</span>
+              }
+            </div>
+
+            <!-- Email Address (Editable) -->
+            <div class="carbon-form-group" [class.has-error]="fieldErrors()['email']">
+              <label for="profile-email" class="carbon-label">
+                Primary Email Address <span class="required-star">*</span>
+              </label>
+              <input
+                id="profile-email"
+                type="email"
+                class="carbon-input"
+                [ngModel]="email()"
+                (ngModelChange)="email.set($event); onFieldChange()"
+                placeholder="agent@agency.com"
+                autocomplete="email"
+                maxlength="100"
+              />
+              @if (fieldErrors()['email']) {
+                <span class="field-error-text">{{ fieldErrors()['email'] }}</span>
+              } @else {
+                <span class="field-hint">Used for policy issuance confirmations and communications</span>
+              }
+            </div>
+
+            <!-- Full Name (Read-Only) -->
+            <div class="carbon-form-group">
+              <div class="label-with-lock">
+                <label for="profile-fullname" class="carbon-label">Full Name</label>
+                <span class="lock-indicator" title="Managed by Organization Admin">
+                  <svg class="lock-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                  </svg>
+                  Locked
+                </span>
+              </div>
+              <input
+                id="profile-fullname"
+                type="text"
+                class="carbon-input is-readonly"
+                [value]="profile()?.fullName"
+                readonly
+                disabled
+              />
+              <span class="field-hint">Full legal name verified with Insurance Regulatory guidelines</span>
+            </div>
+
+            <!-- Agency Name (Read-Only) -->
+            <div class="carbon-form-group">
+              <div class="label-with-lock">
+                <label for="profile-agency" class="carbon-label">Agency / Branch Name</label>
+                <span class="lock-indicator" title="Managed by Organization Admin">
+                  <svg class="lock-icon" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+                  </svg>
+                  Locked
+                </span>
+              </div>
+              <input
+                id="profile-agency"
+                type="text"
+                class="carbon-input is-readonly"
+                [value]="profile()?.agencyName"
+                readonly
+                disabled
+              />
+              <span class="field-hint">Licensed agent entity under current broker account</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Section 2: Contact & Location Coordinates -->
+        <section class="carbon-tile form-tile">
+          <div class="tile-header">
+            <div class="tile-header-text">
+              <h3 class="tile-title">Contact Coordinates & Location</h3>
+              <p class="tile-desc">Direct mobile contact and geographical communication address</p>
+            </div>
+            <span class="tile-number">02</span>
+          </div>
+
+          <div class="form-fields-grid">
+            <!-- Mobile Phone (Editable) -->
+            <div class="carbon-form-group" [class.has-error]="fieldErrors()['phone']">
+              <label for="profile-phone" class="carbon-label">
+                Mobile Phone Number <span class="required-star">*</span>
+              </label>
+              <div class="input-addon-wrapper">
+                <span class="input-addon-prefix">+91</span>
+                <input
+                  id="profile-phone"
+                  type="tel"
+                  class="carbon-input addon-input"
+                  [ngModel]="phone()"
+                  (ngModelChange)="phone.set($event); onFieldChange()"
+                  placeholder="9876543210"
+                  autocomplete="tel"
+                  maxlength="10"
+                />
+              </div>
+              @if (fieldErrors()['phone']) {
+                <span class="field-error-text">{{ fieldErrors()['phone'] }}</span>
+              } @else {
+                <span class="field-hint">10-digit mobile phone for OTP verification & client contact</span>
+              }
+            </div>
+
+            <!-- Postal Pincode (Editable) -->
+            <div class="carbon-form-group" [class.has-error]="fieldErrors()['pincode']">
+              <label for="profile-pincode" class="carbon-label">Postal Pincode</label>
+              <input
+                id="profile-pincode"
+                type="text"
+                class="carbon-input"
+                [ngModel]="pincode()"
+                (ngModelChange)="pincode.set($event); onFieldChange()"
+                placeholder="685584"
+                autocomplete="postal-code"
+                maxlength="6"
+              />
+              @if (fieldErrors()['pincode']) {
+                <span class="field-error-text">{{ fieldErrors()['pincode'] }}</span>
+              } @else {
+                <span class="field-hint">6-digit postal index code</span>
+              }
+            </div>
+
+            <!-- Postal Address (Editable Textarea) -->
+            <div class="carbon-form-group col-span-2">
+              <label for="profile-address" class="carbon-label">Postal / Office Address</label>
+              <textarea
+                id="profile-address"
+                class="carbon-textarea"
+                rows="3"
+                [ngModel]="address()"
+                (ngModelChange)="address.set($event); onFieldChange()"
+                placeholder="Building, Street, Landmark, City, State..."
+                autocomplete="street-address"
+              ></textarea>
+              <span class="field-hint">Official communication address for policy and tax documentation</span>
+            </div>
+          </div>
+        </section>
+
+        <!-- Bottom Action Bar -->
+        <div class="form-action-bar">
+          <div class="action-status">
+            @if (isDirty()) {
+              <span class="status-indicator-dot"></span>
+              <span class="status-text">You have pending modifications</span>
+            } @else {
+              <span class="status-clean-text">All coordinates synchronized</span>
+            }
+          </div>
+
+          <div class="action-buttons-group">
+            @if (isDirty()) {
+              <button
+                type="button"
+                class="carbon-btn carbon-btn-secondary"
+                (click)="resetForm()"
+                [disabled]="isSaving()"
+              >
+                Cancel
+              </button>
+            }
+            <button
+              type="button"
+              class="carbon-btn carbon-btn-primary"
+              (click)="saveProfile()"
+              [disabled]="isSaving() || (!isDirty() && !errorMessage())"
+            >
+              @if (isSaving()) {
+                <span class="btn-spinner" aria-hidden="true"></span>
+                <span>Saving Profile...</span>
+              } @else {
+                <span>Save Profile Changes</span>
+              }
+            </button>
+          </div>
+        </div>
+      </main>
+    </div>
+  }
+</div>

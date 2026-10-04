@@ -1,0 +1,250 @@
+<header class="nav-bar">
+  <div class="nav-container">
+
+    <div class="nav-left">
+      <a [routerLink]="['/dashboard']" class="brand-link" (click)="closeMenus()">
+        RenewOne
+      </a>
+
+      <nav class="nav-menu">
+        <a
+          [routerLink]="['/dashboard']"
+          routerLinkActive="active"
+          class="nav-square-btn"
+          (click)="closeMenus()"
+        >
+          Dashboard
+        </a>
+        <a
+          [routerLink]="['/enquiry']"
+          routerLinkActive="active"
+          class="nav-square-btn"
+          (click)="closeMenus()"
+        >
+          Enquiries
+        </a>
+        @if (isAgent()) {
+          <a
+            [routerLink]="['/employees']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Employees
+          </a>
+        }
+        <a
+          [routerLink]="['/reports']"
+          routerLinkActive="active"
+          class="nav-square-btn"
+          (click)="closeMenus()"
+        >
+          Reports
+        </a>
+      </nav>
+    </div>
+
+    <div class="nav-right">
+      <div class="profile-wrapper">
+        <button
+          type="button"
+          class="carbon-profile-trigger"
+          [class.active]="isProfileMenuOpen()"
+          (click)="toggleProfileMenu()"
+          aria-label="User profile menu"
+          aria-haspopup="true"
+          [attr.aria-expanded]="isProfileMenuOpen()"
+          title="Account profile"
+        >
+          <div class="profile-avatar-tile">
+            <span class="avatar-initials">{{ getUserInitials() }}</span>
+          </div>
+
+          <div class="profile-meta-text">
+            <span class="profile-display-name">{{ authService.currentUser()?.fullName }}</span>
+            <span class="profile-display-role">{{ authService.currentUser()?.userType }}</span>
+          </div>
+
+          <svg class="profile-chevron-svg" [class.rotated]="isProfileMenuOpen()" viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+          </svg>
+        </button>
+
+        @if (isProfileMenuOpen()) {
+          <div class="carbon-profile-popover" role="menu">
+            <div class="popover-user-tile">
+              <div class="popover-avatar">
+                {{ getUserInitials() }}
+              </div>
+              <div class="popover-info">
+                <p class="popover-full-name">{{ authService.currentUser()?.fullName }}</p>
+                <span class="popover-tag">{{ authService.currentUser()?.userType }}</span>
+              </div>
+            </div>
+
+            <div class="popover-divider"></div>
+            <div class="popover-nav-list">
+              <a [routerLink]="['/profile']" class="carbon-menu-item" (click)="closeMenus()" role="menuitem">
+                <svg class="menu-icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+                </svg>
+                <span>My Profile</span>
+              </a>
+
+              <div class="popover-divider"></div>
+
+              <button type="button" class="carbon-menu-item carbon-menu-item-logout" (click)="onLogout()" role="menuitem">
+                <svg class="menu-icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h6a1 1 0 100-2H4V5h5a1 1 0 100-2H3zm10.293 3.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+                </svg>
+                <span>Log out</span>
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+
+      <!-- Mobile Right Sidebar Drawer Toggle Button -->
+      <button
+        type="button"
+        class="carbon-hamburger-btn"
+        [class.active]="isMobileDrawerOpen()"
+        (click)="toggleMobileDrawer()"
+        aria-label="Toggle navigation menu"
+        [attr.aria-expanded]="isMobileDrawerOpen()"
+        title="Open menu"
+      >
+        <svg class="hamburger-icon-svg" viewBox="0 0 20 20" fill="currentColor">
+          @if (isMobileDrawerOpen()) {
+            <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+          } @else {
+            <path fill-rule="evenodd" d="M3 5a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 10a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zM3 15a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clip-rule="evenodd"/>
+          }
+        </svg>
+      </button>
+    </div>
+
+  </div>
+</header>
+
+<!-- Mobile Right Sidebar Drawer Backdrop & Slide-out Panel -->
+@if (isMobileDrawerOpen()) {
+  <div class="mobile-drawer-backdrop" (click)="closeMenus()" aria-hidden="true"></div>
+  <aside class="mobile-drawer-panel" role="dialog" aria-modal="true" aria-label="Mobile Navigation Menu">
+    <div class="drawer-header">
+      <div class="drawer-brand-group">
+        <span class="drawer-brand-title">RenewOne</span>
+        <span class="drawer-portal-tag">Agent Portal</span>
+      </div>
+      <button
+        type="button"
+        class="drawer-btn-close"
+        (click)="closeMenus()"
+        aria-label="Close navigation menu"
+      >
+        <svg viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M4.293 4.293a1 1 0 011.414 0L10 8.586l4.293-4.293a1 1 0 111.414 1.414L11.414 10l4.293 4.293a1 1 0 01-1.414 1.414L10 11.414l-4.293 4.293a1 1 0 01-1.414-1.414L8.586 10 4.293 5.707a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+      </button>
+    </div>
+
+    <div class="drawer-user-tile">
+      <div class="drawer-avatar">
+        {{ getUserInitials() }}
+      </div>
+      <div class="drawer-user-meta">
+        <p class="drawer-user-name">{{ authService.currentUser()?.fullName || 'Agent' }}</p>
+        <span class="drawer-user-role">{{ authService.currentUser()?.userType || 'Agent' }}</span>
+      </div>
+    </div>
+
+    <nav class="drawer-nav">
+      <div class="drawer-section-heading">Main Navigation</div>
+
+      <a
+        [routerLink]="['/dashboard']"
+        routerLinkActive="active"
+        class="drawer-nav-link"
+        (click)="closeMenus()"
+      >
+        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <rect x="3" y="3" width="7" height="7"></rect>
+          <rect x="14" y="3" width="7" height="7"></rect>
+          <rect x="14" y="14" width="7" height="7"></rect>
+          <rect x="3" y="14" width="7" height="7"></rect>
+        </svg>
+        <span>Dashboard</span>
+      </a>
+
+      <a
+        [routerLink]="['/enquiry']"
+        routerLinkActive="active"
+        class="drawer-nav-link"
+        (click)="closeMenus()"
+      >
+        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+        </svg>
+        <span>Enquiries</span>
+      </a>
+
+      @if (isAgent()) {
+        <a
+          [routerLink]="['/employees']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"></path>
+          </svg>
+          <span>Employees</span>
+        </a>
+      }
+
+      <a
+        [routerLink]="['/reports']"
+        routerLinkActive="active"
+        class="drawer-nav-link"
+        (click)="closeMenus()"
+      >
+        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <line x1="18" y1="20" x2="18" y2="10"></line>
+          <line x1="12" y1="20" x2="12" y2="4"></line>
+          <line x1="6" y1="20" x2="6" y2="14"></line>
+        </svg>
+        <span>Reports</span>
+      </a>
+
+      <div class="drawer-divider"></div>
+      <div class="drawer-section-heading">Account</div>
+
+      <a
+        [routerLink]="['/profile']"
+        routerLinkActive="active"
+        class="drawer-nav-link"
+        (click)="closeMenus()"
+      >
+        <svg class="drawer-nav-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 9a3 3 0 100-6 3 3 0 000 6zm-7 9a7 7 0 1114 0H3z" clip-rule="evenodd"/>
+        </svg>
+        <span>My Profile</span>
+      </a>
+
+      <button
+        type="button"
+        class="drawer-nav-link drawer-nav-logout"
+        (click)="onLogout()"
+      >
+        <svg class="drawer-nav-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M3 3a1 1 0 00-1 1v12a1 1 0 001 1h6a1 1 0 100-2H4V5h5a1 1 0 100-2H3zm10.293 3.293a1 1 0 011.414 0l3 3a1 1 0 010 1.414l-3 3a1 1 0 01-1.414-1.414L14.586 11H7a1 1 0 110-2h7.586l-1.293-1.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+        </svg>
+        <span>Log out</span>
+      </button>
+    </nav>
+  </aside>
+}
+
+<div class="nav-spacer" aria-hidden="true"></div>

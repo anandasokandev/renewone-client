@@ -1,0 +1,608 @@
+<div class="carbon-payments-modal" role="dialog" aria-modal="true" aria-labelledby="payment-dialog-title">
+  <!-- Modal Header -->
+  <header class="payments-modal-header">
+    <div class="header-titles">
+      <div class="header-pretitle-row">
+        <span class="carbon-tag tag-payment-mode">Payment Checkout</span>
+        @if (enquiryId) {
+        <span class="enquiry-ref-tag">Enquiry: {{ enquiryId }}</span>
+        }
+        @if (policySummary()?.policyType) {
+        <span class="carbon-tag tag-policy-type">{{ policySummary()?.policyType }}</span>
+        }
+      </div>
+      <h2 id="payment-dialog-title" class="payments-modal-title">Policy Premium Payment</h2>
+      @if (policySummary()) {
+      <p class="payments-modal-subtitle">
+        Proposal for <strong>{{ policySummary()?.insuranceCompany }}</strong> ·
+        {{ policySummary()?.customerName }} · {{ policySummary()?.vehicle }} ({{ policySummary()?.vehicleNumber }}) ·
+        Payable Total: <span class="amount-accent">{{ formatCurrency(payableAmount()) }}</span>
+        @if (policySummary()?.agentProfit) {
+        <span class="agent-profit-tag">+{{ formatCurrency(policySummary()?.agentProfit) }} Agent Profit</span>
+        }
+      </p>
+      } @else if (quote) {
+      <p class="payments-modal-subtitle">
+        Proposal for <strong>{{ quote.insuranceCompanyName }}</strong> · Payable Total:
+        <span class="amount-accent">{{ formatCurrency(payableAmount()) }}</span>
+      </p>
+      }
+    </div>
+
+    <button type="button" class="btn-modal-close" (click)="dismiss()" title="Close payment modal"
+      aria-label="Close payment modal">
+      <svg viewBox="0 0 16 16" fill="currentColor">
+        <path
+          d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z" />
+      </svg>
+    </button>
+  </header>
+
+  <!-- Error / Success Alert Messages -->
+  @if (errorMessage()) {
+  <div class="carbon-inline-alert alert-error" role="alert">
+    <svg class="alert-icon" viewBox="0 0 16 16" fill="currentColor">
+      <path fill-rule="evenodd"
+        d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0-2A5 5 0 1 0 8 3a5 5 0 0 0 0 10zm-1-8a1 1 0 0 1 2 0v3a1 1 0 0 1-2 0V5zm1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z" />
+    </svg>
+    <span class="alert-text">{{ errorMessage() }}</span>
+    <button type="button" class="btn-alert-dismiss" (click)="errorMessage.set(null)">✕</button>
+  </div>
+  }
+
+  @if (successMessage()) {
+  <div class="carbon-inline-alert alert-success" role="status">
+    <svg class="alert-icon" viewBox="0 0 16 16" fill="currentColor">
+      <path fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        clip-rule="evenodd" />
+    </svg>
+    <span class="alert-text">{{ successMessage() }}</span>
+  </div>
+  }
+
+  <!-- Payment Already Submitted / Read-Only Notice Banner -->
+  @if (effectiveReadOnly()) {
+  <div class="carbon-inline-alert alert-readonly" role="status">
+    <svg class="alert-icon" viewBox="0 0 16 16" fill="currentColor">
+      <path fill-rule="evenodd"
+        d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+        clip-rule="evenodd" />
+    </svg>
+    <div class="readonly-alert-content">
+      <div class="readonly-alert-title">
+        <span>Payment Already Submitted — View Only Mode</span>
+        <span class="tag-verified-badge">Submitted</span>
+      </div>
+      <p class="readonly-alert-desc">
+        Payment of <strong>{{ formatCurrency(quotePaymentSummary()?.amount || payableAmount()) }}</strong>
+        was recorded via <strong>{{ quotePaymentSummary()?.paymentMode || paymentMethod() }}</strong>
+        @if (quotePaymentSummary()?.referenceNumber) {
+          · Ref: <code>{{ quotePaymentSummary()?.referenceNumber }}</code>
+        }
+        @if (quotePaymentSummary()?.transactionId) {
+          · Txn: <code>{{ quotePaymentSummary()?.transactionId }}</code>
+        }
+        @if (quotePaymentSummary()?.ledgerPaymentTime || quotePaymentSummary()?.paymentDate) {
+          · Date: {{ formatDate(quotePaymentSummary()?.ledgerPaymentTime || quotePaymentSummary()?.paymentDate) }}
+        }
+        @if (quotePaymentSummary()?.agentLedgerName) {
+          · Agent: {{ quotePaymentSummary()?.agentLedgerName }}
+        }.
+        Modifications and resubmissions are disabled.
+      </p>
+    </div>
+  </div>
+  }
+
+  <!-- Payment Method Selector Tabs (Carbon Segmented Control) -->
+  <div class="payment-method-strip" role="tablist" aria-label="Select Payment Method">
+    <button type="button" role="tab" class="payment-tab-btn" [class.active]="paymentMethod() === 'Ledger'"
+      (click)="setPaymentMethod('Ledger')" [attr.aria-selected]="paymentMethod() === 'Ledger'">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path d="M4 4a2 2 0 00-2 2v1h16V6a2 2 0 00-2-2H4z" />
+        <path fill-rule="evenodd"
+          d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
+          clip-rule="evenodd" />
+      </svg>
+      <span class="tab-title">Pay from Ledger</span>
+      <span class="tab-badge">Instant Verification</span>
+    </button>
+
+    <button type="button" role="tab" class="payment-tab-btn" [class.active]="paymentMethod() === 'BankTransaction'"
+      (click)="setPaymentMethod('BankTransaction')" [attr.aria-selected]="paymentMethod() === 'BankTransaction'">
+      <svg class="tab-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd"
+          d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V8a2 2 0 00-2-2h-5L9 4H4zm7 5a1 1 0 10-2 0v1H8a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2h-1V9z"
+          clip-rule="evenodd" />
+      </svg>
+      <span class="tab-title">Bank Transaction</span>
+      <span class="tab-badge">QR & NEFT / RTGS</span>
+    </button>
+  </div>
+
+  <div class="payments-body">
+    @if (paymentMethod() === 'Ledger') {
+    <section class="ledger-panel" aria-label="Ledger Payment Details">
+      <!-- 3-Column Carbon Metric Tiles -->
+      <div class="ledger-metrics-grid">
+        <div class="ledger-metric-tile tile-current-balance">
+          <span class="tile-label">Current Ledger Balance</span>
+          <span class="tile-amount text-success">
+            @if (isLoadingLedger()) {
+            <span class="carbon-spinner tile-spinner"></span>
+            } @else {
+            {{ formatCurrency(ledgerDetails()?.ledgerBalance) }}
+            }
+          </span>
+          <span class="tile-hint">Available agent credit balance</span>
+        </div>
+
+        <div class="ledger-metric-tile tile-pending-payment">
+          <span class="tile-label">Final Amount Payable</span>
+          <span class="tile-amount text-primary">
+            @if (isLoadingLedger() || isLoadingPolicySummary()) {
+            <span class="carbon-spinner tile-spinner"></span>
+            } @else {
+            {{ formatCurrency(ledgerDetails()?.finalAmount ?? payableAmount()) }}
+            }
+          </span>
+          <span class="tile-hint">
+            @if (policySummary()?.agentProfit) {
+            Gross: {{ formatCurrency(policySummary()?.premiumAmount) }} · Profit: -{{
+            formatCurrency(policySummary()?.agentProfit) }}
+            } @else {
+            Net payable for policy issuance
+            }
+          </span>
+        </div>
+
+        <div class="ledger-metric-tile tile-remaining-balance">
+          <span class="tile-label">Balance After Cut</span>
+          <span class="tile-amount" [class.text-danger]="!hasSufficientBalance()"
+            [class.text-success]="hasSufficientBalance()">
+            @if (isLoadingLedger()) {
+            <span class="carbon-spinner tile-spinner"></span>
+            } @else {
+            {{ formatCurrency(ledgerDetails()?.balanceAfterCut ?? remainingBalance()) }}
+            }
+          </span>
+          <span class="tile-hint">
+            {{ hasSufficientBalance() ? 'Safe balance remains' : 'Insufficient ledger balance' }}
+          </span>
+        </div>
+      </div>
+
+      <!-- Ledger Sufficiency Status Strip -->
+      @if (hasSufficientBalance()) {
+      <div class="ledger-status-box status-ok">
+        <svg class="status-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z"
+            clip-rule="evenodd" />
+        </svg>
+        <div class="status-desc">
+          <strong>Sufficient Ledger Balance Available</strong>
+          <p>The final amount will be automatically deducted from your agency ledger balance upon confirmation, and the
+            policy will immediately proceed to verification.</p>
+        </div>
+      </div>
+      } @else if (!isLoadingLedger()) {
+      <div class="ledger-status-box status-deficit">
+        <svg class="status-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd"
+            d="M8.257 3.099c.765-1.36 2.722-1.36 3.486 0l5.58 9.92c.75 1.334-.213 2.98-1.742 2.98H4.42c-1.53 0-2.493-1.646-1.743-2.98l5.58-9.92zM11 13a1 1 0 11-2 0 1 1 0 012 0zm-1-8a1 1 0 00-1 1v3a1 1 0 002 0V6a1 1 0 00-1-1z"
+            clip-rule="evenodd" />
+        </svg>
+        <div class="status-desc">
+          <strong>Insufficient Balance in Agency Ledger</strong>
+          <p>Your current ledger balance ({{ formatCurrency(ledgerDetails()?.ledgerBalance) }}) is lower than the
+            payable amount ({{
+            formatCurrency(payableAmount()) }}). Please switch to the "Bank Transaction" tab to pay via dynamic UPI QR
+            or Bank Transfer.</p>
+        </div>
+      </div>
+      }
+
+      <!-- Order Summary Row -->
+      <div class="ledger-order-summary">
+        <h4 class="summary-header">Policy & Financial Summary</h4>
+        <div class="summary-key-values">
+          <div class="summary-item">
+            <span class="item-label">Customer / Vehicle</span>
+            <span class="item-val">
+              {{ policySummary()?.customerName || 'Customer' }}
+              @if (policySummary()?.vehicleNumber) {
+              ({{ policySummary()?.vehicleNumber }})
+              }
+            </span>
+          </div>
+          <div class="summary-item">
+            <span class="item-label">Gross Premium</span>
+            <span class="item-val">{{ formatCurrency(policySummary()?.premiumAmount || quote?.premium) }}</span>
+          </div>
+          <div class="summary-item">
+            <span class="item-label">Agent Profit</span>
+            <span class="item-val text-success">
+              +{{ formatCurrency(policySummary()?.agentProfit ?? quote?.agentPoints ?? 0) }}
+            </span>
+          </div>
+          <div class="summary-item total-item">
+            <span class="item-label">Net Agent Payable</span>
+            <span class="item-val">{{ formatCurrency(ledgerDetails()?.finalAmount ?? policySummary()?.agentPayable ??
+              payableAmount()) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ledger Action Footer -->
+      <div class="modal-footer-action">
+        <button type="button" class="btn-secondary" (click)="dismiss()">
+          {{ effectiveReadOnly() ? 'Close' : 'Cancel' }}
+        </button>
+        @if (effectiveReadOnly()) {
+        <button type="button" class="btn-primary btn-readonly-status" disabled>
+          <svg viewBox="0 0 16 16" fill="currentColor" class="status-check-icon" style="width: 16px; height: 16px; margin-right: 6px;">
+            <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+          </svg>
+          <span>Payment Submitted via Ledger</span>
+        </button>
+        } @else {
+        <button type="button" class="btn-primary"
+          [disabled]="!hasSufficientBalance() || isVerifyingLedger() || ledgerSuccess() || isLoadingLedger()"
+          (click)="proceedLedgerVerification()">
+          @if (isVerifyingLedger()) {
+          <span class="carbon-spinner btn-spinner" aria-hidden="true"></span>
+          <span>Verifying Ledger...</span>
+          } @else if (ledgerSuccess()) {
+          <span>✓ Verified & Proceeding</span>
+          } @else {
+          <span>Proceed for Verification</span>
+          <svg class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd"
+              d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+              clip-rule="evenodd" />
+          </svg>
+          }
+        </button>
+        }
+      </div>
+    </section>
+    }
+
+    @if (paymentMethod() === 'BankTransaction') {
+    <section class="bank-panel" aria-label="Bank Transaction & Dynamic QR Details">
+      <div class="bank-panel-layout">
+        <div class="bank-left-col">
+          <div class="qr-showcase-box">
+            <div class="qr-header">
+              <span class="qr-title">Scan Dynamic UPI QR</span>
+              @if (qrDetails()?.qrName) {
+              <span class="carbon-tag tag-qr-name">{{ qrDetails()?.qrName }}</span>
+              }
+              <span class="qr-amount-badge">Amount: {{ formatCurrency(payableAmount()) }}</span>
+            </div>
+
+            @if (isLoadingQr()) {
+            <div class="qr-loading-frame">
+              <span class="carbon-spinner qr-spinner"></span>
+              <span class="loading-label">Loading QR coordinates...</span>
+            </div>
+            } @else if (qrDetails()?.upiId) {
+            <div class="qr-render-frame">
+              @if (qrCodeDataUrl()) {
+              <img [src]="qrCodeDataUrl()" alt="Scan to pay via UPI" class="qr-code-img" width="220" height="220" />
+              } @else if (dynamicQrSvg()) {
+              <div class="svg-qr-wrapper" [innerHTML]="dynamicQrSvg()"></div>
+              }
+              <div class="qr-scan-hint">
+                <svg class="upi-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                  <rect x="2" y="5" width="20" height="14" rx="2" />
+                  <line x1="2" y1="10" x2="22" y2="10" />
+                </svg>
+                <span>Supports GPay, PhonePe, Paytm, BHIM & All UPI Apps</span>
+              </div>
+            </div>
+
+            <div class="qr-deep-link-row">
+              <a [href]="upiUri()" class="btn-upi-app" target="_blank" rel="noopener">
+                <span>Open directly in UPI App</span>
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd"
+                    d="M8.636 3.5a.5.5 0 0 0-.5-.5H1.5A1.5 1.5 0 0 0 0 4.5v10A1.5 1.5 0 0 0 1.5 16h10a1.5 1.5 0 0 0 1.5-1.5V7.864a.5.5 0 0 0-1 0V14.5a.5.5 0 0 1-.5.5h-10a.5.5 0 0 1-.5-.5v-10a.5.5 0 0 1 .5-.5h6.636a.5.5 0 0 0 .5-.5z" />
+                  <path fill-rule="evenodd"
+                    d="M16 .5a.5.5 0 0 0-.5-.5h-5a.5.5 0 0 0 0 1h3.793L6.146 9.146a.5.5 0 1 0 .708.708L15 1.707V5.5a.5.5 0 0 0 1 0v-5z" />
+                </svg>
+              </a>
+            </div>
+            } @else {
+            <div class="qr-empty-frame">
+              <p>No QR details available.</p>
+              @if (enquiryId) {
+              <button type="button" class="btn-retry" (click)="loadQrDetails(enquiryId)">
+                Retry Loading QR
+              </button>
+              }
+            </div>
+            }
+          </div>
+
+          <div class="bank-accounts-card">
+            <h4 class="accounts-header">Bank Transfer Coordinates (NEFT / IMPS / RTGS)</h4>
+            @if (isLoadingQr()) {
+            <div class="bank-details-loading">
+              <span class="carbon-spinner"></span>
+              <span>Loading bank coordinates...</span>
+            </div>
+            } @else if (qrDetails()) {
+            <div class="accounts-list">
+              <div class="account-row">
+                <div class="account-info">
+                  <span class="info-label">Account Number</span>
+                  <span class="info-val font-mono">{{ qrDetails()?.accountNumber }}</span>
+                </div>
+                <button type="button" class="btn-copy"
+                  (click)="copyToClipboard(qrDetails()?.accountNumber || '', 'acc')" title="Copy Account Number">
+                  {{ copiedField() === 'acc' ? 'Copied ✓' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="account-row">
+                <div class="account-info">
+                  <span class="info-label">IFSC Code</span>
+                  <span class="info-val font-mono">{{ qrDetails()?.ifscCode }}</span>
+                </div>
+                <button type="button" class="btn-copy" (click)="copyToClipboard(qrDetails()?.ifscCode || '', 'ifsc')"
+                  title="Copy IFSC Code">
+                  {{ copiedField() === 'ifsc' ? 'Copied ✓' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="account-row">
+                <div class="account-info">
+                  <span class="info-label">UPI ID</span>
+                  <span class="info-val font-mono">{{ qrDetails()?.upiId }}</span>
+                </div>
+                <button type="button" class="btn-copy" (click)="copyToClipboard(qrDetails()?.upiId || '', 'upi')"
+                  title="Copy UPI ID">
+                  {{ copiedField() === 'upi' ? 'Copied ✓' : 'Copy' }}
+                </button>
+              </div>
+
+              <div class="account-row static-row">
+                <div class="account-info">
+                  <span class="info-label">Beneficiary</span>
+                  <span class="info-val">{{ qrDetails()?.accountHolderName }}</span>
+                </div>
+              </div>
+
+              <div class="account-row static-row">
+                <div class="account-info">
+                  <span class="info-label">Bank & Branch</span>
+                  <span class="info-val">{{ qrDetails()?.bankName }} ({{ qrDetails()?.branchName }})</span>
+                </div>
+              </div>
+            </div>
+            } @else {
+            <div class="accounts-empty">
+              <span>Bank coordinates unavailable</span>
+            </div>
+            }
+          </div>
+        </div>
+
+        <div class="bank-right-col">
+          <div class="bank-form-card">
+            <h4 class="form-card-title">Submit Transaction Proof</h4>
+            <p class="form-card-desc">
+              After completing the transfer via UPI or your banking portal, enter the transaction identifiers below for
+              verification.
+            </p>
+
+            <form class="bank-submission-form" (ngSubmit)="submitBankTransaction()">
+              <div class="carbon-form-item">
+                <label for="tx-id-input" class="carbon-form-label">
+                  Transaction ID / Bank Ref <span class="required-star">*</span>
+                </label>
+                <input id="tx-id-input" type="text" class="carbon-input form-field"
+                  placeholder="e.g. TXN-92817401 or UPI Ref Number" [value]="transactionId()"
+                  [disabled]="effectiveReadOnly()"
+                  (input)="transactionId.set($any($event.target).value)" />
+                <span class="field-hint">Unique payment reference from your bank receipt or UPI app</span>
+              </div>
+
+              <!-- Mandatory Payment Screenshot Upload -->
+              <div class="carbon-form-item">
+                <div class="screenshot-label-row">
+                  <label for="screenshot-file-input" class="carbon-form-label">
+                    Payment Screenshot / Receipt <span class="required-star">*</span>
+                  </label>
+                  <span class="field-hint-sub">JPG, PNG, WEBP, PDF (max 10MB)</span>
+                </div>
+
+                @if (!paymentScreenshotFile() && !paymentScreenshotPreviewUrl()) {
+                  <label class="screenshot-dropzone" [class.is-disabled]="effectiveReadOnly()">
+                    <input
+                      id="screenshot-file-input"
+                      type="file"
+                      class="file-input-hidden"
+                      accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf"
+                      [disabled]="effectiveReadOnly()"
+                      (change)="onScreenshotSelected($event)"
+                    />
+                    <div class="dropzone-content">
+                      <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.75">
+                        <path d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"/>
+                      </svg>
+                      <span class="dropzone-title">Upload Payment Screenshot</span>
+                      <span class="dropzone-desc">Click or drag & drop bank transfer / UPI receipt</span>
+                    </div>
+                  </label>
+                } @else {
+                  <div class="screenshot-preview-card">
+                    <div class="preview-thumbnail-box" (click)="openScreenshotModal()" title="Click to enlarge preview">
+                      @if (isPdfScreenshot()) {
+                        <div class="pdf-badge-box">
+                          <svg class="pdf-icon" viewBox="0 0 24 24" fill="currentColor">
+                            <path d="M19 3H5c-1.1 0-2 .9-2 2v14c0 1.1.9 2 2 2h14c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-9.5 8.5h-2v1h2c.28 0 .5-.22.5-.5s-.22-.5-.5-.5zm5 0h-2v2h2c.28 0 .5-.22.5-.5v-1c0-.28-.22-.5-.5-.5zm-5-3h-3v5h1v-1.5h2c.83 0 1.5-.67 1.5-1.5v-.5c0-.83-.67-1.5-1.5-1.5zm5 0h-3v5h3c.83 0 1.5-.67 1.5-1.5v-2c0-.83-.67-1.5-1.5-1.5zm4 0h-3.5v5H16v-2h2v-1h-2v-1h2.5V8.5z"/>
+                          </svg>
+                          <span class="pdf-tag">PDF</span>
+                        </div>
+                      } @else {
+                        <img [src]="paymentScreenshotPreviewUrl()" alt="Payment Screenshot Preview" class="screenshot-img-thumb" />
+                      }
+                      <div class="preview-overlay">
+                        <svg class="zoom-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+                        </svg>
+                      </div>
+                    </div>
+
+                    <div class="preview-meta-info">
+                      <span class="screenshot-name" [title]="paymentScreenshotName()">
+                        {{ paymentScreenshotName() }}
+                      </span>
+                      <span class="screenshot-size">{{ formatFileSize(paymentScreenshotSize()) }}</span>
+
+                      @if (!effectiveReadOnly()) {
+                        <div class="screenshot-actions">
+                          <button type="button" class="btn-action-text" (click)="openScreenshotModal()">
+                            Preview
+                          </button>
+                          <span class="action-pipe">|</span>
+                          <label class="btn-action-text replace-btn">
+                            <span>Replace</span>
+                            <input
+                              type="file"
+                              class="file-input-hidden"
+                              accept=".jpg,.jpeg,.png,.webp,.pdf,image/*,application/pdf"
+                              (change)="onScreenshotSelected($event)"
+                            />
+                          </label>
+                          <span class="action-pipe">|</span>
+                          <button type="button" class="btn-action-text text-danger" (click)="removeScreenshot()">
+                            Remove
+                          </button>
+                        </div>
+                      } @else {
+                        <button type="button" class="btn-action-text" (click)="openScreenshotModal()">
+                          View Receipt
+                        </button>
+                      }
+                    </div>
+                  </div>
+                }
+
+                @if (screenshotError()) {
+                  <span class="field-error-text">{{ screenshotError() }}</span>
+                }
+              </div>
+
+              <div class="carbon-form-item">
+                <label for="remark-input" class="carbon-form-label">
+                  Remark / Notes <span class="optional-tag">(Optional)</span>
+                </label>
+                <textarea id="remark-input" rows="3" class="carbon-textarea form-field"
+                  placeholder="e.g. Transferred from SBI account ending in 7431" [value]="remark()"
+                  [disabled]="effectiveReadOnly()"
+                  (input)="remark.set($any($event.target).value)"></textarea>
+              </div>
+
+              <div class="payment-amount-box">
+                <div class="amount-row">
+                  <span>Gross Premium:</span>
+                  <span>{{ formatCurrency(policySummary()?.premiumAmount || payableAmount()) }}</span>
+                </div>
+                @if (policySummary()?.agentProfit) {
+                <div class="amount-row text-success">
+                  <span>Agent Profit:</span>
+                  <span>-{{ formatCurrency(policySummary()?.agentProfit) }}</span>
+                </div>
+                }
+                <div class="amount-row amount-total">
+                  <span>Final Payable Amount:</span>
+                  <span class="total-price">{{ formatCurrency(payableAmount()) }}</span>
+                </div>
+              </div>
+              
+              <div class="form-action-row">
+                <button type="button" class="btn-secondary" (click)="dismiss()">
+                  {{ effectiveReadOnly() ? 'Close' : 'Cancel' }}
+                </button>
+                @if (effectiveReadOnly()) {
+                <button type="button" class="btn-primary btn-submit-bank btn-readonly-status" disabled>
+                  <svg viewBox="0 0 16 16" fill="currentColor" class="status-check-icon" style="width: 16px; height: 16px; margin-right: 6px;">
+                    <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                  <span>Bank Payment Proof Submitted</span>
+                </button>
+                } @else {
+                <button type="submit" class="btn-primary btn-submit-bank"
+                  [disabled]="!transactionId().trim() || !paymentScreenshotFile() || isSubmittingBank() || bankSuccess()">
+                  @if (isSubmittingBank()) {
+                  <span class="carbon-spinner btn-spinner" aria-hidden="true"></span>
+                  <span>Submitting Proof...</span>
+                  } @else if (bankSuccess()) {
+                  <span>✓ Submitted Successfully</span>
+                  } @else {
+                  <span>Submit Bank Transaction</span>
+                  <svg class="btn-arrow" viewBox="0 0 20 20" fill="currentColor">
+                    <path fill-rule="evenodd"
+                      d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z"
+                      clip-rule="evenodd" />
+                  </svg>
+                  }
+                </button>
+                }
+              </div>
+            </form>
+          </div>
+        </div>
+      </div>
+    </section>
+    }
+  </div>
+
+  <!-- Lightbox Modal for Screenshot Preview -->
+  @if (showScreenshotModal()) {
+    <div class="carbon-modal-backdrop" (click)="closeScreenshotModal()">
+      <div class="carbon-modal-dialog screenshot-dialog" (click)="$event.stopPropagation()">
+        <div class="modal-header">
+          <div class="modal-title-group">
+            <span class="modal-badge">Payment Proof</span>
+            <h3 class="modal-title">{{ paymentScreenshotName() || 'Payment Screenshot' }}</h3>
+          </div>
+          <button type="button" class="btn-modal-close" (click)="closeScreenshotModal()" title="Close preview">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L8 8.707l-2.646 2.647a.5.5 0 0 1-.708-.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div class="modal-body modal-screenshot-body">
+          @if (isPdfScreenshot()) {
+            <iframe [src]="safeScreenshotPreviewUrl()" class="modal-pdf-frame" title="Payment Receipt Preview"></iframe>
+          } @else {
+            <img [src]="paymentScreenshotPreviewUrl()" [alt]="paymentScreenshotName()" class="modal-preview-image" />
+          }
+        </div>
+
+        <div class="modal-footer">
+          <div class="modal-meta-left">
+            <span>Size: {{ formatFileSize(paymentScreenshotSize()) }}</span>
+          </div>
+          <div class="modal-buttons">
+            @if (paymentScreenshotPreviewUrl()) {
+              <a [href]="paymentScreenshotPreviewUrl()" [download]="paymentScreenshotName() || 'receipt'" target="_blank" class="btn-secondary modal-btn">
+                Download
+              </a>
+            }
+            <button type="button" class="btn-primary modal-btn" (click)="closeScreenshotModal()">
+              Close
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+</div>

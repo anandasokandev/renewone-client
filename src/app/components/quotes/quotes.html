@@ -1,0 +1,611 @@
+<div class="carbon-quotes-container" [class.modal-mode]="isModalView">
+  <!-- Toast Notification -->
+  @if (successMessage()) {
+    <div class="carbon-toast" role="status" aria-live="polite">
+      <div class="toast-content">
+        <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+        </svg>
+        <span>{{ successMessage() }}</span>
+      </div>
+    </div>
+  }
+
+  <!-- Header Strip -->
+  <header class="quotes-header">
+    <div class="header-left">
+      @if (!isModalView) {
+        <nav class="carbon-breadcrumb" aria-label="Breadcrumb">
+          <ol class="breadcrumb-list">
+            <li class="breadcrumb-item"><a routerLink="/enquiry" class="breadcrumb-link">Enquiries</a></li>
+            <li class="breadcrumb-separator">/</li>
+            <li class="breadcrumb-item"><span class="breadcrumb-current">Quotes Comparison</span></li>
+          </ol>
+        </nav>
+      }
+      <div class="header-title-row">
+        <h1 class="quotes-title">Quotation Proposals</h1>
+        @if (activeEnquiryId()) {
+          <span class="enquiry-ref-tag" title="Associated Enquiry ID">
+            Ref: {{ activeEnquiryId() }}
+          </span>
+        }
+      </div>
+    </div>
+
+    @if (isModalView) {
+      <button
+        type="button"
+        class="btn-modal-close"
+        (click)="dismiss()"
+        aria-label="Close modal"
+        title="Close"
+      >
+        <svg viewBox="0 0 16 16" fill="currentColor">
+          <path d="M4.646 4.646a.5.5 0 0 1 .708 0L8 7.293l2.646-2.647a.5.5 0 0 1 .708.708L8.707 8l2.647 2.646a.5.5 0 0 1-.708.708L7.293 8 4.646 5.354a.5.5 0 0 1 0-.708z"/>
+        </svg>
+      </button>
+    }
+  </header>
+
+  <!-- Payment Submitted / Locked Notice Banner -->
+  @if (isPaymentAlreadySubmitted()) {
+    <div class="carbon-inline-alert alert-locked-payment" role="status">
+      <svg class="alert-icon" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1a3.5 3.5 0 0 0-3.5 3.5V6H4a2 2 0 0 0-2 2v6a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-.5V4.5A3.5 3.5 0 0 0 8 1zm2 5H6V4.5a2 2 0 1 1 4 0V6z"/>
+      </svg>
+      <div class="locked-alert-content">
+        <div class="locked-alert-title">
+          <span>Payment Already Processed — Quote Selection Locked</span>
+          <span class="locked-badge">View Only</span>
+        </div>
+        <div class="locked-alert-desc">
+          A payment of <strong>{{ formatCurrency(paymentSummary()?.amount) }}</strong> was already submitted via 
+          <strong>{{ paymentSummary()?.paymentMode }}</strong>
+          @if (paymentSummary()?.referenceNumber || paymentSummary()?.transactionId) {
+            (Ref: <code>{{ paymentSummary()?.referenceNumber || paymentSummary()?.transactionId }}</code>)
+          }
+          @if (paymentSummary()?.agentLedgerName) {
+            by {{ paymentSummary()?.agentLedgerName }}
+          }. 
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Summary Metrics Strip -->
+  <section class="quotes-metrics-strip" aria-label="Key Proposal Metrics">
+    <div class="metric-card metric-best-agent">
+      <div class="metric-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+      </div>
+      <div class="metric-text-col">
+        <span class="metric-label">Max Agent Incentive</span>
+        <span class="metric-val text-success">{{ highestAgentPoints() }} Pts</span>
+        <span class="metric-hint">Highest return on closing</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-lowest-premium">
+      <div class="metric-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 1v22M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
+        </svg>
+      </div>
+      <div class="metric-text-col">
+        <span class="metric-label">Lowest Premium</span>
+        <span class="metric-val text-primary">{{ formatCurrency(lowestPremium()) }}</span>
+        <span class="metric-hint">Most economical choice</span>
+      </div>
+    </div>
+
+    <div class="metric-card metric-total-quotes">
+      <div class="metric-icon-wrap" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+        </svg>
+      </div>
+      <div class="metric-text-col">
+        <span class="metric-label">Quotes Received</span>
+        <span class="metric-val">{{ totalQuotesCount() }} Insurers</span>
+        <span class="metric-hint">Live competitive options</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Best Quote Suggested Banner -->
+  @if (!isPaymentAlreadySubmitted() && bestQuote(); as best) {
+    @let isBestSelected = selectedQuoteId() === best.id;
+    <div
+      class="best-quote-banner"
+      [class.is-selected]="isBestSelected"
+      tabindex="0"
+      role="region"
+      aria-label="Recommended Proposal Banner"
+    >
+      <div class="banner-badge-strip">
+        <span class="carbon-tag tag-recommended">
+          <svg class="tag-star" viewBox="0 0 20 20" fill="currentColor">
+            <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z"/>
+          </svg>
+          Recommended · Highest Agent Points
+        </span>
+        <span class="banner-incentive-pill">+{{ best.agentPoints }} Points Earned</span>
+      </div>
+
+      <div class="banner-body-row">
+        <div class="banner-company-info">
+          <div class="company-logo-badge" aria-hidden="true">{{ getCompanyInitials(best.insuranceCompanyName) }}</div>
+          <div class="company-text-group">
+            <h2 class="banner-company-name">{{ best.insuranceCompanyName }}</h2>
+            <p class="banner-remarks">{{ best.remarks || 'Full comprehensive protection package' }}</p>
+          </div>
+        </div>
+
+        <div class="banner-pricing-info">
+          <div class="price-stat-group">
+            <span class="stat-label">Insured Value (IDV)</span>
+            <span class="stat-val">{{ formatCurrency(best.idv) }}</span>
+          </div>
+          <div class="price-stat-group highlight">
+            <span class="stat-label">Total Premium (inc. Tax)</span>
+            <span class="banner-price">{{ formatCurrency(best.premium) }}</span>
+          </div>
+        </div>
+
+        <div class="banner-action-col">
+          <button
+            type="button"
+            class="btn-select-best"
+            [class.btn-selected]="isBestSelected"
+            [disabled]="isPaymentAlreadySubmitted()"
+            (click)="selectBestQuote()"
+            [attr.aria-pressed]="isBestSelected"
+          >
+            @if (isBestSelected) {
+              <svg class="btn-check" viewBox="0 0 20 20" fill="currentColor">
+                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+              </svg>
+              <span>Selected as Best</span>
+            } @else {
+              <span>Select Recommended Quote</span>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- Toolbar: Search, Sort & View Mode -->
+  <div class="quotes-toolbar">
+    <div class="search-box">
+      <svg class="search-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+      </svg>
+      <input
+        type="text"
+        class="carbon-input search-input"
+        placeholder="Filter proposals by insurer name..."
+        [value]="searchQuery()"
+        (input)="onSearch($event)"
+        aria-label="Filter proposals by insurer name"
+      />
+      @if (searchQuery()) {
+        <button
+          type="button"
+          class="btn-clear-search"
+          (click)="clearSearch()"
+          aria-label="Clear search"
+          title="Clear search"
+        >
+          ✕
+        </button>
+      }
+    </div>
+
+    <div class="sort-filter-group">
+      <span class="toolbar-label">Sort:</span>
+      <div class="sort-tabs" role="group" aria-label="Sort quotes by">
+        <button
+          type="button"
+          class="sort-tab"
+          [class.active]="sortBy() === 'agentPoints'"
+          (click)="setSort('agentPoints')"
+          title="Sort by Agent Incentive Points"
+        >
+          <span>Points</span>
+          @if (sortBy() === 'agentPoints') {
+            <span class="sort-arrow" aria-hidden="true">{{ sortDescending() ? '↓' : '↑' }}</span>
+          }
+        </button>
+        <button
+          type="button"
+          class="sort-tab"
+          [class.active]="sortBy() === 'premium'"
+          (click)="setSort('premium')"
+          title="Sort by Total Premium"
+        >
+          <span>Premium</span>
+          @if (sortBy() === 'premium') {
+            <span class="sort-arrow" aria-hidden="true">{{ sortDescending() ? '↓' : '↑' }}</span>
+          }
+        </button>
+        <button
+          type="button"
+          class="sort-tab"
+          [class.active]="sortBy() === 'insuranceCompanyName'"
+          (click)="setSort('insuranceCompanyName')"
+          title="Sort by Insurance Company"
+        >
+          <span>Insurer</span>
+          @if (sortBy() === 'insuranceCompanyName') {
+            <span class="sort-arrow" aria-hidden="true">{{ sortDescending() ? '↓' : '↑' }}</span>
+          }
+        </button>
+      </div>
+
+      <div class="view-mode-toggle" role="group" aria-label="View layout switcher">
+        <button
+          type="button"
+          class="btn-toggle-mode"
+          [class.active]="viewMode() === 'cards'"
+          (click)="setViewMode('cards')"
+          title="Switch to Card Grid View"
+          aria-label="Switch to Card Grid View"
+          [attr.aria-pressed]="viewMode() === 'cards'"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path d="M1 2.5A1.5 1.5 0 0 1 2.5 1h3A1.5 1.5 0 0 1 7 2.5v3A1.5 1.5 0 0 1 5.5 7h-3A1.5 1.5 0 0 1 1 5.5v-3zM2.5 2a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 1h3A1.5 1.5 0 0 1 15 2.5v3A1.5 1.5 0 0 1 13.5 7h-3A1.5 1.5 0 0 1 9 5.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zM1 10.5A1.5 1.5 0 0 1 2.5 9h3A1.5 1.5 0 0 1 7 10.5v3A1.5 1.5 0 0 1 5.5 15h-3A1.5 1.5 0 0 1 1 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3zm6.5.5A1.5 1.5 0 0 1 10.5 9h3a1.5 1.5 0 0 1 1.5 1.5v3a1.5 1.5 0 0 1-1.5 1.5h-3A1.5 1.5 0 0 1 9 13.5v-3zm1.5-.5a.5.5 0 0 0-.5.5v3a.5.5 0 0 0 .5.5h3a.5.5 0 0 0 .5-.5v-3a.5.5 0 0 0-.5-.5h-3z"/>
+          </svg>
+          <span class="mode-label">Cards</span>
+        </button>
+        <button
+          type="button"
+          class="btn-toggle-mode"
+          [class.active]="viewMode() === 'table'"
+          (click)="setViewMode('table')"
+          title="Switch to Comparison Table View"
+          aria-label="Switch to Comparison Table View"
+          [attr.aria-pressed]="viewMode() === 'table'"
+        >
+          <svg viewBox="0 0 16 16" fill="currentColor">
+            <path fill-rule="evenodd" d="M0 2a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v12a2 2 0 0 1-2 2H2a2 2 0 0 1-2-2V2zm1 2v2h14V4H1zm0 3v2h14V7H1zm0 3v2h14v-2H1zm0 3v1a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-1H1zM2 1a1 1 0 0 0-1 1v1h14V2a1 1 0 0 0-1-1H2z"/>
+          </svg>
+          <span class="mode-label">Table</span>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Content Area -->
+  @if (isLoading()) {
+    <!-- Loading State -->
+    <div class="quotes-loading-box" role="status">
+      <span class="carbon-spinner quotes-spinner" aria-hidden="true"></span>
+      <span class="loading-label">Fetching live quotes from underwriters...</span>
+    </div>
+  } @else if (quotes().length === 0) {
+    <!-- Empty State -->
+    <div class="quotes-empty-card">
+      <svg class="empty-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" aria-hidden="true">
+        <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+      </svg>
+      <h3 class="empty-title">No Quotations Available</h3>
+      <p class="empty-desc">
+        @if (searchQuery()) {
+          No proposals matched "{{ searchQuery() }}". Try clearing the filter.
+        } @else {
+          Quotes are currently being generated by our underwriting partners.
+        }
+      </p>
+      @if (searchQuery()) {
+        <button type="button" class="btn-secondary btn-clear-filter" (click)="clearSearch()">
+          Clear Filter
+        </button>
+      }
+    </div>
+  } @else {
+    <!-- Cards View -->
+    @if (viewMode() === 'cards') {
+      <div class="quotes-grid" role="radiogroup" aria-label="Insurance Quotations">
+        @for (quote of quotes(); track quote.id) {
+          @let isBest = bestQuote()?.id === quote.id;
+          @let isLowest = lowestPremiumQuoteId() === quote.id && !isBest;
+          @let isChosen = selectedQuoteId() === quote.id;
+
+          <div
+            class="quote-card"
+            [class.is-selected]="isChosen"
+            [class.is-best-option]="isBest"
+            [class.is-lowest-premium]="isLowest"
+            [class.is-locked]="isPaymentAlreadySubmitted()"
+            (click)="selectQuote(quote)"
+            (keydown.enter)="selectQuote(quote)"
+            (keydown.space)="selectQuote(quote); $event.preventDefault()"
+            tabindex="0"
+            role="radio"
+            [attr.aria-checked]="isChosen"
+            [attr.aria-disabled]="isPaymentAlreadySubmitted()"
+            [attr.aria-label]="quote.insuranceCompanyName + ' proposal for ' + formatCurrency(quote.premium)"
+          >
+            <!-- Card Badge Strip (if special highlight) -->
+            @if (isBest || isLowest) {
+              <div class="card-highlight-strip">
+                @if (isBest) {
+                  <span class="card-tag tag-top-earning">
+                    <svg class="tag-icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path d="M3.612 15.443c-.386.198-.824-.149-.746-.592l.83-4.73L.173 6.765c-.329-.314-.158-.888.283-.95l4.898-.696L7.538.792c.197-.39.73-.39.927 0l2.184 4.327 4.898.696c.441.062.612.636.282.95l-3.522 3.356.83 4.73c.078.443-.36.79-.746.592L8 13.187l-4.389 2.256z"/>
+                    </svg>
+                    Top Earning · +{{ quote.agentPoints }} Pts
+                  </span>
+                } @else if (isLowest) {
+                  <span class="card-tag tag-lowest-price">
+                    Lowest Premium Option
+                  </span>
+                }
+              </div>
+            }
+
+            <!-- Card Top Header -->
+            <div class="card-header-strip">
+              <div class="company-brand-row">
+                <div class="company-badge-circle" [class.badge-gold]="isBest" aria-hidden="true">
+                  {{ getCompanyInitials(quote.insuranceCompanyName) }}
+                </div>
+                <div class="company-info-col">
+                  <h3 class="company-title">{{ quote.insuranceCompanyName }}</h3>
+                  <span class="quote-time">{{ formatDate(quote.quoteDate) }}</span>
+                </div>
+              </div>
+
+              <!-- Visual Selection Checkbox / Radio Indicator -->
+              <div class="selection-indicator">
+                <input
+                  type="radio"
+                  name="selectedQuoteRadio"
+                  [checked]="isChosen"
+                  (change)="selectQuote(quote)"
+                  class="carbon-radio"
+                  tabindex="-1"
+                  aria-hidden="true"
+                />
+              </div>
+            </div>
+
+            <!-- Card Key Numbers Grid -->
+            <div class="card-metrics-grid">
+              <div class="card-metric-block metric-block-price">
+                <span class="card-metric-label">Premium (inc. GST)</span>
+                <span class="card-metric-val price-val">{{ formatCurrency(quote.premium) }}</span>
+              </div>
+
+              <div class="card-metric-block metric-block-points">
+                <span class="card-metric-label">Agent Incentive</span>
+                <span class="card-metric-val points-val">+{{ quote.agentPoints }} Pts</span>
+              </div>
+
+              <div class="card-metric-block metric-block-idv">
+                <span class="card-metric-label">IDV Cover</span>
+                <span class="card-metric-val idv-val">{{ formatCurrency(quote.idv) }}</span>
+              </div>
+            </div>
+
+            <!-- Remarks & Policy Perks -->
+            @if (quote.remarks) {
+              <div class="card-remarks-box">
+                <svg class="remarks-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+                  <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0-2A5 5 0 1 0 8 3a5 5 0 0 0 0 10zm-1-8a1 1 0 0 1 2 0v3a1 1 0 0 1-2 0V5zm1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+                </svg>
+                <span class="remarks-text">{{ quote.remarks }}</span>
+              </div>
+            }
+
+            <!-- Card Bottom Selection CTA -->
+            <div class="card-footer-action">
+              <div class="footer-status-tag">
+                @if (isChosen) {
+                  <span class="selected-state-text">
+                    <svg class="status-check-icon" viewBox="0 0 16 16" fill="currentColor">
+                      <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                    </svg>
+                    Currently Selected
+                  </span>
+                } @else {
+                  <span class="unselected-prompt">Click to select proposal</span>
+                }
+              </div>
+
+              <button
+                type="button"
+                class="btn-card-choose"
+                [class.chosen]="isChosen"
+                [disabled]="isPaymentAlreadySubmitted()"
+                (click)="selectQuote(quote); $event.stopPropagation()"
+                [attr.aria-pressed]="isChosen"
+              >
+                @if (isChosen) {
+                  <svg class="btn-check-sm" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                  <span>Selected</span>
+                } @else {
+                  <span>Select Quote</span>
+                }
+              </button>
+            </div>
+          </div>
+        }
+      </div>
+    } @else {
+      <!-- Comparison Table View -->
+      <div class="carbon-table-wrapper" tabindex="0" aria-label="Comparison Table Scroll Container">
+        <table class="carbon-data-table">
+          <thead>
+            <tr>
+              <th class="col-select" scope="col" aria-label="Select"></th>
+              <th scope="col">Insurance Company</th>
+              <th scope="col">IDV Cover</th>
+              <th scope="col">Total Premium (inc. Tax)</th>
+              <th scope="col">Agent Incentive</th>
+              <th scope="col">Coverage & Remarks</th>
+              <th scope="col">Proposal Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (quote of quotes(); track quote.id) {
+              @let isChosen = selectedQuoteId() === quote.id;
+              @let isBest = bestQuote()?.id === quote.id;
+              @let isLowest = lowestPremiumQuoteId() === quote.id && !isBest;
+
+              <tr
+                [class.selected-row]="isChosen"
+                [class.best-row]="isBest"
+                [class.is-locked]="isPaymentAlreadySubmitted()"
+                (click)="selectQuote(quote)"
+                (keydown.enter)="selectQuote(quote)"
+                (keydown.space)="selectQuote(quote); $event.preventDefault()"
+                tabindex="0"
+                role="row"
+                [attr.aria-selected]="isChosen"
+              >
+                <td class="col-select">
+                  <input
+                    type="radio"
+                    name="tableQuoteRadio"
+                    [checked]="isChosen"
+                    [disabled]="isPaymentAlreadySubmitted()"
+                    (change)="selectQuote(quote)"
+                    class="carbon-radio"
+                    tabindex="-1"
+                    aria-hidden="true"
+                  />
+                </td>
+                <td>
+                  <div class="table-insurer-cell">
+                    <div class="table-logo-sq">{{ getCompanyInitials(quote.insuranceCompanyName) }}</div>
+                    <div class="table-insurer-details">
+                      <span class="table-company-name">{{ quote.insuranceCompanyName }}</span>
+                      @if (isBest) {
+                        <span class="table-tag tag-top">Top Points</span>
+                      } @else if (isLowest) {
+                        <span class="table-tag tag-lowest">Lowest Price</span>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="table-idv-cell">{{ formatCurrency(quote.idv) }}</td>
+                <td class="table-premium-cell">{{ formatCurrency(quote.premium) }}</td>
+                <td>
+                  <span class="table-points-badge">+{{ quote.agentPoints }} Pts</span>
+                </td>
+                <td class="table-remarks-cell" [title]="quote.remarks || 'Standard comprehensive package'">
+                  {{ quote.remarks || 'Standard comprehensive package' }}
+                </td>
+                <td class="table-date-cell">{{ formatDate(quote.quoteDate) }}</td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  }
+
+  <!-- Sticky Selection Action Bar -->
+  <footer class="quotes-action-bar" role="region" aria-label="Selection Confirmation Toolbar">
+    <div class="action-bar-left">
+      @if (selectedQuote(); as chosen) {
+        <div class="selected-summary-strip">
+          <div class="summary-check-sq" aria-hidden="true">
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
+            </svg>
+          </div>
+          <div class="summary-info">
+            <span class="summary-title">Selected: <strong>{{ chosen.insuranceCompanyName }}</strong></span>
+            <span class="summary-meta">
+              Premium: <strong>{{ formatCurrency(chosen.premium) }}</strong>
+              <span class="meta-sep">·</span>
+              Incentive: <strong class="meta-green">+{{ chosen.agentPoints }} Pts</strong>
+              <span class="meta-sep">·</span>
+              IDV: <strong>{{ formatCurrency(chosen.idv) }}</strong>
+            </span>
+          </div>
+        </div>
+      } @else {
+        <div class="no-selection-strip">
+          <svg class="no-selection-icon" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8 15A7 7 0 1 0 8 1a7 7 0 0 0 0 14zm0-2A5 5 0 1 0 8 3a5 5 0 0 0 0 10zm-1-8a1 1 0 0 1 2 0v3a1 1 0 0 1-2 0V5zm1 6a1 1 0 1 0 0-2 1 1 0 0 0 0 2z"/>
+          </svg>
+          <span class="no-selection-hint">Please choose a quote proposal to proceed with policy issuance</span>
+        </div>
+      }
+    </div>
+
+    <div class="action-bar-right">
+      @if (isModalView) {
+        <button type="button" class="btn-action-cancel" (click)="dismiss()">
+          Cancel
+        </button>
+      }
+      @if (isPaymentAlreadySubmitted()) {
+        <button
+          type="button"
+          class="btn-action-confirm btn-action-view"
+          (click)="confirmSelection()"
+          title="View submitted payment details"
+        >
+          <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true" style="margin-right: 6px;">
+            <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+            <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+          </svg>
+          <span>View Payment Details</span>
+        </button>
+      } @else {
+        <button
+          type="button"
+          class="btn-action-confirm"
+          [disabled]="!selectedQuote() || isSubmittingQuote()"
+          (click)="confirmSelection()"
+          [attr.aria-disabled]="!selectedQuote() || isSubmittingQuote()"
+        >
+          @if (isSubmittingQuote()) {
+            <span class="carbon-spinner btn-spinner" aria-hidden="true"></span>
+            <span>Submitting Quote...</span>
+          } @else {
+            <span>Confirm & Proceed</span>
+            <svg class="btn-icon-right" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M10.293 3.293a1 1 0 011.414 0l6 6a1 1 0 010 1.414l-6 6a1 1 0 01-1.414-1.414L14.586 11H3a1 1 0 110-2h11.586l-4.293-4.293a1 1 0 010-1.414z" clip-rule="evenodd"/>
+            </svg>
+          }
+        </button>
+      }
+    </div>
+  </footer>
+
+  <!-- Payments Modal Backdrop & Dialog -->
+  @if (showPaymentModal()) {
+    <div
+      class="carbon-modal-backdrop"
+      (click)="onPaymentModalClose()"
+      role="presentation"
+    >
+      <div
+        class="carbon-modal-dialog"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+      >
+        <app-payments
+          [enquiryId]="activeEnquiryId()"
+          [quote]="selectedQuote()"
+          [amount]="selectedQuote()?.premium || 0"
+          [isReadOnly]="isPaymentAlreadySubmitted()"
+          (close)="onPaymentModalClose()"
+          (paymentCompleted)="onPaymentCompleted($event)"
+        ></app-payments>
+      </div>
+    </div>
+  }
+</div>
