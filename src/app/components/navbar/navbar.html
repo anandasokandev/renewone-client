@@ -48,6 +48,67 @@
           >
             Reports
           </a>
+
+          <!-- Accelerator Dropdown -->
+          <div
+            class="nav-dropdown"
+            [class.open]="isAcceleratorMenuOpen()"
+            (mouseenter)="openAcceleratorMenu()"
+            (mouseleave)="closeAcceleratorMenu()"
+          >
+            <button
+              type="button"
+              class="nav-square-btn nav-dropdown-trigger"
+              [class.active]="isAcceleratorActive()"
+              (click)="toggleAcceleratorMenu()"
+              aria-haspopup="true"
+              [attr.aria-expanded]="isAcceleratorMenuOpen()"
+            >
+              <span>Accelerator</span>
+              <svg class="dropdown-chevron-svg" [class.rotated]="isAcceleratorMenuOpen()" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+              </svg>
+            </button>
+
+            <div class="nav-dropdown-menu" role="menu">
+              <a
+                [routerLink]="['/admin/accelerators/qr-management']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                QR Mgmt
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/bank-account-management']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                Bank Account Mgmt
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/pricing-master']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                Pricing Master
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/insurance-management']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                Insurance Mgmt
+              </a>
+            </div>
+          </div>
         } @else {
           <a
             [routerLink]="['/dashboard']"
@@ -274,6 +335,64 @@
           </svg>
           <span>Reports</span>
         </a>
+
+        <!-- Accelerator Accordion in Drawer -->
+        <div class="drawer-accordion-group">
+          <button
+            type="button"
+            class="drawer-nav-link drawer-nav-accordion-trigger"
+            [class.active]="isAcceleratorActive()"
+            (click)="toggleAcceleratorDrawer()"
+            [attr.aria-expanded]="isAcceleratorDrawerOpen()"
+          >
+            <div class="drawer-link-content">
+              <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon>
+              </svg>
+              <span>Accelerator</span>
+            </div>
+            <svg class="drawer-chevron-svg" [class.rotated]="isAcceleratorDrawerOpen()" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+            </svg>
+          </button>
+
+          @if (isAcceleratorDrawerOpen()) {
+            <div class="drawer-submenu">
+              <a
+                [routerLink]="['/admin/accelerators/qr-management']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                QR Mgmt
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/bank-account-management']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                Bank Account Mgmt
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/pricing-master']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                Pricing Master
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/insurance-management']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                Insurance Mgmt
+              </a>
+            </div>
+          }
+        </div>
       } @else {
         <a
           [routerLink]="['/dashboard']"

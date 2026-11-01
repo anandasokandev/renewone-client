@@ -47,6 +47,45 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/admin/admin-reports/admin-reports').then(m => m.AdminReports),
       },
+      {
+        path: 'accelerators',
+        children: [
+          { path: '', redirectTo: 'qr-management', pathMatch: 'full' },
+          {
+            path: 'qr-management',
+            loadComponent: () =>
+              import('./components/admin/accelerators/qr-management/qr-management').then(
+                m => m.QrManagement
+              ),
+          },
+          {
+            path: 'bank-account-management',
+            loadComponent: () =>
+              import(
+                './components/admin/accelerators/bank-account-management/bank-account-management'
+              ).then(m => m.BankAccountManagement),
+          },
+          {
+            path: 'pricing-master',
+            loadComponent: () =>
+              import('./components/admin/accelerators/pricing-master/pricing-master').then(
+                m => m.PricingMaster
+              ),
+          },
+          {
+            path: 'insurance-management',
+            loadComponent: () =>
+              import(
+                './components/admin/accelerators/insurance-management/insurance-management'
+              ).then(m => m.InsuranceManagement),
+          },
+        ],
+      },
+      { path: 'accelerator', redirectTo: 'accelerators', pathMatch: 'full' },
+      { path: 'qr-management', redirectTo: 'accelerators/qr-management', pathMatch: 'full' },
+      { path: 'bank-account-management', redirectTo: 'accelerators/bank-account-management', pathMatch: 'full' },
+      { path: 'pricing-master', redirectTo: 'accelerators/pricing-master', pathMatch: 'full' },
+      { path: 'insurance-management', redirectTo: 'accelerators/insurance-management', pathMatch: 'full' },
     ],
   },
   {
