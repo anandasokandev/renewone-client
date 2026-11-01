@@ -8,5 +8,5 @@ export interface UserData {
   token: string;
   fullName: string;
   userType: string;
-  accountId: string;
+  accountId: string | null;
 }
