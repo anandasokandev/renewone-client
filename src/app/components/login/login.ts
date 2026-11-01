@@ -4,10 +4,9 @@ import { ActivatedRoute, Router, RouterLink } from '@angular/router';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { Auth } from '../../services/auth/auth';
-import { LoginRequest, UserData } from '../../models/auth.model';
+import { ADMIN_USER_TYPES, AdminUserType, LoginRequest, UserData } from '../../models/auth.model';
 
-export const ADMIN_USER_TYPES = ['SuperAdmin', 'Supervisor', 'AdminEmployee'] as const;
-export type AdminUserType = (typeof ADMIN_USER_TYPES)[number];
+export { ADMIN_USER_TYPES, type AdminUserType };
 
 @Component({
   selector: 'app-login',

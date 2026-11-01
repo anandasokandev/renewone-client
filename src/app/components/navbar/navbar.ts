@@ -2,6 +2,7 @@ import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { Router, RouterLink, RouterLinkActive } from '@angular/router';
 import { Auth } from '../../services/auth/auth';
+import { ADMIN_USER_TYPES } from '../../models/auth.model';
 
 @Component({
   selector: 'app-navbar',
@@ -10,17 +11,29 @@ import { Auth } from '../../services/auth/auth';
   styleUrl: './navbar.css',
 })
 export class Navbar {
-  protected authService = inject(Auth);
-  private router = inject(Router);
-  private elementRef = inject(ElementRef);
+  protected readonly authService = inject(Auth);
+  private readonly router = inject(Router);
+  private readonly elementRef = inject(ElementRef);
 
-  isProfileMenuOpen = signal<boolean>(false);
-  isMobileDrawerOpen = signal<boolean>(false);
+  readonly isProfileMenuOpen = signal<boolean>(false);
+  readonly isMobileDrawerOpen = signal<boolean>(false);
 
-  isAgent = computed<boolean>(() => {
+  readonly isAgent = computed<boolean>(() => {
+    if (typeof this.authService.isAgent === 'function') {
+      return this.authService.isAgent();
+    }
     return this.authService.currentUser()?.userType?.trim().toLowerCase() === 'agent';
   });
 
+  readonly isAdmin = computed<boolean>(() => {
+    if (typeof this.authService.isAdmin === 'function') {
+      return this.authService.isAdmin();
+    }
+    const userType = this.authService.currentUser()?.userType?.trim().toLowerCase();
+    return !!userType && ADMIN_USER_TYPES.some((role) => role.toLowerCase() === userType);
+  });
+
+  readonly homeRoute = computed<string>(() => (this.isAdmin() ? '/admin/dashboard' : '/dashboard'));
 
   getUserInitials(): string {
     const name = this.authService.currentUser()?.fullName;
@@ -69,4 +82,3 @@ export class Navbar {
     this.closeMenus();
   }
 }
-

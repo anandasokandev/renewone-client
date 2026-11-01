@@ -4,7 +4,6 @@ import { provideHttpClient } from '@angular/common/http';
 import { Navbar } from './navbar';
 import { Auth } from '../../services/auth/auth';
 
-
 describe('Navbar', () => {
   let component: Navbar;
   let fixture: ComponentFixture<Navbar>;
@@ -100,5 +99,53 @@ describe('Navbar', () => {
     const hasDrawerEmployees = drawerLinks.some((el) => el.textContent?.includes('Employees'));
     expect(hasDrawerEmployees).toBe(false);
   });
-});
 
+  it('should show admin navigation links (Dashboard, Enquiries, Employees, Agents, Reports) when user is an Admin', async () => {
+    const authService = TestBed.inject(Auth);
+    authService.currentUser.set({
+      userId: 'admin-1',
+      fullName: 'Super Administrator',
+      userType: 'SuperAdmin',
+      accountId: null,
+      token: 'mock-token',
+    });
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    expect(component.isAdmin()).toBe(true);
+    expect(component.homeRoute()).toBe('/admin/dashboard');
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const brandLink = compiled.querySelector('.brand-link');
+    expect(brandLink?.getAttribute('href')).toBe('/admin/dashboard');
+
+    const desktopLinks = Array.from(compiled.querySelectorAll('.nav-menu a'));
+    const linkTexts = desktopLinks.map((el) => el.textContent?.trim());
+    expect(linkTexts).toEqual(['Dashboard', 'Enquiries', 'Employees', 'Agents', 'Reports']);
+
+    const linkHrefs = desktopLinks.map((el) => el.getAttribute('href'));
+    expect(linkHrefs).toEqual([
+      '/admin/dashboard',
+      '/admin/enquiries',
+      '/admin/employees',
+      '/admin/agents',
+      '/admin/reports',
+    ]);
+
+    // Check Mobile Drawer for Admin
+    component.isMobileDrawerOpen.set(true);
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const portalTag = compiled.querySelector('.drawer-portal-tag');
+    expect(portalTag?.textContent?.trim()).toBe('Admin Portal');
+
+    const drawerNavLinks = Array.from(compiled.querySelectorAll('.drawer-nav a.drawer-nav-link'));
+    const drawerHrefs = drawerNavLinks.map((el) => el.getAttribute('href'));
+    expect(drawerHrefs).toContain('/admin/dashboard');
+    expect(drawerHrefs).toContain('/admin/enquiries');
+    expect(drawerHrefs).toContain('/admin/employees');
+    expect(drawerHrefs).toContain('/admin/agents');
+    expect(drawerHrefs).toContain('/admin/reports');
+  });
+});

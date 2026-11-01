@@ -1,7 +1,7 @@
 import { computed, inject, Injectable, signal } from '@angular/core';
 import { environment } from '../../../environments/environment';
 import { HttpClient } from '@angular/common/http';
-import { LoginRequest, UserData } from '../../models/auth.model';
+import { ADMIN_USER_TYPES, LoginRequest, UserData } from '../../models/auth.model';
 import { Observable, tap } from 'rxjs';
 import { ApiResponse } from '../../models/response.model';
 
@@ -15,6 +15,11 @@ export class Auth {
   currentUser = signal<UserData | null>(this.getStoredUser());
   isAuthenticated = computed(() => !!this.currentUser() && !!this.getToken());
   isAgent = computed(() => this.currentUser()?.userType?.trim().toLowerCase() === 'agent');
+  isAdmin = computed(() => {
+    const userType = this.currentUser()?.userType?.trim().toLowerCase();
+    if (!userType) return false;
+    return ADMIN_USER_TYPES.some((role) => role.toLowerCase() === userType);
+  });
 
 
   login(payload: LoginRequest): Observable<ApiResponse<UserData>> {

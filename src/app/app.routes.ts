@@ -4,6 +4,7 @@ import { Signup } from './components/signup/signup';
 import { authGuard } from './guards/auth.guard';
 import { guestGuard } from './guards/guest.guard';
 import { agentGuard } from './guards/agent.guard';
+import { adminGuard } from './guards/admin.guard';
 
 export const routes: Routes = [
   { path: '', redirectTo: 'login', pathMatch: 'full' },
@@ -15,10 +16,38 @@ export const routes: Routes = [
     loadComponent: () => import('./components/dashboard/dashboard').then(m => m.Dashboard),
   },
   {
-    path: 'admin/dashboard',
-    canActivate: [authGuard],
-    loadComponent: () =>
-      import('./components/admin/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
+    path: 'admin',
+    canActivate: [authGuard, adminGuard],
+    children: [
+      { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
+      {
+        path: 'dashboard',
+        loadComponent: () =>
+          import('./components/admin/admin-dashboard/admin-dashboard').then(m => m.AdminDashboard),
+      },
+      {
+        path: 'enquiries',
+        loadComponent: () =>
+          import('./components/admin/admin-enquiry/admin-enquiry').then(m => m.AdminEnquiry),
+      },
+      { path: 'enquiry', redirectTo: 'enquiries', pathMatch: 'full' },
+      {
+        path: 'employees',
+        loadComponent: () =>
+          import('./components/admin/admin-employee/admin-employee').then(m => m.AdminEmployee),
+      },
+      { path: 'employee', redirectTo: 'employees', pathMatch: 'full' },
+      {
+        path: 'agents',
+        loadComponent: () =>
+          import('./components/admin/admin-agents/admin-agents').then(m => m.AdminAgents),
+      },
+      {
+        path: 'reports',
+        loadComponent: () =>
+          import('./components/admin/admin-reports/admin-reports').then(m => m.AdminReports),
+      },
+    ],
   },
   {
     path: 'enquiry',
@@ -68,4 +97,3 @@ export const routes: Routes = [
   },
   { path: '**', redirectTo: 'login' },
 ];
-

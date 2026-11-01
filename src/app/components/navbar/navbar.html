@@ -2,45 +2,88 @@
   <div class="nav-container">
 
     <div class="nav-left">
-      <a [routerLink]="['/dashboard']" class="brand-link" (click)="closeMenus()">
+      <a [routerLink]="[homeRoute()]" class="brand-link" (click)="closeMenus()">
         RenewOne
       </a>
 
       <nav class="nav-menu">
-        <a
-          [routerLink]="['/dashboard']"
-          routerLinkActive="active"
-          class="nav-square-btn"
-          (click)="closeMenus()"
-        >
-          Dashboard
-        </a>
-        <a
-          [routerLink]="['/enquiry']"
-          routerLinkActive="active"
-          class="nav-square-btn"
-          (click)="closeMenus()"
-        >
-          Enquiries
-        </a>
-        @if (isAgent()) {
+        @if (isAdmin()) {
           <a
-            [routerLink]="['/employees']"
+            [routerLink]="['/admin/dashboard']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Dashboard
+          </a>
+          <a
+            [routerLink]="['/admin/enquiries']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Enquiries
+          </a>
+          <a
+            [routerLink]="['/admin/employees']"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
           >
             Employees
           </a>
+          <a
+            [routerLink]="['/admin/agents']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Agents
+          </a>
+          <a
+            [routerLink]="['/admin/reports']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Reports
+          </a>
+        } @else {
+          <a
+            [routerLink]="['/dashboard']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Dashboard
+          </a>
+          <a
+            [routerLink]="['/enquiry']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Enquiries
+          </a>
+          @if (isAgent()) {
+            <a
+              [routerLink]="['/employees']"
+              routerLinkActive="active"
+              class="nav-square-btn"
+              (click)="closeMenus()"
+            >
+              Employees
+            </a>
+          }
+          <a
+            [routerLink]="['/reports']"
+            routerLinkActive="active"
+            class="nav-square-btn"
+            (click)="closeMenus()"
+          >
+            Reports
+          </a>
         }
-        <a
-          [routerLink]="['/reports']"
-          routerLinkActive="active"
-          class="nav-square-btn"
-          (click)="closeMenus()"
-        >
-          Reports
-        </a>
       </nav>
     </div>
 
@@ -134,7 +177,7 @@
     <div class="drawer-header">
       <div class="drawer-brand-group">
         <span class="drawer-brand-title">RenewOne</span>
-        <span class="drawer-portal-tag">Agent Portal</span>
+        <span class="drawer-portal-tag">{{ isAdmin() ? 'Admin Portal' : 'Agent Portal' }}</span>
       </div>
       <button
         type="button"
@@ -153,44 +196,44 @@
         {{ getUserInitials() }}
       </div>
       <div class="drawer-user-meta">
-        <p class="drawer-user-name">{{ authService.currentUser()?.fullName || 'Agent' }}</p>
-        <span class="drawer-user-role">{{ authService.currentUser()?.userType || 'Agent' }}</span>
+        <p class="drawer-user-name">{{ authService.currentUser()?.fullName || (isAdmin() ? 'Administrator' : 'Agent') }}</p>
+        <span class="drawer-user-role">{{ authService.currentUser()?.userType || (isAdmin() ? 'Admin' : 'Agent') }}</span>
       </div>
     </div>
 
     <nav class="drawer-nav">
       <div class="drawer-section-heading">Main Navigation</div>
 
-      <a
-        [routerLink]="['/dashboard']"
-        routerLinkActive="active"
-        class="drawer-nav-link"
-        (click)="closeMenus()"
-      >
-        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <rect x="3" y="3" width="7" height="7"></rect>
-          <rect x="14" y="3" width="7" height="7"></rect>
-          <rect x="14" y="14" width="7" height="7"></rect>
-          <rect x="3" y="14" width="7" height="7"></rect>
-        </svg>
-        <span>Dashboard</span>
-      </a>
-
-      <a
-        [routerLink]="['/enquiry']"
-        routerLinkActive="active"
-        class="drawer-nav-link"
-        (click)="closeMenus()"
-      >
-        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
-        </svg>
-        <span>Enquiries</span>
-      </a>
-
-      @if (isAgent()) {
+      @if (isAdmin()) {
         <a
-          [routerLink]="['/employees']"
+          [routerLink]="['/admin/dashboard']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a
+          [routerLink]="['/admin/enquiries']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span>Enquiries</span>
+        </a>
+
+        <a
+          [routerLink]="['/admin/employees']"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -202,21 +245,93 @@
           </svg>
           <span>Employees</span>
         </a>
-      }
 
-      <a
-        [routerLink]="['/reports']"
-        routerLinkActive="active"
-        class="drawer-nav-link"
-        (click)="closeMenus()"
-      >
-        <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <line x1="18" y1="20" x2="18" y2="10"></line>
-          <line x1="12" y1="20" x2="12" y2="4"></line>
-          <line x1="6" y1="20" x2="6" y2="14"></line>
-        </svg>
-        <span>Reports</span>
-      </a>
+        <a
+          [routerLink]="['/admin/agents']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"></path>
+            <circle cx="9" cy="7" r="4"></circle>
+            <path d="M22 21v-2a4 4 0 0 0-3-3.87"></path>
+            <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+          </svg>
+          <span>Agents</span>
+        </a>
+
+        <a
+          [routerLink]="['/admin/reports']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Reports</span>
+        </a>
+      } @else {
+        <a
+          [routerLink]="['/dashboard']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <rect x="3" y="3" width="7" height="7"></rect>
+            <rect x="14" y="3" width="7" height="7"></rect>
+            <rect x="14" y="14" width="7" height="7"></rect>
+            <rect x="3" y="14" width="7" height="7"></rect>
+          </svg>
+          <span>Dashboard</span>
+        </a>
+
+        <a
+          [routerLink]="['/enquiry']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+          </svg>
+          <span>Enquiries</span>
+        </a>
+
+        @if (isAgent()) {
+          <a
+            [routerLink]="['/employees']"
+            routerLinkActive="active"
+            class="drawer-nav-link"
+            (click)="closeMenus()"
+          >
+            <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+              <path d="M17 21v-2a4 4 0 00-4-4H5a4 4 0 00-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 00-3-3.87m-4-12a4 4 0 010 7.75"></path>
+            </svg>
+            <span>Employees</span>
+          </a>
+        }
+
+        <a
+          [routerLink]="['/reports']"
+          routerLinkActive="active"
+          class="drawer-nav-link"
+          (click)="closeMenus()"
+        >
+          <svg class="drawer-nav-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+            <line x1="18" y1="20" x2="18" y2="10"></line>
+            <line x1="12" y1="20" x2="12" y2="4"></line>
+            <line x1="6" y1="20" x2="6" y2="14"></line>
+          </svg>
+          <span>Reports</span>
+        </a>
+      }
 
       <div class="drawer-divider"></div>
       <div class="drawer-section-heading">Account</div>
