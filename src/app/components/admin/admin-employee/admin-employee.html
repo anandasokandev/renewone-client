@@ -1,1 +1,394 @@
-<p>admin-employee works!</p>
+<div class="carbon-agents-page">
+  <!-- Carbon Toast Notification -->
+  @if (toastMessage()) {
+    <div class="carbon-toast" [class.toast-error]="toastType() === 'error'" [class.toast-info]="toastType() === 'info'" role="status">
+      <div class="toast-content">
+        @if (toastType() === 'success') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        } @else if (toastType() === 'info') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        } @else {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        }
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearToast()" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  <!-- Page Header -->
+  <header class="page-header">
+    <div class="header-main-row">
+      <div class="header-title-group">
+        <span class="carbon-breadcrumb-tag">Admin Portal</span>
+        <h1 class="page-headline">Employees</h1>
+        <p class="page-subhead">Manage administrative employees, roles, permissions, and directory status.</p>
+      </div>
+    </div>
+  </header>
+
+  <!-- Main Card Section: Employees Table -->
+  <section class="carbon-card-section" id="section-employees-table">
+    <!-- Toolbar -->
+    <div class="section-toolbar">
+      <div class="section-title-group">
+        <div class="title-with-badge">
+          <h2 class="section-title">Employees Directory</h2>
+          <span class="carbon-count-tag">{{ totalRecords() }} total</span>
+        </div>
+      </div>
+
+      <div class="section-actions-group">
+        <!-- Status Filter Dropdown -->
+        <div class="status-filter-wrapper">
+          <label for="employee-status-filter" class="filter-label">Status:</label>
+          <select
+            id="employee-status-filter"
+            class="carbon-select status-select"
+            [ngModel]="statusFilter()"
+            (ngModelChange)="onStatusFilterChange($event)"
+          >
+            <option value="All">All Statuses</option>
+            <option value="Active">Active</option>
+            <option value="Inactive">Inactive</option>
+          </select>
+        </div>
+
+        <!-- Search Box -->
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            type="text"
+            class="carbon-input search-input"
+            placeholder="Search ID, username, name, contact..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+            (keyup.enter)="submitSearch()"
+            aria-label="Search employees"
+          />
+          @if (searchQuery()) {
+            <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
+          }
+        </div>
+
+        <!-- Refresh Button -->
+        <button
+          type="button"
+          class="carbon-btn-secondary"
+          (click)="refreshEmployees()"
+          [disabled]="isLoading()"
+          title="Refresh employees list"
+        >
+          <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+
+        <!-- Add Button -->
+        <button
+          type="button"
+          class="carbon-btn-primary"
+          (click)="onAddEmployee()"
+          title="Add new Employee"
+        >
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          <span>Add Employee</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="carbon-table-container">
+      @if (isLoading()) {
+        <div class="table-loading-state">
+          <div class="carbon-spinner"></div>
+          <span class="loading-label">Fetching employees...</span>
+        </div>
+      } @else if (filteredEmployees().length === 0) {
+        <div class="table-empty-state">
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+              <circle cx="9" cy="7" r="4"></circle>
+              <path d="M23 21v-2a4 4 0 0 0-3-3.87"></path>
+              <path d="M16 3.13a4 4 0 0 1 0 7.75"></path>
+            </svg>
+          </div>
+          <h3 class="empty-title">No employees found</h3>
+          <p class="empty-desc">
+            @if (searchQuery() || statusFilter() !== 'All') {
+              No employee records matched your search or status filter. Try clearing filters.
+            } @else {
+              There are currently no administrative employees registered in the system.
+            }
+          </p>
+          @if (searchQuery() || statusFilter() !== 'All') {
+            <button type="button" class="carbon-btn-secondary" (click)="clearSearch(); onStatusFilterChange('All')">
+              Clear Filters
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="table-scroll-wrapper">
+          <table class="carbon-table" aria-label="Employees Table">
+            <thead>
+              <tr>
+                <th class="th-emp-id">Employee ID</th>
+                <th class="th-username">User Name</th>
+                <th class="th-emp-name">Employee Name</th>
+                <th class="th-contact">Contact (Email &amp; Phone)</th>
+                <th class="th-role">Role</th>
+                <th class="th-status">Status</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredEmployees(); track item.id) {
+                <tr class="carbon-table-row">
+                  <!-- 1. Employee ID -->
+                  <td class="td-emp-id">
+                    <div class="agent-id-cell">
+                      <div class="id-mono-row">
+                        <span class="code-mono">{{ item.employeeId }}</span>
+                        <button
+                          type="button"
+                          class="carbon-icon-btn small-icon-btn"
+                          (click)="copyToClipboard(item.employeeId, 'Employee ID')"
+                          [title]="copiedField() === item.employeeId ? 'Copied!' : 'Copy Employee ID'"
+                          aria-label="Copy Employee ID"
+                        >
+                          @if (copiedField() === item.employeeId) {
+                            <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                          } @else {
+                            <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                            </svg>
+                          }
+                        </button>
+                      </div>
+                      @if (item.createdOn) {
+                        <span class="joined-date">Joined {{ formatDate(item.createdOn) }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- 2. User Name -->
+                  <td class="td-username">
+                    <div class="username-cell">
+                      <span class="username-text">&#64;{{ getUserName(item) }}</span>
+                      @if (item.activeTask !== undefined && item.activeTask > 0) {
+                        <span class="pincode-pill">Tasks: {{ item.activeTask }}</span>
+                      }
+                    </div>
+                  </td>
+
+                  <!-- 3. Employee Name -->
+                  <td class="td-emp-name">
+                    <div class="name-cell">
+                      <span class="agent-primary-name">{{ item.employeeName }}</span>
+                    </div>
+                  </td>
+
+                  <!-- 4. Contact (Email & Phone) -->
+                  <td class="td-contact">
+                    <div class="contact-cell">
+                      <!-- Email -->
+                      <div class="contact-row">
+                        <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                          <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                        </svg>
+                        <span class="contact-text email-text">{{ item.email || '—' }}</span>
+                        @if (item.email) {
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.email, 'Email')"
+                            [title]="copiedField() === item.email ? 'Copied!' : 'Copy Email'"
+                            aria-label="Copy Email"
+                          >
+                            @if (copiedField() === item.email) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        }
+                      </div>
+
+                      <!-- Phone Number -->
+                      <div class="contact-row">
+                        <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                        </svg>
+                        <span class="contact-text phone-text">{{ item.phoneNumber || '—' }}</span>
+                        @if (item.phoneNumber) {
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.phoneNumber, 'Phone Number')"
+                            [title]="copiedField() === item.phoneNumber ? 'Copied!' : 'Copy Phone Number'"
+                            aria-label="Copy Phone Number"
+                          >
+                            @if (copiedField() === item.phoneNumber) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- 5. Role -->
+                  <td class="td-role">
+                    <span class="carbon-tag tag-role">
+                      {{ formatRole(item.role) }}
+                    </span>
+                  </td>
+
+                  <!-- 6. Status -->
+                  <td class="td-status">
+                    <span
+                      class="carbon-tag"
+                      [class.tag-active]="item.status"
+                      [class.tag-inactive]="!item.status"
+                    >
+                      {{ item.status ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <!-- 7. Actions: Manage Rights Icon, Edit Icon, Enable/Disable -->
+                  <td class="td-actions">
+                    <div class="actions-cell-wrapper">
+                      <!-- Manage Rights Icon Button -->
+                      <button
+                        type="button"
+                        class="carbon-icon-btn edit-action-btn"
+                        (click)="onManageRights(item, $event)"
+                        title="Manage Rights &amp; Permissions"
+                        aria-label="Manage Rights"
+                      >
+                        <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                          <rect x="3" y="11" width="18" height="11" rx="0" ry="0"></rect>
+                          <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
+                        </svg>
+                      </button>
+
+                      <!-- Edit Icon Button -->
+                      <button
+                        type="button"
+                        class="carbon-icon-btn edit-action-btn"
+                        (click)="onEditEmployee(item, $event)"
+                        title="Edit Employee details"
+                        aria-label="Edit Employee"
+                      >
+                        <svg class="action-svg" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.886 2.215 2.215-.886.707-.707-1.329-1.329-.707.707z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Flat Toggle Switch -->
+                      <button
+                        type="button"
+                        class="carbon-toggle-switch"
+                        [class.checked]="item.status"
+                        [disabled]="togglingEmployeeId() === item.id"
+                        (click)="onToggleStatus(item, $event)"
+                        role="switch"
+                        [attr.aria-checked]="item.status"
+                        [title]="item.status ? 'Disable Employee' : 'Enable Employee'"
+                        [attr.aria-label]="item.status ? 'Disable Employee' : 'Enable Employee'"
+                      >
+                        <span class="toggle-slider"></span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="carbon-pagination-bar">
+          <div class="pagination-info">
+            Showing <strong>{{ filteredEmployees().length }}</strong> of <strong>{{ totalRecords() }}</strong> items
+          </div>
+
+          <div class="pagination-controls">
+            <div class="page-size-selector">
+              <label for="employee-page-size" class="page-size-label">Items per page:</label>
+              <select
+                id="employee-page-size"
+                class="carbon-select"
+                [ngModel]="pageSize()"
+                (ngModelChange)="onPageSizeChange($event)"
+              >
+                <option [value]="5">5</option>
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </div>
+
+            <div class="page-nav-buttons">
+              <span class="page-number-display">Page {{ pageNumber() }} of {{ totalPages() }}</span>
+              <button
+                type="button"
+                class="carbon-page-btn"
+                [disabled]="pageNumber() <= 1 || isLoading()"
+                (click)="onPageChange(pageNumber() - 1)"
+                title="Previous page"
+                aria-label="Previous page"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="carbon-page-btn"
+                [disabled]="pageNumber() >= totalPages() || isLoading()"
+                (click)="onPageChange(pageNumber() + 1)"
+                title="Next page"
+                aria-label="Next page"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+</div>

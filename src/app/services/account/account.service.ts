@@ -1,9 +1,15 @@
 import { inject, Injectable } from '@angular/core';
-import { HttpClient, HttpHeaders } from '@angular/common/http';
+import { HttpClient, HttpHeaders, HttpParams } from '@angular/common/http';
 import { Observable } from 'rxjs';
 import { environment } from '../../../environments/environment';
 import { ApiResponse } from '../../models/response.model';
-import { RegisterAgentPayload, UpdateUserProfilePayload, UserProfileData } from '../../models/account.model';
+import {
+  AgentFilterParams,
+  AgentsResponseData,
+  RegisterAgentPayload,
+  UpdateUserProfilePayload,
+  UserProfileData,
+} from '../../models/account.model';
 
 @Injectable({
   providedIn: 'root',
@@ -47,6 +53,34 @@ export class AccountService {
         headers: this.getAuthHeaders(),
       }
     );
+  }
+
+  getAgents(params: AgentFilterParams = {}): Observable<ApiResponse<AgentsResponseData>> {
+    let httpParams = new HttpParams();
+    httpParams = httpParams.set('SortBy', params.sortBy || 'Name');
+    httpParams = httpParams.set('SortOrder', params.sortOrder || 'Asc');
+    httpParams = httpParams.set('PageNumber', (params.pageNumber || 1).toString());
+    httpParams = httpParams.set('PageSize', (params.pageSize || 5).toString());
+    httpParams = httpParams.set('UserType', params.userType || 'Agent');
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.status && params.status !== 'All') {
+      httpParams = httpParams.set('Status', params.status);
+    }
+
+    return this.http.get<ApiResponse<AgentsResponseData>>(`${this.apiUrl}/agents`, {
+      params: httpParams,
+    });
+  }
+
+  toggleAgentStatus(accountId: string): Observable<ApiResponse<any>> {
+    return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${accountId}/toggle-status`, {});
+  }
+
+  approveAgent(accountId: string): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/approve-agent/${accountId}`, {});
   }
 }
 

@@ -1,22 +1,232 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-
+import { provideHttpClient } from '@angular/common/http';
+import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { of, throwError } from 'rxjs';
 import { AdminEmployee } from './admin-employee';
+import { EmployeeService } from '../../../services/employee/employee.service';
+import { AdminEmployeeItem, AdminEmployeePagedData } from '../../../models/employee.model';
+import { ApiResponse } from '../../../models/response.model';
 
 describe('AdminEmployee', () => {
   let component: AdminEmployee;
   let fixture: ComponentFixture<AdminEmployee>;
+  let employeeService: EmployeeService;
+
+  const mockEmployees: AdminEmployeeItem[] = [
+    {
+      id: '5bd52b4a-1f1a-4aaf-bc98-6f82ae8e63d4',
+      employeeId: 'EMP-0001',
+      employeeName: 'Samuel John',
+      email: 'samuel@gmail.com',
+      phoneNumber: '9744510308',
+      role: 'AdminEmployee',
+      status: true,
+      activeTask: 0,
+      completedTask: 0,
+      createdOn: '2026-11-01T15:58:45.8983542',
+    },
+    {
+      id: '9cf63a12-882b-4fa8-b221-729ab9021234',
+      employeeId: 'EMP-0002',
+      employeeName: 'Sarah Jenkins',
+      email: 'sarah.j@renew1.in',
+      phoneNumber: '9845112233',
+      role: 'Supervisor',
+      status: false,
+      activeTask: 2,
+      completedTask: 5,
+      createdOn: '2026-10-15T10:20:00.0000000',
+    },
+  ];
+
+  const mockPagedResponse: ApiResponse<AdminEmployeePagedData> = {
+    isSuccess: true,
+    data: {
+      items: mockEmployees,
+      pageNumber: 1,
+      pageSize: 5,
+      totalRecords: 2,
+      totalPages: 1,
+      hasPreviousPage: false,
+      hasNextPage: false,
+    },
+    message: 'Employees fetched successfully',
+    statusCode: 200,
+    errors: null,
+  };
 
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [AdminEmployee],
+      providers: [
+        provideHttpClient(),
+        provideHttpClientTesting(),
+        {
+          provide: EmployeeService,
+          useValue: {
+            getAllEmployees: vi.fn().mockReturnValue(of(mockPagedResponse)),
+            toggleEmployeeStatus: vi.fn().mockReturnValue(of({ isSuccess: true })),
+          },
+        },
+      ],
     }).compileComponents();
 
     fixture = TestBed.createComponent(AdminEmployee);
     component = fixture.componentInstance;
-    await fixture.whenStable();
+    employeeService = TestBed.inject(EmployeeService);
   });
 
-  it('should create', () => {
+  it('should create component', () => {
+    fixture.detectChanges();
     expect(component).toBeTruthy();
+  });
+
+  it('should load employees on init with default payload', () => {
+    fixture.detectChanges();
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: '',
+      PageNumber: 1,
+      PageSize: 5,
+    });
+    expect(component.employees().length).toBe(2);
+    expect(component.totalRecords()).toBe(2);
+    expect(component.totalPages()).toBe(1);
+  });
+
+  it('should render table rows and columns properly', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+    const rows = compiled.querySelectorAll('tbody tr');
+    expect(rows.length).toBe(2);
+
+    const firstRowText = rows[0].textContent;
+    expect(firstRowText).toContain('EMP-0001');
+    expect(firstRowText).toContain('Samuel John');
+    expect(firstRowText).toContain('samuel@gmail.com');
+    expect(firstRowText).toContain('9744510308');
+    expect(firstRowText).toContain('Active');
+  });
+
+  it('should filter employees client-side by active status', () => {
+    fixture.detectChanges();
+    component.onStatusFilterChange('Active');
+    fixture.detectChanges();
+
+    expect(component.filteredEmployees().length).toBe(1);
+    expect(component.filteredEmployees()[0].employeeName).toBe('Samuel John');
+  });
+
+  it('should filter employees client-side by inactive status', () => {
+    fixture.detectChanges();
+    component.onStatusFilterChange('Inactive');
+    fixture.detectChanges();
+
+    expect(component.filteredEmployees().length).toBe(1);
+    expect(component.filteredEmployees()[0].employeeName).toBe('Sarah Jenkins');
+  });
+
+  it('should search employees by search query and submit to service', () => {
+    fixture.detectChanges();
+    component.onSearchChange('Samuel');
+    component.submitSearch();
+
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: 'Samuel',
+      PageNumber: 1,
+      PageSize: 5,
+    });
+  });
+
+  it('should clear search and reload employees', () => {
+    fixture.detectChanges();
+    component.searchQuery.set('Samuel');
+    component.clearSearch();
+
+    expect(component.searchQuery()).toBe('');
+    expect(component.pageNumber()).toBe(1);
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: '',
+      PageNumber: 1,
+      PageSize: 5,
+    });
+  });
+
+  it('should trigger optimistic toggle and call toggleEmployeeStatus on toggle click', () => {
+    fixture.detectChanges();
+    const target = mockEmployees[0]; // Samuel John, status: true
+    expect(component.employees()[0].status).toBe(true);
+
+    component.onToggleStatus(target);
+    expect(component.employees()[0].status).toBe(false);
+    expect(employeeService.toggleEmployeeStatus).toHaveBeenCalledWith(target.id);
+    expect(component.toastMessage()).toContain('Inactive');
+  });
+
+  it('should revert optimistic status update if toggle fails', () => {
+    vi.spyOn(employeeService, 'toggleEmployeeStatus').mockReturnValue(
+      throwError(() => new Error('Toggle error'))
+    );
+    fixture.detectChanges();
+
+    const target = mockEmployees[0];
+    component.onToggleStatus(target);
+
+    // After failure, status should revert back to original
+    expect(component.employees()[0].status).toBe(true);
+    expect(component.toastMessage()).toContain('Failed to update employee status');
+  });
+
+  it('should show toast when clicking Manage Rights button', () => {
+    fixture.detectChanges();
+    component.onManageRights(mockEmployees[0]);
+    expect(component.toastMessage()).toContain('Manage rights for "Samuel John"');
+  });
+
+  it('should show toast when clicking Edit Employee button', () => {
+    fixture.detectChanges();
+    component.onEditEmployee(mockEmployees[0]);
+    expect(component.toastMessage()).toContain('Edit Employee "Samuel John"');
+  });
+
+  it('should show toast when clicking Add Employee button', () => {
+    fixture.detectChanges();
+    component.onAddEmployee();
+    expect(component.toastMessage()).toContain('Add Employee popup');
+  });
+
+  it('should handle pagination changes', () => {
+    fixture.detectChanges();
+    component.totalPages.set(3);
+    component.pageNumber.set(1);
+
+    component.onPageChange(2);
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: '',
+      PageNumber: 2,
+      PageSize: 5,
+    });
+
+    component.onPageSizeChange(10);
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: '',
+      PageNumber: 1,
+      PageSize: 10,
+    });
+  });
+
+  it('should format role names cleanly', () => {
+    expect(component.formatRole('AdminEmployee')).toBe('Admin Employee');
+    expect(component.formatRole('Supervisor')).toBe('Supervisor');
+    expect(component.formatRole(undefined)).toBe('Employee');
+  });
+
+  it('should derive username from email when userName field is absent', () => {
+    expect(component.getUserName(mockEmployees[0])).toBe('samuel');
+    expect(
+      component.getUserName({
+        ...mockEmployees[0],
+        userName: 'customUser',
+      })
+    ).toBe('customUser');
   });
 });
