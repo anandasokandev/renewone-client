@@ -397,3 +397,54 @@ export interface PolicyPreviewData {
   policyIssuedBy: string;
   policyIssuedByPhone: string;
 }
+
+export interface AdminCommonQueueItem {
+  id: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber: string;
+  vehicleType: string;
+  policyType: string;
+  insuranceType: string;
+  status: string;
+  createdBy: string;
+  createdByPhone: string;
+  createdByRole: string;
+  agencyName: string;
+  agencyNumber: string;
+  submittedOn: string;
+  priority: number;
+}
+
+export enum DateFilterType {
+  Today = 1,
+  Yesterday = 2,
+  ThisWeek = 3,
+  ThisMonth = 4,
+  Custom = 5,
+  ThisYear = 6,
+}
+
+export interface AdminCommonQueueFilterParams {
+  search?: string;
+  insuranceTypeId?: string;
+  vehicleTypeId?: string;
+  fromDate?: string;
+  toDate?: string;
+  dateFilter?: number;
+  sortDescending?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminCommonQueuePagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminCommonQueueItem[];
+}
+

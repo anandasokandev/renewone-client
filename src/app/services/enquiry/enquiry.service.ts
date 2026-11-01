@@ -29,6 +29,9 @@ import {
   QuotePaymentSummaryData,
   PolicyPreviewData,
   AgentEnquiryDetailsData,
+  AdminCommonQueueItem,
+  AdminCommonQueueFilterParams,
+  AdminCommonQueuePagedData,
 } from '../../models/enquiry.model';
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
@@ -242,6 +245,48 @@ export class EnquiryService {
       `${environment.apiUrl}/Enquiry/admin/quote-summary/${enquiryId}`,
       {
         headers: this.getAuthHeaders(),
+      }
+    );
+  }
+
+  getAdminCommonQueue(
+    params: AdminCommonQueueFilterParams = {}
+  ): Observable<ApiResponse<AdminCommonQueuePagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminCommonQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/common-queue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
       }
     );
   }
