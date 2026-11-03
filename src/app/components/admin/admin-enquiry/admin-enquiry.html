@@ -41,6 +41,24 @@
           @if (stage.id === 1 && totalRecords() > 0) {
             <span class="stage-tab-badge">{{ totalRecords() }}</span>
           }
+          @if (stage.id === 2 && allEnquiriesTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ allEnquiriesTotalRecords() }}</span>
+          }
+          @if (stage.id === 3 && myTasksTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ myTasksTotalRecords() }}</span>
+          }
+          @if (stage.id === 4 && quoteTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ quoteTotalRecords() }}</span>
+          }
+          @if (stage.id === 5 && quotedTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ quotedTotalRecords() }}</span>
+          }
+          @if (stage.id === 6 && policyTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ policyTotalRecords() }}</span>
+          }
+          @if (stage.id === 7 && policyIssuedTotalRecords() > 0) {
+            <span class="stage-tab-badge">{{ policyIssuedTotalRecords() }}</span>
+          }
         </button>
       }
     </div>
@@ -90,7 +108,8 @@
   <div class="enquiry-layout-grid">
     <!-- Left Main Column (70%-75%): Common Queue Card Section -->
     <div class="layout-main-col">
-      <section class="carbon-card-section" id="section-queue-table">
+      @if (activeStage() === 1) {
+        <section class="carbon-card-section" id="section-queue-table">
     <!-- Toolbar with Title & Search / Filter Controls -->
     <div class="section-toolbar">
       <div class="section-title-group">
@@ -468,6 +487,1762 @@
       }
     </div>
   </section>
+  } @else if (activeStage() === 2) {
+    <section class="carbon-card-section" id="section-all-enquiries-table">
+      <!-- Toolbar with Title & Search / Filter Controls -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">All Enquiries</h2>
+            <span class="carbon-count-tag">{{ allEnquiriesTotalRecords() }} total</span>
+          </div>
+        </div>
+
+        <!-- Search & Filters Toolbar -->
+        <div class="toolbar-filters-group">
+          <!-- Global Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search customer, number, enquiry ID, vehicle..."
+              [ngModel]="allEnquiriesSearchQuery()"
+              (ngModelChange)="onAllEnquiriesSearchChange($event)"
+              (keyup.enter)="submitAllEnquiriesSearch()"
+              aria-label="Search all enquiries"
+            />
+            @if (allEnquiriesSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearAllEnquiriesSearch()" aria-label="Clear search">&times;</button>
+            }
+          </div>
+
+          <!-- Filters Row -->
+          <div class="filters-selects-row">
+            <!-- Enquiry Status Filter -->
+            <div class="filter-field">
+              <label for="all-filter-status" class="field-label">Status:</label>
+              <select
+                id="all-filter-status"
+                class="carbon-select"
+                [ngModel]="allEnquiriesSelectedStatus()"
+                (ngModelChange)="onAllEnquiriesStatusChange($event)"
+              >
+                <option value="All">All Statuses</option>
+                @for (opt of statusOptions; track opt.id) {
+                  <option [value]="opt.id">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Insurance Line Filter -->
+            <div class="filter-field">
+              <label for="all-filter-insurance-type" class="field-label">Insurance Line:</label>
+              <select
+                id="all-filter-insurance-type"
+                class="carbon-select"
+                [ngModel]="allEnquiriesSelectedInsuranceTypeId()"
+                (ngModelChange)="onAllEnquiriesInsuranceTypeChange($event)"
+              >
+                <option value="All">All Lines</option>
+                @for (type of insuranceTypes(); track type.id) {
+                  <option [value]="type.id">{{ type.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Vehicle Category Filter -->
+            <div class="filter-field">
+              <label for="all-filter-vehicle-type" class="field-label">Vehicle Category:</label>
+              <select
+                id="all-filter-vehicle-type"
+                class="carbon-select"
+                [ngModel]="allEnquiriesSelectedVehicleTypeId()"
+                (ngModelChange)="onAllEnquiriesVehicleTypeChange($event)"
+              >
+                <option value="All">All Categories</option>
+                @for (vType of vehicleTypes(); track vType.id) {
+                  <option [value]="vType.id">{{ vType.typeName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Account Filter -->
+            <div class="filter-field">
+              <label for="all-filter-account" class="field-label">Account:</label>
+              <select
+                id="all-filter-account"
+                class="carbon-select"
+                [ngModel]="allEnquiriesSelectedAccountId()"
+                (ngModelChange)="onAllEnquiriesAccountChange($event)"
+              >
+                <option value="All">All Accounts</option>
+                @for (acc of accountOptions(); track acc.accountId) {
+                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-field">
+              <label for="all-filter-date-range" class="field-label">Date Filter:</label>
+              <select
+                id="all-filter-date-range"
+                class="carbon-select"
+                [ngModel]="allEnquiriesSelectedDateFilter().toString()"
+                (ngModelChange)="onAllEnquiriesDateFilterChange($event)"
+              >
+                <option [value]="DateFilterType.Today">Today</option>
+                <option [value]="DateFilterType.Yesterday">Yesterday</option>
+                <option [value]="DateFilterType.ThisWeek">This Week</option>
+                <option [value]="DateFilterType.ThisMonth">This Month</option>
+                <option [value]="DateFilterType.Custom">Custom Range</option>
+                <option [value]="DateFilterType.ThisYear">This Year</option>
+              </select>
+            </div>
+
+            <!-- Custom Date Inputs (when DateFilterType.Custom) -->
+            @if (allEnquiriesSelectedDateFilter() === DateFilterType.Custom) {
+              <div class="custom-date-range-group">
+                <div class="date-input-wrap">
+                  <label for="all-from-date" class="field-label">From:</label>
+                  <input
+                    id="all-from-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="allEnquiriesFromDate()"
+                    (ngModelChange)="allEnquiriesFromDate.set($event); onAllEnquiriesCustomDateChange()"
+                  />
+                </div>
+                <div class="date-input-wrap">
+                  <label for="all-to-date" class="field-label">To:</label>
+                  <input
+                    id="all-to-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="allEnquiriesToDate()"
+                    (ngModelChange)="allEnquiriesToDate.set($event); onAllEnquiriesCustomDateChange()"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isAllEnquiriesLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching all customer enquiries...</span>
+          </div>
+        } @else if (allEnquiriesItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+              </svg>
+            </div>
+            <h3 class="empty-title">No enquiries found</h3>
+            <p class="empty-desc">
+              @if (allEnquiriesSearchQuery() || allEnquiriesSelectedStatus() !== 'All' || allEnquiriesSelectedInsuranceTypeId() !== 'All' || allEnquiriesSelectedVehicleTypeId() !== 'All' || allEnquiriesSelectedAccountId() !== 'All' || allEnquiriesSelectedDateFilter() !== DateFilterType.Today) {
+                No enquiry records match the active filters. Try resetting filters to view all entries.
+              } @else {
+                No customer enquiries are currently registered in the system.
+              }
+            </p>
+            @if (allEnquiriesSearchQuery() || allEnquiriesSelectedStatus() !== 'All' || allEnquiriesSelectedInsuranceTypeId() !== 'All' || allEnquiriesSelectedVehicleTypeId() !== 'All' || allEnquiriesSelectedAccountId() !== 'All' || allEnquiriesSelectedDateFilter() !== DateFilterType.Today) {
+              <button type="button" class="carbon-btn-secondary" (click)="resetAllFilters()">
+                Clear Filters
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table" aria-label="Admin All Enquiries Table">
+              <thead>
+                <tr>
+                  <th class="th-enquiry-id">Enquiry ID &amp; Submitted</th>
+                  <th class="th-customer">Customer &amp; Contact</th>
+                  <th class="th-vehicle">Vehicle &amp; Policy</th>
+                  <th class="th-source">Created By &amp; Agency</th>
+                  <th class="th-assigned">Assigned Employee</th>
+                  <th class="th-quotes">Quotes</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-actions text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of allEnquiriesItems(); track item.id) {
+                  <tr class="carbon-table-row" (click)="openAllEnquiryDetails(item, $event)">
+                    <!-- 1. Enquiry ID & Submitted -->
+                    <td class="td-enquiry-id">
+                      <div class="enquiry-id-cell">
+                        <div class="id-row">
+                          <span class="code-mono">{{ item.enquiryId }}</span>
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.enquiryId, 'Enquiry ID', $event)"
+                            [title]="copiedField() === item.enquiryId ? 'Copied!' : 'Copy Enquiry ID'"
+                            aria-label="Copy Enquiry ID"
+                          >
+                            @if (copiedField() === item.enquiryId) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        </div>
+
+                        <div class="timestamp-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                          </svg>
+                          <span>{{ formatDate(item.submittedOn || item.createdAt) }} • {{ formatTime(item.submittedOn || item.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 2. Customer & Contact -->
+                    <td class="td-customer">
+                      <div class="customer-cell">
+                        <span class="customer-primary-name">{{ item.customerName || 'Unnamed Customer' }}</span>
+                        <div class="contact-links-row">
+                          <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                          </svg>
+                          <span class="phone-mono">{{ item.customerNumber || '—' }}</span>
+                          @if (item.customerNumber) {
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.customerNumber, 'Customer Phone', $event)"
+                              [title]="copiedField() === item.customerNumber ? 'Copied!' : 'Copy Phone'"
+                              aria-label="Copy Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+
+                            <a
+                              [href]="getWhatsAppUrl(item.customerNumber)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="whatsapp-link-btn"
+                              (click)="$event.stopPropagation()"
+                              title="Chat on WhatsApp"
+                              aria-label="Chat on WhatsApp"
+                            >
+                              <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.587 1.761.884 2.791.884h.001c3.181 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.77-5.769-5.77zm0 10.455h-.001c-.904 0-1.789-.243-2.56-.701l-.184-.108-1.579.414.421-1.539-.12-.191c-.504-.8-.77-1.727-.77-2.678 0-2.628 2.14-4.767 4.77-4.767 1.274 0 2.472.497 3.372 1.398.9.901 1.396 2.098 1.396 3.371 0 2.629-2.14 4.768-4.77 4.768zm3.054-3.578c-.167-.084-.991-.489-1.145-.545-.153-.056-.265-.084-.376.084-.112.167-.432.545-.53.656-.098.112-.195.126-.362.042-.167-.084-.707-.261-1.346-.831-.497-.444-.833-.992-.931-1.159-.098-.168-.01-.258.073-.341.075-.075.167-.195.251-.293.084-.098.112-.168.167-.279.056-.112.028-.21-.014-.293-.042-.084-.376-.907-.516-1.243-.135-.327-.273-.282-.376-.287h-.321c-.112 0-.293.042-.446.21-.153.167-.585.572-.585 1.395 0 .823.599 1.618.683 1.73.084.112 1.178 1.799 2.855 2.522.4.172.712.275.955.353.401.127.766.109 1.055.066.321-.048.991-.405 1.13-.796.14-.391.14-.726.098-.796-.042-.07-.154-.112-.321-.196z"/>
+                              </svg>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 3. Vehicle & Policy -->
+                    <td class="td-vehicle">
+                      <div class="vehicle-cell">
+                        @if (item.vehicleNumber) {
+                          <div class="plate-row">
+                            <span class="vehicle-plate-pill">{{ item.vehicleNumber }}</span>
+                          </div>
+                        }
+                        <div class="spec-row">
+                          <span class="vehicle-spec">{{ item.vehicleType || 'Vehicle' }}</span>
+                          <span class="dot-sep">•</span>
+                          <span class="policy-spec">{{ item.policyType || 'Comprehensive' }}</span>
+                        </div>
+                        <span class="line-badge">{{ item.insuranceType || 'Insurance' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- 4. Source & Agency -->
+                    <td class="td-source">
+                      <div class="source-cell">
+                        <div class="agency-title-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm4 0h2v2h-2V5zm-4 4h2v2H7V9zm4 0h2v2h-2V9zm-4 4h2v2H7v-2zm4 0h2v2h-2v-2z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="agency-name">{{ item.agencyName || 'Direct Platform' }}</span>
+                          @if (item.agencyNumber) {
+                            <span class="code-subtext">#{{ item.agencyNumber }}</span>
+                          }
+                        </div>
+
+                        <div class="creator-row">
+                          <span class="creator-name">{{ item.createdBy || 'Agent' }}</span>
+                          @if (item.createdByRole) {
+                            <span class="role-badge-sm">{{ item.createdByRole }}</span>
+                          }
+                        </div>
+
+                        @if (item.createdByPhone) {
+                          <div class="creator-phone-row">
+                            <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                            </svg>
+                            <span>{{ item.createdByPhone }}</span>
+                          </div>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 5. Assigned Employee -->
+                    <td class="td-assigned">
+                      <div class="assigned-cell">
+                        @if (item.assignedEmployee || item.assignedEmployeeName) {
+                          <span class="assigned-name">{{ item.assignedEmployee || item.assignedEmployeeName }}</span>
+                        } @else {
+                          <span class="unassigned-tag">Unassigned</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 6. Quote Count -->
+                    <td class="td-quotes">
+                      <span class="quote-count-pill" [class.has-quotes]="(item.quoteCount ?? 0) > 0">
+                        {{ item.quoteCount ?? 0 }} {{ (item.quoteCount ?? 0) === 1 ? 'Quote' : 'Quotes' }}
+                      </span>
+                    </td>
+
+                    <!-- 7. Status -->
+                    <td class="td-status">
+                      <span class="carbon-tag tag-status" [ngClass]="getEnquiryStatusClass(item.status)">
+                        {{ getEnquiryStatusLabel(item.status) }}
+                      </span>
+                    </td>
+
+                    <!-- 8. Actions -->
+                    <td class="td-actions text-right">
+                      <div class="actions-cell-wrapper" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="carbon-icon-btn edit-action-btn"
+                          (click)="onAssignToMeAllEnquiry(item, $event)"
+                          title="Assign to Me"
+                          aria-label="Assign to Me"
+                        >
+                          <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path>
+                            <circle cx="8.5" cy="7" r="4"></circle>
+                            <line x1="20" y1="8" x2="20" y2="14"></line>
+                            <line x1="23" y1="11" x2="17" y2="11"></line>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              {{ allEnquiriesShowingRangeText() }}
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="all-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="all-page-size"
+                  class="carbon-select"
+                  [ngModel]="allEnquiriesPageSize()"
+                  (ngModelChange)="onAllEnquiriesPageSizeChange($event)"
+                >
+                  <option [value]="4">4</option>
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ allEnquiriesPageNumber() }} of {{ allEnquiriesTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!allEnquiriesHasPreviousPage() || isAllEnquiriesLoading()"
+                  (click)="onAllEnquiriesPageChange(allEnquiriesPageNumber() - 1)"
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!allEnquiriesHasNextPage() || isAllEnquiriesLoading()"
+                  (click)="onAllEnquiriesPageChange(allEnquiriesPageNumber() + 1)"
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  } @else if (activeStage() === 3) {
+    <section class="carbon-card-section" id="section-my-tasks-table">
+      <!-- Toolbar with Title & Search / Filter Controls -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">My Tasks</h2>
+            <span class="carbon-count-tag">{{ myTasksTotalRecords() }} total</span>
+          </div>
+        </div>
+
+        <!-- Search & Filters Toolbar -->
+        <div class="toolbar-filters-group">
+          <!-- Global Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search customer, number, enquiry ID, vehicle..."
+              [ngModel]="myTasksSearchQuery()"
+              (ngModelChange)="onMyTasksSearchChange($event)"
+              (keyup.enter)="submitMyTasksSearch()"
+              aria-label="Search my tasks"
+            />
+            @if (myTasksSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearMyTasksSearch()" aria-label="Clear search">&times;</button>
+            }
+          </div>
+
+          <!-- Filters Row -->
+          <div class="filters-selects-row">
+            <!-- Enquiry Status Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-status" class="field-label">Status:</label>
+              <select
+                id="mytasks-filter-status"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedEnquiryStatus()"
+                (ngModelChange)="onMyTasksEnquiryStatusChange($event)"
+              >
+                <option value="All">All Statuses</option>
+                @for (opt of statusOptions; track opt.id) {
+                  <option [value]="opt.id">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Policy Type Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-policy-type" class="field-label">Policy Type:</label>
+              <select
+                id="mytasks-filter-policy-type"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedPolicyType()"
+                (ngModelChange)="onMyTasksPolicyTypeChange($event)"
+              >
+                <option value="All">All Policy Types</option>
+                @for (pt of policyTypeOptions; track pt.id) {
+                  <option [value]="pt.id">{{ pt.label }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Insurance Line Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-insurance-type" class="field-label">Insurance Line:</label>
+              <select
+                id="mytasks-filter-insurance-type"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedInsuranceTypeId()"
+                (ngModelChange)="onMyTasksInsuranceTypeChange($event)"
+              >
+                <option value="All">All Lines</option>
+                @for (type of insuranceTypes(); track type.id) {
+                  <option [value]="type.id">{{ type.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Vehicle Category Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-vehicle-type" class="field-label">Vehicle Category:</label>
+              <select
+                id="mytasks-filter-vehicle-type"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedVehicleTypeId()"
+                (ngModelChange)="onMyTasksVehicleTypeChange($event)"
+              >
+                <option value="All">All Categories</option>
+                @for (vType of vehicleTypes(); track vType.id) {
+                  <option [value]="vType.id">{{ vType.typeName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Account Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-account" class="field-label">Account:</label>
+              <select
+                id="mytasks-filter-account"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedAccountId()"
+                (ngModelChange)="onMyTasksAccountChange($event)"
+              >
+                <option value="All">All Accounts</option>
+                @for (acc of accountOptions(); track acc.accountId) {
+                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Date Range Filter -->
+            <div class="filter-field">
+              <label for="mytasks-filter-date-range" class="field-label">Date Filter:</label>
+              <select
+                id="mytasks-filter-date-range"
+                class="carbon-select"
+                [ngModel]="myTasksSelectedDateFilter().toString()"
+                (ngModelChange)="onMyTasksDateFilterChange($event)"
+              >
+                <option [value]="DateFilterType.Today">Today</option>
+                <option [value]="DateFilterType.Yesterday">Yesterday</option>
+                <option [value]="DateFilterType.ThisWeek">This Week</option>
+                <option [value]="DateFilterType.ThisMonth">This Month</option>
+                <option [value]="DateFilterType.Custom">Custom Range</option>
+                <option [value]="DateFilterType.ThisYear">This Year</option>
+              </select>
+            </div>
+
+            <!-- Custom Date Inputs (when DateFilterType.Custom) -->
+            @if (myTasksSelectedDateFilter() === DateFilterType.Custom) {
+              <div class="custom-date-range-group">
+                <div class="date-input-wrap">
+                  <label for="mytasks-from-date" class="field-label">From:</label>
+                  <input
+                    id="mytasks-from-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="myTasksFromDate()"
+                    (ngModelChange)="myTasksFromDate.set($event); onMyTasksCustomDateChange()"
+                  />
+                </div>
+                <div class="date-input-wrap">
+                  <label for="mytasks-to-date" class="field-label">To:</label>
+                  <input
+                    id="mytasks-to-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="myTasksToDate()"
+                    (ngModelChange)="myTasksToDate.set($event); onMyTasksCustomDateChange()"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isMyTasksLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching assigned tasks...</span>
+          </div>
+        } @else if (myTasksItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+              </svg>
+            </div>
+            <h3 class="empty-title">No tasks found</h3>
+            <p class="empty-desc">
+              @if (myTasksSearchQuery() || myTasksSelectedEnquiryStatus() !== 'All' || myTasksSelectedPolicyType() !== 'All' || myTasksSelectedInsuranceTypeId() !== 'All' || myTasksSelectedVehicleTypeId() !== 'All' || myTasksSelectedAccountId() !== 'All' || myTasksSelectedDateFilter() !== DateFilterType.Today) {
+                No task records match the active filters. Try resetting filters to view all entries.
+              } @else {
+                You currently have no tasks assigned in this queue.
+              }
+            </p>
+            @if (myTasksSearchQuery() || myTasksSelectedEnquiryStatus() !== 'All' || myTasksSelectedPolicyType() !== 'All' || myTasksSelectedInsuranceTypeId() !== 'All' || myTasksSelectedVehicleTypeId() !== 'All' || myTasksSelectedAccountId() !== 'All' || myTasksSelectedDateFilter() !== DateFilterType.Today) {
+              <button type="button" class="carbon-btn-secondary" (click)="resetAllFilters()">
+                Clear Filters
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table" aria-label="Admin My Tasks Table">
+              <thead>
+                <tr>
+                  <th class="th-enquiry-id">Enquiry ID &amp; Submitted</th>
+                  <th class="th-priority">Priority</th>
+                  <th class="th-customer">Customer &amp; Contact</th>
+                  <th class="th-vehicle">Vehicle &amp; Policy</th>
+                  <th class="th-source">Created By &amp; Agency</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-actions text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of myTasksItems(); track item.id) {
+                  <tr class="carbon-table-row" (click)="openMyTaskDetails(item, $event)">
+                    <!-- 1. Enquiry ID & Submitted -->
+                    <td class="td-enquiry-id">
+                      <div class="enquiry-id-cell">
+                        <div class="id-row">
+                          <span class="code-mono">{{ item.enquiryId }}</span>
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.enquiryId, 'Enquiry ID', $event)"
+                            [title]="copiedField() === item.enquiryId ? 'Copied!' : 'Copy Enquiry ID'"
+                            aria-label="Copy Enquiry ID"
+                          >
+                            @if (copiedField() === item.enquiryId) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        </div>
+
+                        <div class="timestamp-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                          </svg>
+                          <span>{{ formatDate(item.submittedOn || item.createdAt) }} • {{ formatTime(item.submittedOn || item.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 2. Priority -->
+                    <td class="td-priority">
+                      <span class="priority-tag" [ngClass]="getPriorityClass(item.priority)">
+                        {{ getPriorityLabel(item.priority) }}
+                      </span>
+                    </td>
+
+                    <!-- 3. Customer & Contact -->
+                    <td class="td-customer">
+                      <div class="customer-cell">
+                        <span class="customer-primary-name">{{ item.customerName || 'Unnamed Customer' }}</span>
+                        <div class="contact-links-row">
+                          <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                          </svg>
+                          <span class="phone-mono">{{ item.customerNumber || '—' }}</span>
+                          @if (item.customerNumber) {
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.customerNumber, 'Customer Phone', $event)"
+                              [title]="copiedField() === item.customerNumber ? 'Copied!' : 'Copy Phone'"
+                              aria-label="Copy Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+
+                            <a
+                              [href]="getWhatsAppUrl(item.customerNumber)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="whatsapp-link-btn"
+                              (click)="$event.stopPropagation()"
+                              title="Chat on WhatsApp"
+                              aria-label="Chat on WhatsApp"
+                            >
+                              <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.587 1.761.884 2.791.884h.001c3.181 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.77-5.769-5.77zm0 10.455h-.001c-.904 0-1.789-.243-2.56-.701l-.184-.108-1.579.414.421-1.539-.12-.191c-.504-.8-.77-1.727-.77-2.678 0-2.628 2.14-4.767 4.77-4.767 1.274 0 2.472.497 3.372 1.398.9.901 1.396 2.098 1.396 3.371 0 2.629-2.14 4.768-4.77 4.768zm3.054-3.578c-.167-.084-.991-.489-1.145-.545-.153-.056-.265-.084-.376.084-.112.167-.432.545-.53.656-.098.112-.195.126-.362.042-.167-.084-.707-.261-1.346-.831-.497-.444-.833-.992-.931-1.159-.098-.168-.01-.258.073-.341.075-.075.167-.195.251-.293.084-.098.112-.168.167-.279.056-.112.028-.21-.014-.293-.042-.084-.376-.907-.516-1.243-.135-.327-.273-.282-.376-.287h-.321c-.112 0-.293.042-.446.21-.153.167-.585.572-.585 1.395 0 .823.599 1.618.683 1.73.084.112 1.178 1.799 2.855 2.522.4.172.712.275.955.353.401.127.766.109 1.055.066.321-.048.991-.405 1.13-.796.14-.391.14-.726.098-.796-.042-.07-.154-.112-.321-.196z"/>
+                              </svg>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 4. Vehicle & Policy -->
+                    <td class="td-vehicle">
+                      <div class="vehicle-cell">
+                        @if (item.vehicleNumber) {
+                          <div class="plate-row">
+                            <span class="vehicle-plate-pill">{{ item.vehicleNumber }}</span>
+                          </div>
+                        }
+                        <div class="spec-row">
+                          <span class="vehicle-spec">{{ item.vehicleType || 'Vehicle' }}</span>
+                          <span class="dot-sep">•</span>
+                          <span class="policy-spec">{{ getPolicyTypeLabel(item.policyType) }}</span>
+                        </div>
+                        <span class="line-badge">{{ item.insuranceType || 'Insurance' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- 5. Created By & Agency -->
+                    <td class="td-source">
+                      <div class="source-cell">
+                        <div class="agency-title-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm4 0h2v2h-2V5zm-4 4h2v2H7V9zm4 0h2v2h-2V9zm-4 4h2v2H7v-2zm4 0h2v2h-2v-2z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="agency-name">{{ item.agencyName || 'Direct Platform' }}</span>
+                          @if (item.agencyNumber) {
+                            <span class="code-subtext">#{{ item.agencyNumber }}</span>
+                          }
+                        </div>
+
+                        <div class="creator-row">
+                          <span class="creator-name">{{ item.createdBy || 'Agent' }}</span>
+                          @if (item.createdByRole) {
+                            <span class="role-badge-sm">{{ item.createdByRole }}</span>
+                          }
+                        </div>
+
+                        @if (item.createdByPhone) {
+                          <div class="creator-phone-row">
+                            <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                            </svg>
+                            <span>{{ item.createdByPhone }}</span>
+                          </div>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 6. Status -->
+                    <td class="td-status">
+                      <span class="carbon-tag tag-status" [ngClass]="getEnquiryStatusClass(item.enquiryStatus ?? item.status)">
+                        {{ getEnquiryStatusLabel(item.enquiryStatus ?? item.status) }}
+                      </span>
+                    </td>
+
+                    <!-- 7. Actions -->
+                    <td class="td-actions text-right">
+                      <div class="actions-cell-wrapper" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="carbon-btn-open"
+                          (click)="openMyTaskDetails(item, $event)"
+                          title="View & Process Enquiry"
+                          aria-label="View Enquiry"
+                        >
+                          <span>Open</span>
+                          <svg class="btn-arrow-svg" viewBox="0 0 16 16" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              {{ myTasksShowingRangeText() }}
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="mytasks-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="mytasks-page-size"
+                  class="carbon-select"
+                  [ngModel]="myTasksPageSize()"
+                  (ngModelChange)="onMyTasksPageSizeChange($event)"
+                >
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ myTasksPageNumber() }} of {{ myTasksTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!myTasksHasPreviousPage() || isMyTasksLoading()"
+                  (click)="onMyTasksPageChange(myTasksPageNumber() - 1)"
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!myTasksHasNextPage() || isMyTasksLoading()"
+                  (click)="onMyTasksPageChange(myTasksPageNumber() + 1)"
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  } @else if (activeStage() === 4 || activeStage() === 5) {
+    <section class="carbon-card-section" id="section-quote-queue-table">
+      <!-- Toolbar with Title & Search / Filter Controls -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">{{ activeStage() === 4 ? 'Quote Queue' : 'Quoted Queue' }}</h2>
+            <span class="carbon-count-tag">{{ quoteQueueTotalRecords() }} total</span>
+          </div>
+        </div>
+
+        <!-- Search & Filters Toolbar -->
+        <div class="toolbar-filters-group">
+          <!-- Global Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search customer, number, enquiry ID, vehicle..."
+              [ngModel]="quoteQueueSearchQuery()"
+              (ngModelChange)="onQuoteQueueSearchChange($event)"
+              (keyup.enter)="submitQuoteQueueSearch()"
+              aria-label="Search quote queue"
+            />
+            @if (quoteQueueSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearQuoteQueueSearch()" aria-label="Clear search">&times;</button>
+            }
+          </div>
+
+          <!-- Filters Row -->
+          <div class="filters-selects-row">
+            <!-- Insurance Type Filter -->
+            <div class="filter-field">
+              <label for="quote-filter-insurance" class="field-label">Insurance:</label>
+              <select
+                id="quote-filter-insurance"
+                class="carbon-select"
+                [ngModel]="quoteQueueSelectedInsuranceTypeId()"
+                (ngModelChange)="onQuoteQueueInsuranceTypeChange($event)"
+              >
+                <option value="All">All Categories</option>
+                @for (item of insuranceTypes(); track item.id) {
+                  <option [value]="item.id">{{ item.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Vehicle Type Filter -->
+            <div class="filter-field">
+              <label for="quote-filter-vehicle" class="field-label">Vehicle:</label>
+              <select
+                id="quote-filter-vehicle"
+                class="carbon-select"
+                [ngModel]="quoteQueueSelectedVehicleTypeId()"
+                (ngModelChange)="onQuoteQueueVehicleTypeChange($event)"
+              >
+                <option value="All">All Vehicles</option>
+                @for (item of vehicleTypes(); track item.id) {
+                  <option [value]="item.id">{{ item.typeName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Account Filter -->
+            <div class="filter-field">
+              <label for="quote-filter-account" class="field-label">Account:</label>
+              <select
+                id="quote-filter-account"
+                class="carbon-select"
+                [ngModel]="quoteQueueSelectedAccountId()"
+                (ngModelChange)="onQuoteQueueAccountChange($event)"
+              >
+                <option value="All">All Accounts</option>
+                @for (acc of accountOptions(); track acc.accountId) {
+                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Date Range Predefined Filter -->
+            <div class="filter-field">
+              <label for="quote-filter-date" class="field-label">Date Filter:</label>
+              <select
+                id="quote-filter-date"
+                class="carbon-select"
+                [ngModel]="quoteQueueSelectedDateFilter().toString()"
+                (ngModelChange)="onQuoteQueueDateFilterChange($event)"
+              >
+                <option [value]="DateFilterType.Today">Today</option>
+                <option [value]="DateFilterType.Yesterday">Yesterday</option>
+                <option [value]="DateFilterType.ThisWeek">This Week</option>
+                <option [value]="DateFilterType.ThisMonth">This Month</option>
+                <option [value]="DateFilterType.Custom">Custom Range</option>
+                <option [value]="DateFilterType.ThisYear">This Year</option>
+              </select>
+            </div>
+
+            <!-- Custom Date Range Inputs -->
+            @if (quoteQueueSelectedDateFilter() === DateFilterType.Custom) {
+              <div class="custom-date-range-group">
+                <div class="date-input-wrap">
+                  <label for="quote-from-date" class="field-label">From:</label>
+                  <input
+                    id="quote-from-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="quoteQueueFromDate()"
+                    (ngModelChange)="quoteQueueFromDate.set($event); onQuoteQueueCustomDateChange()"
+                  />
+                </div>
+                <div class="date-input-wrap">
+                  <label for="quote-to-date" class="field-label">To:</label>
+                  <input
+                    id="quote-to-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="quoteQueueToDate()"
+                    (ngModelChange)="quoteQueueToDate.set($event); onQuoteQueueCustomDateChange()"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isQuoteQueueLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching {{ activeStage() === 4 ? 'quote' : 'quoted' }} queue...</span>
+          </div>
+        } @else if (quoteQueueItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h3 class="empty-title">No enquiries found</h3>
+            <p class="empty-desc">
+              @if (quoteQueueSearchQuery() || quoteQueueSelectedInsuranceTypeId() !== 'All' || quoteQueueSelectedVehicleTypeId() !== 'All' || quoteQueueSelectedAccountId() !== 'All' || quoteQueueSelectedDateFilter() !== DateFilterType.Today) {
+                No enquiry records match the active filters in the {{ activeStage() === 4 ? 'Quote' : 'Quoted' }} queue. Try resetting filters to view all entries.
+              } @else {
+                There are currently no enquiries in the {{ activeStage() === 4 ? 'Quote' : 'Quoted' }} queue.
+              }
+            </p>
+            @if (quoteQueueSearchQuery() || quoteQueueSelectedInsuranceTypeId() !== 'All' || quoteQueueSelectedVehicleTypeId() !== 'All' || quoteQueueSelectedAccountId() !== 'All' || quoteQueueSelectedDateFilter() !== DateFilterType.Today) {
+              <button type="button" class="carbon-btn-secondary" (click)="resetAllFilters()">
+                Clear Filters
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table" [attr.aria-label]="activeStage() === 4 ? 'Admin Quote Queue Table' : 'Admin Quoted Queue Table'">
+              <thead>
+                <tr>
+                  <th class="th-enquiry-id">Enquiry ID &amp; Submitted</th>
+                  <th class="th-priority">Priority</th>
+                  <th class="th-customer">Customer &amp; Contact</th>
+                  <th class="th-vehicle">Vehicle &amp; Policy</th>
+                  <th class="th-source">Created By &amp; Agency</th>
+                  <!-- <th class="th-assigned">Assigned Employee</th> -->
+                  <th class="th-quotes">Quotes</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-actions text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of quoteQueueItems(); track item.id || item.enquiryId) {
+                  <tr class="carbon-table-row" (click)="openQuoteQueueDetails(item, $event)">
+                    <!-- 1. Enquiry ID & Submitted -->
+                    <td class="td-enquiry-id">
+                      <div class="enquiry-id-cell">
+                        <div class="id-row">
+                          <span class="code-mono">{{ item.enquiryId }}</span>
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.enquiryId, 'Enquiry ID', $event)"
+                            [title]="copiedField() === item.enquiryId ? 'Copied!' : 'Copy Enquiry ID'"
+                            aria-label="Copy Enquiry ID"
+                          >
+                            @if (copiedField() === item.enquiryId) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        </div>
+
+                        <div class="timestamp-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                          </svg>
+                          <span>{{ formatDate(item.submittedOn || item.createdAt) }} • {{ formatTime(item.submittedOn || item.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 2. Priority -->
+                    <td class="td-priority">
+                      <span class="priority-tag" [ngClass]="getPriorityClass(item.priority)">
+                        {{ getPriorityLabel(item.priority) }}
+                      </span>
+                    </td>
+
+                    <!-- 3. Customer & Contact -->
+                    <td class="td-customer">
+                      <div class="customer-cell">
+                        <span class="customer-primary-name">{{ item.customerName || 'Unnamed Customer' }}</span>
+                        <div class="contact-links-row">
+                          <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                          </svg>
+                          <span class="phone-mono">{{ item.customerNumber || '—' }}</span>
+                          @if (item.customerNumber) {
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.customerNumber, 'Customer Phone', $event)"
+                              [title]="copiedField() === item.customerNumber ? 'Copied!' : 'Copy Phone'"
+                              aria-label="Copy Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+
+                            <a
+                              [href]="getWhatsAppUrl(item.customerNumber)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="whatsapp-link-btn"
+                              (click)="$event.stopPropagation()"
+                              title="Chat on WhatsApp"
+                              aria-label="Chat on WhatsApp"
+                            >
+                              <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.587 1.761.884 2.791.884h.001c3.181 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.77-5.769-5.77zm0 10.455h-.001c-.904 0-1.789-.243-2.56-.701l-.184-.108-1.579.414.421-1.539-.12-.191c-.504-.8-.77-1.727-.77-2.678 0-2.628 2.14-4.767 4.77-4.767 1.274 0 2.472.497 3.372 1.398.9.901 1.396 2.098 1.396 3.371 0 2.629-2.14 4.768-4.77 4.768zm3.054-3.578c-.167-.084-.991-.489-1.145-.545-.153-.056-.265-.084-.376.084-.112.167-.432.545-.53.656-.098.112-.195.126-.362.042-.167-.084-.707-.261-1.346-.831-.497-.444-.833-.992-.931-1.159-.098-.168-.01-.258.073-.341.075-.075.167-.195.251-.293.084-.098.112-.168.167-.279.056-.112.028-.21-.014-.293-.042-.084-.376-.907-.516-1.243-.135-.327-.273-.282-.376-.287h-.321c-.112 0-.293.042-.446.21-.153.167-.585.572-.585 1.395 0 .823.599 1.618.683 1.73.084.112 1.178 1.799 2.855 2.522.4.172.712.275.955.353.401.127.766.109 1.055.066.321-.048.991-.405 1.13-.796.14-.391.14-.726.098-.796-.042-.07-.154-.112-.321-.196z"/>
+                              </svg>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 4. Vehicle & Policy -->
+                    <td class="td-vehicle">
+                      <div class="vehicle-cell">
+                        @if (item.vehicleNumber) {
+                          <div class="plate-row">
+                            <span class="vehicle-plate-pill">{{ item.vehicleNumber }}</span>
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.vehicleNumber, 'Vehicle Plate', $event)"
+                              [title]="copiedField() === item.vehicleNumber ? 'Copied!' : 'Copy Plate'"
+                              aria-label="Copy Vehicle Plate"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        }
+                        <div class="spec-row">
+                          <span class="vehicle-spec">{{ item.vehicleType || 'Vehicle' }}</span>
+                          <span class="dot-sep">•</span>
+                          <span class="policy-spec">{{ getPolicyTypeLabel(item.policyType) }}</span>
+                        </div>
+                        <span class="line-badge">{{ item.insuranceType || 'Insurance' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- 5. Created By & Agency -->
+                    <td class="td-source">
+                      <div class="source-cell">
+                        <div class="agency-title-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm4 0h2v2h-2V5zm-4 4h2v2H7V9zm4 0h2v2h-2V9zm-4 4h2v2H7v-2zm4 0h2v2h-2v-2z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="agency-name">{{ item.agencyName || 'Direct Platform' }}</span>
+                          @if (item.agencyNumber) {
+                            <span class="code-subtext">#{{ item.agencyNumber }}</span>
+                          }
+                        </div>
+
+                        <div class="creator-row">
+                          <span class="creator-name">{{ item.createdBy || 'Agent' }}</span>
+                          @if (item.createdByRole) {
+                            <span class="role-badge-sm">{{ item.createdByRole }}</span>
+                          }
+                        </div>
+
+                        @if (item.createdByPhone) {
+                          <div class="creator-phone-row">
+                            <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 3a1 1 0 011-1h2a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                            </svg>
+                            <span class="phone-mono-sm">{{ item.createdByPhone }}</span>
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.createdByPhone, 'Creator Phone', $event)"
+                              [title]="copiedField() === item.createdByPhone ? 'Copied!' : 'Copy Creator Phone'"
+                              aria-label="Copy Creator Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 6. Assigned Employee -->
+                    <!-- <td class="td-assigned">
+                      <div class="assigned-cell">
+                        @if (item.assignedEmployee) {
+                          <span class="assigned-name">{{ item.assignedEmployee }}</span>
+                          @if (item.assignedEmployeeRole) {
+                            <span class="role-badge-sm">{{ item.assignedEmployeeRole }}</span>
+                          }
+                        } @else {
+                          <span class="unassigned-tag">Unassigned</span>
+                        }
+                      </div>
+                    </td> -->
+
+                    <!-- 7. Quotes Count -->
+                    <td class="td-quotes">
+                      <span class="quote-count-pill" [class.has-quotes]="(item.quoteCount ?? 0) > 0">
+                        {{ item.quoteCount ?? 0 }} {{ (item.quoteCount ?? 0) === 1 ? 'Quote' : 'Quotes' }}
+                      </span>
+                    </td>
+
+                    <!-- 8. Status -->
+                    <td class="td-status">
+                      <div class="status-cell">
+                        <span class="carbon-tag tag-status" [ngClass]="getEnquiryStatusClass(item.status)">
+                          {{ getEnquiryStatusLabel(item.status) }}
+                        </span>
+                        @if (item.adminAssisted) {
+                          <span class="line-badge" style="background: #f4f4f4; color: #525252; border-color: #e0e0e0; font-size: 10px;">Admin Assisted</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 9. Actions -->
+                    <td class="td-actions text-right">
+                      <div class="actions-cell-wrapper" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="carbon-icon-btn edit-action-btn"
+                          (click)="onProcessQuote(item, $event)"
+                          [title]="activeStage() === 4 ? 'Process Quotes' : 'View Quotes'"
+                          [attr.aria-label]="activeStage() === 4 ? 'Process Quotes' : 'View Quotes'"
+                        >
+                          <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path>
+                            <polyline points="14 2 14 8 20 8"></polyline>
+                            <line x1="16" y1="13" x2="8" y2="13"></line>
+                            <line x1="16" y1="17" x2="8" y2="17"></line>
+                            <polyline points="10 9 9 9 8 9"></polyline>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              {{ quoteQueueShowingRangeText() }}
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="quote-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="quote-page-size"
+                  class="carbon-select"
+                  [ngModel]="quoteQueuePageSize()"
+                  (ngModelChange)="onQuoteQueuePageSizeChange($event)"
+                  aria-label="Select items per page"
+                >
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="20">20</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ quoteQueuePageNumber() }} of {{ quoteQueueTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!quoteQueueHasPreviousPage() || isQuoteQueueLoading()"
+                  (click)="onQuoteQueuePageChange(quoteQueuePageNumber() - 1)"
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!quoteQueueHasNextPage() || isQuoteQueueLoading()"
+                  (click)="onQuoteQueuePageChange(quoteQueuePageNumber() + 1)"
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  } @else if (activeStage() === 6 || activeStage() === 7) {
+    <section class="carbon-card-section" id="section-policy-queue-table">
+      <!-- Toolbar with Title & Search / Filter Controls -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">{{ activeStage() === 6 ? 'Policy Queue' : 'Policy Issued Queue' }}</h2>
+            <span class="carbon-count-tag">{{ policyQueueTotalRecords() }} total</span>
+          </div>
+        </div>
+
+        <!-- Search & Filters Toolbar -->
+        <div class="toolbar-filters-group">
+          <!-- Global Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search customer, number, enquiry ID, vehicle..."
+              [ngModel]="policyQueueSearchQuery()"
+              (ngModelChange)="onPolicyQueueSearchChange($event)"
+              (keyup.enter)="submitPolicyQueueSearch()"
+              aria-label="Search policy queue"
+            />
+            @if (policyQueueSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearPolicyQueueSearch()" aria-label="Clear search">&times;</button>
+            }
+          </div>
+
+          <!-- Filters Row -->
+          <div class="filters-selects-row">
+            <!-- Enquiry Status Filter -->
+            <div class="filter-field">
+              <label for="policy-filter-status" class="field-label">Status:</label>
+              <select
+                id="policy-filter-status"
+                class="carbon-select"
+                [ngModel]="policyQueueSelectedStatus()"
+                (ngModelChange)="onPolicyQueueStatusChange($event)"
+              >
+                <option value="All">All Statuses</option>
+                @for (opt of statusOptions; track opt.id) {
+                  <option [value]="opt.id">{{ opt.label }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Insurance Type Filter -->
+            <div class="filter-field">
+              <label for="policy-filter-insurance" class="field-label">Insurance:</label>
+              <select
+                id="policy-filter-insurance"
+                class="carbon-select"
+                [ngModel]="policyQueueSelectedInsuranceTypeId()"
+                (ngModelChange)="onPolicyQueueInsuranceTypeChange($event)"
+              >
+                <option value="All">All Categories</option>
+                @for (item of insuranceTypes(); track item.id) {
+                  <option [value]="item.id">{{ item.name }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Vehicle Type Filter -->
+            <div class="filter-field">
+              <label for="policy-filter-vehicle" class="field-label">Vehicle:</label>
+              <select
+                id="policy-filter-vehicle"
+                class="carbon-select"
+                [ngModel]="policyQueueSelectedVehicleTypeId()"
+                (ngModelChange)="onPolicyQueueVehicleTypeChange($event)"
+              >
+                <option value="All">All Vehicles</option>
+                @for (item of vehicleTypes(); track item.id) {
+                  <option [value]="item.id">{{ item.typeName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Account Filter -->
+            <div class="filter-field">
+              <label for="policy-filter-account" class="field-label">Account:</label>
+              <select
+                id="policy-filter-account"
+                class="carbon-select"
+                [ngModel]="policyQueueSelectedAccountId()"
+                (ngModelChange)="onPolicyQueueAccountChange($event)"
+              >
+                <option value="All">All Accounts</option>
+                @for (acc of accountOptions(); track acc.accountId) {
+                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+                }
+              </select>
+            </div>
+
+            <!-- Date Range Predefined Filter -->
+            <div class="filter-field">
+              <label for="policy-filter-date" class="field-label">Date Filter:</label>
+              <select
+                id="policy-filter-date"
+                class="carbon-select"
+                [ngModel]="policyQueueSelectedDateFilter().toString()"
+                (ngModelChange)="onPolicyQueueDateFilterChange($event)"
+              >
+                <option [value]="DateFilterType.Today">Today</option>
+                <option [value]="DateFilterType.Yesterday">Yesterday</option>
+                <option [value]="DateFilterType.ThisWeek">This Week</option>
+                <option [value]="DateFilterType.ThisMonth">This Month</option>
+                <option [value]="DateFilterType.Custom">Custom Range</option>
+                <option [value]="DateFilterType.ThisYear">This Year</option>
+              </select>
+            </div>
+
+            <!-- Custom Date Range Inputs -->
+            @if (policyQueueSelectedDateFilter() === DateFilterType.Custom) {
+              <div class="custom-date-range-group">
+                <div class="date-input-wrap">
+                  <label for="policy-from-date" class="field-label">From:</label>
+                  <input
+                    id="policy-from-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="policyQueueFromDate()"
+                    (ngModelChange)="policyQueueFromDate.set($event); onPolicyQueueCustomDateChange()"
+                  />
+                </div>
+                <div class="date-input-wrap">
+                  <label for="policy-to-date" class="field-label">To:</label>
+                  <input
+                    id="policy-to-date"
+                    type="date"
+                    class="carbon-input-date"
+                    [ngModel]="policyQueueToDate()"
+                    (ngModelChange)="policyQueueToDate.set($event); onPolicyQueueCustomDateChange()"
+                  />
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isPolicyQueueLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching {{ activeStage() === 6 ? 'policy' : 'policy issued' }} queue...</span>
+          </div>
+        } @else if (policyQueueItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path>
+              </svg>
+            </div>
+            <h3 class="empty-title">No enquiries found</h3>
+            <p class="empty-desc">
+              @if (policyQueueSearchQuery() || policyQueueSelectedStatus() !== 'All' || policyQueueSelectedInsuranceTypeId() !== 'All' || policyQueueSelectedVehicleTypeId() !== 'All' || policyQueueSelectedAccountId() !== 'All' || policyQueueSelectedDateFilter() !== DateFilterType.Today) {
+                No enquiry records match the active filters in the {{ activeStage() === 6 ? 'Policy' : 'Policy Issued' }} queue. Try resetting filters to view all entries.
+              } @else {
+                There are currently no enquiries in the {{ activeStage() === 6 ? 'Policy' : 'Policy Issued' }} queue.
+              }
+            </p>
+            @if (policyQueueSearchQuery() || policyQueueSelectedStatus() !== 'All' || policyQueueSelectedInsuranceTypeId() !== 'All' || policyQueueSelectedVehicleTypeId() !== 'All' || policyQueueSelectedAccountId() !== 'All' || policyQueueSelectedDateFilter() !== DateFilterType.Today) {
+              <button type="button" class="carbon-btn-secondary" (click)="resetAllFilters()">
+                Clear Filters
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table" [attr.aria-label]="activeStage() === 6 ? 'Admin Policy Queue Table' : 'Admin Policy Issued Queue Table'">
+              <thead>
+                <tr>
+                  <th class="th-enquiry-id">Enquiry ID &amp; Submitted</th>
+                  <th class="th-priority">Priority</th>
+                  <th class="th-customer">Customer &amp; Contact</th>
+                  <th class="th-vehicle">Vehicle &amp; Policy</th>
+                  <th class="th-source">Created By &amp; Agency</th>
+                  <!-- <th class="th-assigned">Assigned Employee</th> -->
+                  <!-- <th class="th-quotes">Quotes</th> -->
+                  <th class="th-status">Status</th>
+                  <th class="th-actions text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of policyQueueItems(); track item.id || item.enquiryId) {
+                  <tr class="carbon-table-row" (click)="openPolicyQueueDetails(item, $event)">
+                    <!-- 1. Enquiry ID & Submitted -->
+                    <td class="td-enquiry-id">
+                      <div class="enquiry-id-cell">
+                        <div class="id-row">
+                          <span class="code-mono">{{ item.enquiryId }}</span>
+                          <button
+                            type="button"
+                            class="carbon-icon-btn small-icon-btn"
+                            (click)="copyToClipboard(item.enquiryId, 'Enquiry ID', $event)"
+                            [title]="copiedField() === item.enquiryId ? 'Copied!' : 'Copy Enquiry ID'"
+                            aria-label="Copy Enquiry ID"
+                          >
+                            @if (copiedField() === item.enquiryId) {
+                              <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                              </svg>
+                            } @else {
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            }
+                          </button>
+                        </div>
+
+                        <div class="timestamp-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm1-12a1 1 0 10-2 0v4a1 1 0 00.293.707l2.828 2.829a1 1 0 101.415-1.415L11 9.586V6z" clip-rule="evenodd"/>
+                          </svg>
+                          <span>{{ formatDate(item.submittedOn || item.createdAt) }} • {{ formatTime(item.submittedOn || item.createdAt) }}</span>
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 2. Priority -->
+                    <td class="td-priority">
+                      <span class="priority-tag" [ngClass]="getPriorityClass(item.priority)">
+                        {{ getPriorityLabel(item.priority) }}
+                      </span>
+                    </td>
+
+                    <!-- 3. Customer & Contact -->
+                    <td class="td-customer">
+                      <div class="customer-cell">
+                        <span class="customer-primary-name">{{ item.customerName || 'Unnamed Customer' }}</span>
+                        <div class="contact-links-row">
+                          <svg class="contact-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                          </svg>
+                          <span class="phone-mono">{{ item.customerNumber || '—' }}</span>
+                          @if (item.customerNumber) {
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.customerNumber, 'Customer Phone', $event)"
+                              [title]="copiedField() === item.customerNumber ? 'Copied!' : 'Copy Phone'"
+                              aria-label="Copy Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+
+                            <a
+                              [href]="getWhatsAppUrl(item.customerNumber)"
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              class="whatsapp-link-btn"
+                              (click)="$event.stopPropagation()"
+                              title="Chat on WhatsApp"
+                              aria-label="Chat on WhatsApp"
+                            >
+                              <svg class="whatsapp-icon" viewBox="0 0 24 24" fill="currentColor">
+                                <path d="M12.031 6.172c-3.181 0-5.767 2.586-5.768 5.766-.001 1.298.38 2.27 1.019 3.287l-.711 2.598 2.669-.699c.969.587 1.761.884 2.791.884h.001c3.181 0 5.767-2.587 5.768-5.766 0-3.18-2.587-5.77-5.769-5.77zm0 10.455h-.001c-.904 0-1.789-.243-2.56-.701l-.184-.108-1.579.414.421-1.539-.12-.191c-.504-.8-.77-1.727-.77-2.678 0-2.628 2.14-4.767 4.77-4.767 1.274 0 2.472.497 3.372 1.398.9.901 1.396 2.098 1.396 3.371 0 2.629-2.14 4.768-4.77 4.768zm3.054-3.578c-.167-.084-.991-.489-1.145-.545-.153-.056-.265-.084-.376.084-.112.167-.432.545-.53.656-.098.112-.195.126-.362.042-.167-.084-.707-.261-1.346-.831-.497-.444-.833-.992-.931-1.159-.098-.168-.01-.258.073-.341.075-.075.167-.195.251-.293.084-.098.112-.168.167-.279.056-.112.028-.21-.014-.293-.042-.084-.376-.907-.516-1.243-.135-.327-.273-.282-.376-.287h-.321c-.112 0-.293.042-.446.21-.153.167-.585.572-.585 1.395 0 .823.599 1.618.683 1.73.084.112 1.178 1.799 2.855 2.522.4.172.712.275.955.353.401.127.766.109 1.055.066.321-.048.991-.405 1.13-.796.14-.391.14-.726.098-.796-.042-.07-.154-.112-.321-.196z"/>
+                              </svg>
+                            </a>
+                          }
+                        </div>
+                      </div>
+                    </td>
+
+                    <!-- 4. Vehicle & Policy -->
+                    <td class="td-vehicle">
+                      <div class="vehicle-cell">
+                        @if (item.vehicleNumber) {
+                          <div class="plate-row">
+                            <span class="vehicle-plate-pill">{{ item.vehicleNumber }}</span>
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.vehicleNumber, 'Vehicle Plate', $event)"
+                              [title]="copiedField() === item.vehicleNumber ? 'Copied!' : 'Copy Plate'"
+                              aria-label="Copy Vehicle Plate"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        }
+                        <div class="spec-row">
+                          <span class="vehicle-spec">{{ item.vehicleType || 'Vehicle' }}</span>
+                          <span class="dot-sep">•</span>
+                          <span class="policy-spec">{{ getPolicyTypeLabel(item.policyType) }}</span>
+                        </div>
+                        <span class="line-badge">{{ item.insuranceType || 'Insurance' }}</span>
+                      </div>
+                    </td>
+
+                    <!-- 5. Created By & Agency -->
+                    <td class="td-source">
+                      <div class="source-cell">
+                        <div class="agency-title-row">
+                          <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M4 4a2 2 0 012-2h8a2 2 0 012 2v12a1 1 0 110 2H4a1 1 0 110-2V4zm3 1h2v2H7V5zm4 0h2v2h-2V5zm-4 4h2v2H7V9zm4 0h2v2h-2V9zm-4 4h2v2H7v-2zm4 0h2v2h-2v-2z" clip-rule="evenodd"/>
+                          </svg>
+                          <span class="agency-name">{{ item.agencyName || 'Direct Platform' }}</span>
+                          @if (item.agencyNumber) {
+                            <span class="code-subtext">#{{ item.agencyNumber }}</span>
+                          }
+                        </div>
+
+                        <div class="creator-row">
+                          <span class="creator-name">{{ item.createdBy || 'Agent' }}</span>
+                          @if (item.createdByRole) {
+                            <span class="role-badge-sm">{{ item.createdByRole }}</span>
+                          }
+                        </div>
+
+                        @if (item.createdByPhone) {
+                          <div class="creator-phone-row">
+                            <svg class="tiny-icon" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M2 3a1 1 0 011-1h2a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                            </svg>
+                            <span class="phone-mono-sm">{{ item.createdByPhone }}</span>
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.createdByPhone, 'Creator Phone', $event)"
+                              [title]="copiedField() === item.createdByPhone ? 'Copied!' : 'Copy Creator Phone'"
+                              aria-label="Copy Creator Phone"
+                            >
+                              <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                              </svg>
+                            </button>
+                          </div>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 6. Assigned Employee -->
+                    <!-- <td class="td-assigned">
+                      <div class="assigned-cell">
+                        @if (item.assignedEmployee) {
+                          <span class="assigned-name">{{ item.assignedEmployee }}</span>
+                          @if (item.assignedEmployeeRole) {
+                            <span class="role-badge-sm">{{ item.assignedEmployeeRole }}</span>
+                          }
+                        } @else {
+                          <span class="unassigned-tag">Unassigned</span>
+                        }
+                      </div>
+                    </td> -->
+
+                    <!-- 7. Quotes Count -->
+                    <!-- <td class="td-quotes">
+                      <span class="quote-count-pill" [class.has-quotes]="(item.quoteCount ?? 0) > 0">
+                        {{ item.quoteCount ?? 0 }} {{ (item.quoteCount ?? 0) === 1 ? 'Quote' : 'Quotes' }}
+                      </span>
+                    </td> -->
+
+                    <!-- 8. Status -->
+                    <td class="td-status">
+                      <div class="status-cell">
+                        <span class="carbon-tag tag-status" [ngClass]="getEnquiryStatusClass(item.status)">
+                          {{ getEnquiryStatusLabel(item.status) }}
+                        </span>
+                        @if (item.adminAssisted) {
+                          <span class="line-badge" style="background: #f4f4f4; color: #525252; border-color: #e0e0e0; font-size: 10px;">Admin Assisted</span>
+                        }
+                      </div>
+                    </td>
+
+                    <!-- 9. Actions -->
+                    <td class="td-actions text-right">
+                      <div class="actions-cell-wrapper" (click)="$event.stopPropagation()">
+                        <button
+                          type="button"
+                          class="carbon-icon-btn edit-action-btn"
+                          (click)="onProcessPolicy(item, $event)"
+                          [title]="activeStage() === 6 ? 'Process Policy' : 'View Policy'"
+                          [attr.aria-label]="activeStage() === 6 ? 'Process Policy' : 'View Policy'"
+                        >
+                          <svg class="action-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                            <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path>
+                          </svg>
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              {{ policyQueueShowingRangeText() }}
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="policy-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="policy-page-size"
+                  class="carbon-select"
+                  [ngModel]="policyQueuePageSize()"
+                  (ngModelChange)="onPolicyQueuePageSizeChange($event)"
+                  aria-label="Select items per page"
+                >
+                  <option [value]="5">5</option>
+                  <option [value]="10">10</option>
+                  <option [value]="20">20</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ policyQueuePageNumber() }} of {{ policyQueueTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!policyQueueHasPreviousPage() || isPolicyQueueLoading()"
+                  (click)="onPolicyQueuePageChange(policyQueuePageNumber() - 1)"
+                  title="Previous page"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="!policyQueueHasNextPage() || isPolicyQueueLoading()"
+                  (click)="onPolicyQueuePageChange(policyQueuePageNumber() + 1)"
+                  title="Next page"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  } @else {
+    <section class="carbon-card-section stage-placeholder-section">
+      <div class="stage-placeholder-content">
+        <div class="empty-icon-wrap">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 6v6m0 0v6m0-6h6m-6 0H6"/>
+          </svg>
+        </div>
+        <h3 class="empty-title">{{ activeStageObj()?.label || 'Stage' }} Workflow</h3>
+        <p class="empty-desc">
+          This lifecycle stage is scheduled for configuration in the upcoming development phase.
+        </p>
+        <button type="button" class="carbon-btn-secondary" (click)="onStageSelect(1)">
+          Return to Common Queue
+        </button>
+      </div>
+    </section>
+  }
   </div>
 
   <!-- Right Controls Column (25%-30% width) -->
@@ -573,81 +2348,9 @@
         </button>
       </div>
     </div>
-
-    <!-- 2. Accelerators / Direct Shortcuts Panel -->
-    <!-- <div class="controls-panel-card">
-      <div class="controls-card-header">
-        <div class="controls-header-title">
-          <svg class="header-icon" viewBox="0 0 20 20" fill="currentColor">
-            <path d="M13 6a3 3 0 11-6 0 3 3 0 016 0zM18 8a2 2 0 11-4 0 2 2 0 014 0zM14 15a4 4 0 00-8 0v3h8v-3zM6 8a2 2 0 11-4 0 2 2 0 014 0zM16 18v-3a5.972 5.972 0 00-.75-2.906A3.005 3.005 0 0119 15v3h-3zM4.75 12.094A5.973 5.973 0 004 15v3H1v-3a3 3 0 013.75-2.906z"/>
-          </svg>
-          <span>Accelerators &amp; Masters</span>
-        </div>
-      </div>
-      <div class="shortcut-links-stack">
-        <a routerLink="/admin/agents" class="shortcut-link-item">
-          <span class="shortcut-dot"></span>
-          <span class="shortcut-label">Agents Directory</span>
-          <svg class="shortcut-arrow" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </a>
-        <a routerLink="/admin/employees" class="shortcut-link-item">
-          <span class="shortcut-dot"></span>
-          <span class="shortcut-label">Employee Team</span>
-          <svg class="shortcut-arrow" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </a>
-        <a routerLink="/admin/accelerators/bank-account-management" class="shortcut-link-item">
-          <span class="shortcut-dot"></span>
-          <span class="shortcut-label">Bank Accounts</span>
-          <svg class="shortcut-arrow" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </a>
-        <a routerLink="/admin/accelerators/qr-management" class="shortcut-link-item">
-          <span class="shortcut-dot"></span>
-          <span class="shortcut-label">QR Master Mappings</span>
-          <svg class="shortcut-arrow" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </a>
-        <a routerLink="/admin/accelerators/pricing-master" class="shortcut-link-item">
-          <span class="shortcut-dot"></span>
-          <span class="shortcut-label">Pricing Master</span>
-          <svg class="shortcut-arrow" viewBox="0 0 16 16" fill="currentColor">
-            <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-          </svg>
-        </a>
-      </div>
-    </div> -->
-
-    <!-- 3. Micro Live Stats Card -->
-    <!-- <div class="controls-panel-card stats-mini-card">
-      <div class="stats-mini-header">
-        <span class="stats-mini-caption">Queue Intake Velocity</span>
-        <span class="stats-mono-badge">{{ totalRecords() }} Active</span>
-      </div>
-      <div class="stats-mini-grid">
-        <div class="stats-mini-box">
-          <span class="stats-mini-value priority-urgent-val">{{ urgentCount() }}</span>
-          <span class="stats-mini-label">Urgent</span>
-        </div>
-        <div class="stats-mini-box">
-          <span class="stats-mini-value priority-high-val">{{ highPriorityCount() }}</span>
-          <span class="stats-mini-label">High Priority</span>
-        </div>
-        <div class="stats-mini-box">
-          <span class="stats-mini-value priority-normal-val">{{ normalPriorityCount() }}</span>
-          <span class="stats-mini-label">Standard</span>
-        </div>
-      </div>
-    </div> -->
   </aside>
   </div>
 
-  <!-- Full Enquiry Details Modal / Drawer -->
   @if (selectedEnquiry()) {
     <app-enquiry-details
       [enquiry]="selectedEnquiry()"

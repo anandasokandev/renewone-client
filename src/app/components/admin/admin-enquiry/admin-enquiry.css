@@ -492,6 +492,7 @@
   border-color: #0f62fe;
 }
 
+.custom-date-range-group,
 .custom-date-group {
   display: flex;
   align-items: center;
@@ -679,7 +680,80 @@
   background-color: #f4f4f4;
 }
 
-/* Column Widths */
+/* Column Widths - Common Queue */
+#section-common-queue-table .th-enquiry-id { width: 18%; }
+#section-common-queue-table .th-customer { width: 22%; }
+#section-common-queue-table .th-vehicle { width: 22%; }
+#section-common-queue-table .th-source { width: 18%; }
+#section-common-queue-table .th-status { width: 8%; }
+#section-common-queue-table .th-actions { width: 12%; text-align: right; }
+
+/* Column Widths - All Enquiries */
+#section-all-enquiries-table .th-enquiry-id { width: 14%; min-width: 140px; }
+#section-all-enquiries-table .th-customer { width: 16%; min-width: 150px; }
+#section-all-enquiries-table .th-vehicle { width: 16%; min-width: 150px; }
+#section-all-enquiries-table .th-source { width: 14%; min-width: 140px; }
+#section-all-enquiries-table .th-assigned, .th-assigned { width: 13%; min-width: 130px; }
+#section-all-enquiries-table .th-quotes, .th-quotes { width: 9%; min-width: 85px; text-align: center; }
+#section-all-enquiries-table .th-status { width: 10%; min-width: 100px; }
+#section-all-enquiries-table .th-actions { width: 8%; min-width: 70px; text-align: right; }
+
+/* Column Widths - My Tasks */
+#section-my-tasks-table .th-enquiry-id { width: 16%; min-width: 140px; }
+#section-my-tasks-table .th-priority { width: 11%; min-width: 90px; }
+#section-my-tasks-table .th-customer { width: 18%; min-width: 150px; }
+#section-my-tasks-table .th-vehicle { width: 18%; min-width: 150px; }
+#section-my-tasks-table .th-source { width: 17%; min-width: 140px; }
+#section-my-tasks-table .th-status { width: 10%; min-width: 100px; }
+#section-my-tasks-table .th-actions { width: 10%; min-width: 80px; text-align: right; }
+
+/* Column Widths - Quote & Quoted Queue */
+#section-quote-queue-table .th-enquiry-id { width: 14%; min-width: 130px; }
+#section-quote-queue-table .th-priority { width: 9%; min-width: 85px; }
+#section-quote-queue-table .th-customer { width: 14%; min-width: 140px; }
+#section-quote-queue-table .th-vehicle { width: 14%; min-width: 140px; }
+#section-quote-queue-table .th-source { width: 13%; min-width: 130px; }
+#section-quote-queue-table .th-assigned { width: 12%; min-width: 120px; }
+#section-quote-queue-table .th-quotes { width: 8%; min-width: 75px; text-align: center; }
+#section-quote-queue-table .th-status { width: 10%; min-width: 95px; }
+#section-quote-queue-table .th-actions { width: 6%; min-width: 60px; text-align: right; }
+
+/* Column Widths - Policy & Policy Issued Queue */
+#section-policy-queue-table .th-enquiry-id { width: 14%; min-width: 130px; }
+#section-policy-queue-table .th-priority { width: 9%; min-width: 85px; }
+#section-policy-queue-table .th-customer { width: 14%; min-width: 140px; }
+#section-policy-queue-table .th-vehicle { width: 14%; min-width: 140px; }
+#section-policy-queue-table .th-source { width: 13%; min-width: 130px; }
+#section-policy-queue-table .th-assigned { width: 12%; min-width: 120px; }
+#section-policy-queue-table .th-quotes { width: 8%; min-width: 75px; text-align: center; }
+#section-policy-queue-table .th-status { width: 10%; min-width: 95px; }
+#section-policy-queue-table .th-actions { width: 6%; min-width: 60px; text-align: right; }
+
+.status-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  align-items: flex-start;
+}
+
+.tag-assisted {
+  background-color: #e8daff;
+  color: #6929c4;
+  border-color: #d4bbff;
+  font-size: 10px;
+  font-weight: 700;
+  padding: 1px 5px;
+}
+
+.tag-creator-role,
+.tag-assigned-role {
+  background-color: #f4f4f4;
+  color: #525252;
+  border-color: #e0e0e0;
+  font-size: 10px;
+  padding: 1px 4px;
+}
+
 .th-enquiry-id { width: 18%; }
 .th-customer { width: 22%; }
 .th-vehicle { width: 22%; }
@@ -933,6 +1007,36 @@
   background-color: #edf9f0;
   color: #24a148;
   border-color: #24a148;
+}
+
+.tag-status.tag-success {
+  background-color: #edf9f0;
+  color: #0e6027;
+  border-color: #24a148;
+}
+
+.tag-status.tag-progress {
+  background-color: #fff8e1;
+  color: #b28600;
+  border-color: #f1c21b;
+}
+
+.tag-status.tag-purple {
+  background-color: #f6f2ff;
+  color: #6929c4;
+  border-color: #8a3ffc;
+}
+
+.tag-status.tag-cancelled {
+  background-color: #fff1f1;
+  color: #da1e28;
+  border-color: #ff8389;
+}
+
+.tag-status.tag-default {
+  background-color: #f4f4f4;
+  color: #525252;
+  border-color: #e0e0e0;
 }
 
 /* 6. Action Controls */
@@ -1522,5 +1626,66 @@
   letter-spacing: 0.2px;
   font-weight: 500;
 }
+
+/* Assigned Employee & Quotes Column Styles (All Enquiries) */
+.assigned-cell {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.assigned-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #161616;
+}
+
+.unassigned-tag {
+  display: inline-block;
+  font-size: 11px;
+  padding: 1px 6px;
+  background-color: #f4f4f4;
+  color: #8d8d8d;
+  border: 1px dashed #c6c6c6;
+  border-radius: 0px;
+}
+
+.td-quotes {
+  text-align: center;
+}
+
+.quote-count-pill {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: "IBM Plex Mono", monospace;
+  padding: 2px 8px;
+  border-radius: 0px;
+  background-color: #f4f4f4;
+  color: #525252;
+  border: 1px solid #e0e0e0;
+}
+
+.quote-count-pill.has-quotes {
+  background-color: #edf5ff;
+  color: #0043ce;
+  border-color: #0f62fe;
+}
+
+/* Lifecycle Stage Placeholder Section (Stages 3 - 7) */
+.stage-placeholder-section {
+  padding: 48px 24px;
+  text-align: center;
+}
+
+.stage-placeholder-content {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
 
 

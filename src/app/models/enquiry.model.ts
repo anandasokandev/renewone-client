@@ -448,3 +448,231 @@ export interface AdminCommonQueuePagedData {
   items: AdminCommonQueueItem[];
 }
 
+export interface AdminAllEnquiryItem {
+  id: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber?: string;
+  vehicleType?: string;
+  insuranceType?: string;
+  policyType?: string;
+  createdBy?: string;
+  createdByPhone?: string;
+  createdByRole?: string;
+  agencyName?: string;
+  agencyNumber?: string;
+  submittedOn?: string;
+  createdAt?: string;
+  status: string | number;
+  assignedEmployee?: string;
+  assignedEmployeeName?: string;
+  quoteCount?: number;
+  priority?: number;
+}
+
+export interface AdminAllEnquiriesFilterParams {
+  search?: string;
+  status?: number;
+  insuranceTypeId?: string;
+  vehicleTypeId?: string;
+  accountId?: string;
+  dateFilter?: number;
+  fromDate?: string;
+  toDate?: string;
+  sortDescending?: boolean;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminAllEnquiriesPagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminAllEnquiryItem[];
+}
+
+export enum PolicyTypeEnum {
+  Comprehensive = 1,
+  ThirdParty = 2,
+  OwnDamage = 3,
+}
+
+export interface PolicyTypeOption {
+  id: number;
+  label: string;
+}
+
+export const POLICY_TYPE_OPTIONS: PolicyTypeOption[] = [
+  { id: 1, label: 'Comprehensive' },
+  { id: 2, label: 'Third Party' },
+  { id: 3, label: 'Own Damage' },
+];
+
+export enum SortDirectionEnum {
+  Ascending = 0,
+  Descending = 1,
+}
+
+export interface AdminMyTaskItem {
+  id: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber?: string;
+  vehicleType?: string;
+  policyType?: string | number;
+  insuranceType?: string;
+  enquiryStatus?: string | number;
+  status?: string | number;
+  createdBy?: string;
+  createdByPhone?: string;
+  createdByRole?: string;
+  agencyName?: string;
+  agencyNumber?: string;
+  submittedOn?: string;
+  createdAt?: string;
+  priority?: number;
+}
+
+export interface AdminMyTasksFilterParams {
+  search?: string;
+  insuranceTypeId?: string;
+  vehicleTypeId?: string;
+  policyType?: number;
+  enquiryStatus?: number;
+  fromDate?: string;
+  toDate?: string;
+  accountId?: string;
+  sortBy?: number;
+  dateFilter?: number;
+  sortDirection?: number;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminMyTasksPagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminMyTaskItem[];
+}
+
+export enum QuoteQueueType {
+  Quote = 0,
+  Quoted = 1,
+}
+
+export interface AdminQuoteQueueItem {
+  id: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber?: string;
+  vehicleType?: string;
+  insuranceType?: string;
+  policyType?: string;
+  createdBy?: string;
+  createdByPhone?: string;
+  createdByRole?: string;
+  agencyName?: string;
+  agencyNumber?: string;
+  submittedOn?: string;
+  createdAt?: string;
+  priority?: number;
+  status: string | number;
+  adminAssisted?: boolean | string;
+  quoteCount?: number;
+  currentStep?: string | number;
+  assignedEmployee?: string;
+  assignedEmployeeRole?: string;
+}
+
+export interface AdminQuoteQueueFilterParams {
+  type: number;
+  search?: string;
+  insuranceTypeId?: string;
+  vehicleTypeId?: string;
+  accountId?: string;
+  fromDate?: string;
+  toDate?: string;
+  sortDescending?: boolean;
+  dateFilter?: number;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminQuoteQueuePagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminQuoteQueueItem[];
+}
+
+export enum PolicyQueueType {
+  Policy = 0,
+  PolicyIssued = 1,
+}
+
+export interface AdminPolicyQueueItem {
+  id: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber?: string;
+  vehicleType?: string;
+  insuranceType?: string;
+  policyType?: string | number;
+  createdBy?: string;
+  createdByPhone?: string;
+  createdByRole?: string;
+  agencyName?: string;
+  agencyNumber?: string;
+  submittedOn?: string;
+  createdAt?: string;
+  priority?: number;
+  status: string | number;
+  adminAssisted?: boolean | string;
+  quoteCount?: number;
+  currentStep?: string | number;
+  assignedEmployee?: string;
+  assignedEmployeeRole?: string;
+}
+
+export interface AdminPolicyQueueFilterParams {
+  type?: number;
+  search?: string;
+  status?: number;
+  insuranceTypeId?: string;
+  vehicleTypeId?: string;
+  accountId?: string;
+  fromDate?: string;
+  toDate?: string;
+  sortDescending?: boolean;
+  dateFilter?: number;
+  pageNumber?: number;
+  pageSize?: number;
+}
+
+export interface AdminPolicyQueuePagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminPolicyQueueItem[];
+}
+
+
+
+

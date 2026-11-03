@@ -32,6 +32,16 @@ import {
   AdminCommonQueueItem,
   AdminCommonQueueFilterParams,
   AdminCommonQueuePagedData,
+  AdminAllEnquiryItem,
+  AdminAllEnquiriesFilterParams,
+  AdminAllEnquiriesPagedData,
+  AdminMyTaskItem,
+  AdminMyTasksFilterParams,
+  AdminMyTasksPagedData,
+  AdminQuoteQueueFilterParams,
+  AdminQuoteQueuePagedData,
+  AdminPolicyQueueFilterParams,
+  AdminPolicyQueuePagedData,
 } from '../../models/enquiry.model';
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
@@ -284,6 +294,204 @@ export class EnquiryService {
 
     return this.http.get<ApiResponse<AdminCommonQueuePagedData>>(
       `${environment.apiUrl}/Enquiry/admin/common-queue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminAllEnquiries(
+    params: AdminAllEnquiriesFilterParams = {}
+  ): Observable<ApiResponse<AdminAllEnquiriesPagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.status !== undefined && params.status !== null) {
+      httpParams = httpParams.set('Status', params.status.toString());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminAllEnquiriesPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/all-enquiries`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminMyTasks(
+    params: AdminMyTasksFilterParams = {}
+  ): Observable<ApiResponse<AdminMyTasksPagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.policyType !== undefined && params.policyType !== null) {
+      httpParams = httpParams.set('PolicyType', params.policyType.toString());
+    }
+    if (params.enquiryStatus !== undefined && params.enquiryStatus !== null) {
+      httpParams = httpParams.set('EnquiryStatus', params.enquiryStatus.toString());
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortBy !== undefined && params.sortBy !== null) {
+      httpParams = httpParams.set('SortBy', params.sortBy.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.sortDirection !== undefined && params.sortDirection !== null) {
+      httpParams = httpParams.set('SortDirection', params.sortDirection.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminMyTasksPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/mytask`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminMyQuoteQueue(
+    params: AdminQuoteQueueFilterParams
+  ): Observable<ApiResponse<AdminQuoteQueuePagedData>> {
+    let httpParams = new HttpParams().set('Type', (params.type ?? 0).toString());
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminQuoteQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/myquotequeue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminMyPolicyQueue(
+    params: AdminPolicyQueueFilterParams = {}
+  ): Observable<ApiResponse<AdminPolicyQueuePagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.type !== undefined && params.type !== null) {
+      httpParams = httpParams.set('Type', params.type.toString());
+    }
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.status !== undefined && params.status !== null) {
+      httpParams = httpParams.set('Status', params.status.toString());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminPolicyQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/mypolicyqueue`,
       {
         headers: this.getAuthHeaders(),
         params: httpParams,
