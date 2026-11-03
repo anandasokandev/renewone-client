@@ -46,6 +46,14 @@ import {
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
 
+export interface AssignableEmployee {
+  userId: string;
+  fullName: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  isCurrentlyAssigned: boolean;
+}
+
 export const PROGRESSIVE_STATUS_SEQUENCE: EnquiryStatus[] = [
   'Created',
   'Submitted',
@@ -77,6 +85,22 @@ export class EnquiryService {
   private enquiriesSignal = signal<EnquiryItem[]>(this.loadInitial());
 
   readonly enquiries = this.enquiriesSignal.asReadonly();
+
+  getAssignableEmployees(enquiryId: string): Observable<ApiResponse<AssignableEmployee[]>> {
+    return this.http.get<ApiResponse<AssignableEmployee[]>>(
+      `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}/assignable-employees`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  assignEnquiry(enquiryId: string, employeeId: string, remarks = ''): Observable<ApiResponse<unknown>> {
+    const params = new HttpParams().set('employeeId', employeeId).set('remarks', remarks);
+    return this.http.put<ApiResponse<unknown>>(
+      `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}/assign`,
+      null,
+      { headers: this.getAuthHeaders(), params }
+    );
+  }
 
   private getAuthHeaders(): HttpHeaders {
     const token = sessionStorage.getItem('token');

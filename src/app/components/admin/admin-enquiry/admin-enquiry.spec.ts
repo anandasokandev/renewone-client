@@ -6,6 +6,7 @@ import { of, throwError } from 'rxjs';
 import { AdminEnquiry } from './admin-enquiry';
 import { EnquiryService } from '../../../services/enquiry/enquiry.service';
 import { AccountService } from '../../../services/account/account.service';
+import { Auth } from '../../../services/auth/auth';
 import { ApiResponse } from '../../../models/response.model';
 import {
   AdminAllEnquiriesPagedData,
@@ -1566,6 +1567,123 @@ describe('AdminEnquiry', () => {
 
       component.policyQueuePageNumber.set(5);
       expect(component.policyQueueShowingRangeText()).toBe('41 - 45 of 45 enquiries');
+    });
+  });
+
+  describe('User Permissions & Assignment Action Controls', () => {
+    let authService: Auth;
+
+    beforeEach(() => {
+      authService = TestBed.inject(Auth);
+    });
+
+    it('should compute isSuperAdminOrSupervisor correctly based on userType', () => {
+      // Null user
+      authService.currentUser.set(null);
+      expect(component.isSuperAdminOrSupervisor()).toBe(false);
+
+      // SuperAdmin
+      authService.currentUser.set({
+        userId: 'u-1',
+        token: 'token',
+        fullName: 'Super Admin',
+        userType: 'SuperAdmin',
+        accountId: null,
+      });
+      expect(component.isSuperAdminOrSupervisor()).toBe(true);
+
+      // Case insensitivity
+      authService.currentUser.set({
+        userId: 'u-1',
+        token: 'token',
+        fullName: 'Super Admin',
+        userType: 'superadmin',
+        accountId: null,
+      });
+      expect(component.isSuperAdminOrSupervisor()).toBe(true);
+
+      // Supervisor
+      authService.currentUser.set({
+        userId: 'u-2',
+        token: 'token',
+        fullName: 'Supervisor User',
+        userType: 'Supervisor',
+        accountId: null,
+      });
+      expect(component.isSuperAdminOrSupervisor()).toBe(true);
+
+      // AdminEmployee
+      authService.currentUser.set({
+        userId: 'u-3',
+        token: 'token',
+        fullName: 'Admin Employee',
+        userType: 'AdminEmployee',
+        accountId: null,
+      });
+      expect(component.isSuperAdminOrSupervisor()).toBe(false);
+
+      // Agent
+      authService.currentUser.set({
+        userId: 'u-4',
+        token: 'token',
+        fullName: 'Agent User',
+        userType: 'Agent',
+        accountId: null,
+      });
+      expect(component.isSuperAdminOrSupervisor()).toBe(false);
+    });
+
+    it('should render Assign to Staff button only when user is SuperAdmin or Supervisor', () => {
+      component.activeStage.set(1);
+
+      // AdminEmployee should not see the Assign to Staff button
+      authService.currentUser.set({
+        userId: 'u-3',
+        token: 'token',
+        fullName: 'Admin Employee',
+        userType: 'AdminEmployee',
+        accountId: null,
+      });
+      fixture.detectChanges();
+
+      let assignStaffBtn = fixture.nativeElement.querySelector('button[title="Assign to Staff"]');
+      expect(assignStaffBtn).toBeNull();
+
+      // SuperAdmin should see the Assign to Staff button
+      authService.currentUser.set({
+        userId: 'u-1',
+        token: 'token',
+        fullName: 'Super Admin',
+        userType: 'SuperAdmin',
+        accountId: null,
+      });
+      fixture.detectChanges();
+
+      assignStaffBtn = fixture.nativeElement.querySelector('button[title="Assign to Staff"]');
+      expect(assignStaffBtn).not.toBeNull();
+
+      // Supervisor should see the Assign to Staff button
+      authService.currentUser.set({
+        userId: 'u-2',
+        token: 'token',
+        fullName: 'Supervisor User',
+        userType: 'Supervisor',
+        accountId: null,
+      });
+      fixture.detectChanges();
+
+      assignStaffBtn = fixture.nativeElement.querySelector('button[title="Assign to Staff"]');
+      expect(assignStaffBtn).not.toBeNull();
+    });
+
+    it('should render Self Assign button with self-assign-btn class and proper attributes', () => {
+      component.activeStage.set(1);
+      fixture.detectChanges();
+
+      const selfAssignBtn = fixture.nativeElement.querySelector('.self-assign-btn');
+      expect(selfAssignBtn).not.toBeNull();
+      expect(selfAssignBtn.getAttribute('title')).toBe('Self Assign (Assign to Me)');
+      expect(selfAssignBtn.querySelector('polyline')).not.toBeNull();
     });
   });
 });

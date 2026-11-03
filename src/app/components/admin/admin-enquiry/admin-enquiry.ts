@@ -31,6 +31,8 @@ import {
   VehicleTypeItem,
 } from '../../../models/enquiry.model';
 import { EnquiryDetails } from '../../enquiry-details/enquiry-details';
+import { Auth } from '../../../services/auth/auth';
+import { AssignableEmployee } from '../../../services/enquiry/enquiry.service';
 
 export interface EnquiryStageTab {
   id: number;
@@ -51,7 +53,14 @@ export class AdminEnquiry implements OnInit {
   private readonly enquiryService = inject(EnquiryService);
   private readonly accountService = inject(AccountService);
   private readonly router = inject(Router);
+  private readonly auth = inject(Auth);
   private readonly destroyRef = inject(DestroyRef);
+
+  // User Permissions
+  readonly isSuperAdminOrSupervisor = computed<boolean>(() => {
+    const userType = this.auth.currentUser()?.userType?.trim().toLowerCase();
+    return userType === 'superadmin' || userType === 'supervisor';
+  });
 
   // Workflow Stages (7 Stages Architecture)
   readonly activeStage = signal<number>(1);
@@ -187,6 +196,14 @@ export class AdminEnquiry implements OnInit {
 
   // Detail Modal / Drawer state
   readonly selectedEnquiry = signal<EnquiryItem | null>(null);
+  readonly assignmentTarget = signal<AdminCommonQueueItem | null>(null);
+  readonly assignableEmployees = signal<AssignableEmployee[]>([]);
+  readonly isEmployeesLoading = signal(false);
+  readonly employeesError = signal<string | null>(null);
+  readonly selectedEmployeeId = signal('');
+  readonly assignmentRemarks = signal('');
+  readonly assignmentSubmitting = signal(false);
+  readonly assigningToMeId = signal<string | null>(null);
 
   // Active Stage Object helper
   readonly activeStageObj = computed(() =>
@@ -1723,9 +1740,69 @@ export class AdminEnquiry implements OnInit {
   }
 
   // Control Actions (Prepared for upcoming stages and buttons)
+  openAssignment(item: AdminCommonQueueItem, event?: Event): void {
+    event?.stopPropagation();
+    this.assignmentTarget.set(item);
+    this.assignableEmployees.set([]);
+    this.selectedEmployeeId.set('');
+    this.assignmentRemarks.set('');
+    this.employeesError.set(null);
+    this.isEmployeesLoading.set(true);
+    this.enquiryService.getAssignableEmployees(item.id).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.isEmployeesLoading.set(false))
+    ).subscribe({
+      next: (res) => {
+        if (res.isSuccess && Array.isArray(res.data)) this.assignableEmployees.set(res.data);
+        else this.employeesError.set(res.message || 'Unable to load assignable employees.');
+      },
+      error: (err) => this.employeesError.set(err?.error?.message || 'Unable to load assignable employees.')
+    });
+  }
+
+  closeAssignment(): void {
+    if (this.assignmentSubmitting()) return;
+    this.assignmentTarget.set(null);
+  }
+
+  submitAssignment(): void {
+    const item = this.assignmentTarget();
+    const employeeId = this.selectedEmployeeId();
+    if (!item || !employeeId || this.assignmentSubmitting()) return;
+    this.assignmentSubmitting.set(true);
+    this.enquiryService.assignEnquiry(item.enquiryId, employeeId, this.assignmentRemarks()).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.assignmentSubmitting.set(false))
+    ).subscribe({
+      next: (res) => {
+        if (!res.isSuccess) { this.showToast(res.message || 'Unable to assign enquiry.', 'error'); return; }
+        this.showToast(res.message || 'Enquiry assigned successfully.', 'success');
+        this.assignmentTarget.set(null);
+        this.loadQueue();
+      },
+      error: (err) => this.showToast(err?.error?.message || 'Unable to assign enquiry.', 'error')
+    });
+  }
+
   onAssignToMe(item: AdminCommonQueueItem, event?: Event): void {
-    if (event) event.stopPropagation();
-    this.showToast(`Assign action for "${item.enquiryId}" will be configured in next phase.`, 'info');
+    event?.stopPropagation();
+    const employeeId = this.auth.currentUser()?.userId;
+    if (!employeeId || this.assigningToMeId()) {
+      if (!employeeId) this.showToast('Could not identify the signed-in employee.', 'error');
+      return;
+    }
+    this.assigningToMeId.set(item.enquiryId);
+    this.enquiryService.assignEnquiry(item.id, employeeId).pipe(
+      takeUntilDestroyed(this.destroyRef),
+      finalize(() => this.assigningToMeId.set(null))
+    ).subscribe({
+      next: (res) => {
+        if (!res.isSuccess) { this.showToast(res.message || 'Unable to assign enquiry.', 'error'); return; }
+        this.showToast(res.message || 'Enquiry assigned to you.', 'success');
+        this.loadQueue();
+      },
+      error: (err) => this.showToast(err?.error?.message || 'Unable to assign enquiry.', 'error')
+    });
   }
 
   // Formatting helpers

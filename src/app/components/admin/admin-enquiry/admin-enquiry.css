@@ -1296,6 +1296,12 @@
   border-color: #0f62fe;
 }
 
+.self-assign-btn:hover {
+  background-color: #defbe6;
+  color: #198038;
+  border-color: #198038;
+}
+
 .small-icon-btn {
   padding: 2px;
 }
@@ -1856,6 +1862,46 @@
   border: 1px dashed #c6c6c6;
   border-radius: 0px;
 }
+
+.assignment-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgb(22 22 22 / 55%);
+}
+.assignment-modal {
+  width: min(100%, 520px);
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  color: #161616;
+}
+.assignment-modal-header,
+.assignment-modal-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 20px;
+  border-bottom: 1px solid #e0e0e0;
+}
+.assignment-modal-header h2 { margin: 0; font-size: 20px; font-weight: 400; }
+.assignment-modal-header p { margin: 4px 0 0; color: #525252; font-size: 13px; }
+.assignment-modal-body { display: flex; flex-direction: column; padding: 20px; }
+.assignment-field { margin: 0 0 8px; font-size: 13px; font-weight: 600; }
+.assignment-field span { color: #8c8c8c; font-weight: 400; }
+.assignment-select { width: 100%; margin-bottom: 18px; }
+.assignment-textarea { width: 100%; min-height: 96px; padding: 10px 12px; resize: vertical; border: 1px solid #8d8d8d; border-radius: 0; background: #f4f4f4; color: #161616; font: inherit; }
+.assignment-textarea:focus, .assignment-select:focus { outline: 2px solid #0f62fe; outline-offset: 1px; }
+.assignment-modal-footer { justify-content: flex-end; border-top: 1px solid #e0e0e0; border-bottom: 0; background: #f4f4f4; }
+.assignment-submit-btn { height: 36px; padding: 0 16px; border: 0; border-radius: 0; background: #0f62fe; color: #fff; font: inherit; cursor: pointer; }
+.assignment-submit-btn:hover:not(:disabled) { background: #0050e6; }
+.assignment-submit-btn:disabled { background: #c6c6c6; cursor: not-allowed; }
+.assignment-state { display: flex; align-items: center; gap: 10px; min-height: 70px; color: #525252; font-size: 14px; }
+.assignment-error { margin-bottom: 12px; color: #da1e28; font-size: 14px; }
 
 .td-quotes {
   text-align: center;
