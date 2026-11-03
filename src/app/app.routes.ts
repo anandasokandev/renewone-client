@@ -30,6 +30,11 @@ export const routes: Routes = [
         loadComponent: () =>
           import('./components/admin/admin-enquiry/admin-enquiry').then(m => m.AdminEnquiry),
       },
+      {
+        path: 'enquiries/create',
+        loadComponent: () =>
+          import('./components/admin/admin-enquiry-creation/admin-enquiry-creation').then(m => m.AdminEnquiryCreation),
+      },
       { path: 'enquiry', redirectTo: 'enquiries', pathMatch: 'full' },
       {
         path: 'employees',

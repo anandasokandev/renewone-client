@@ -133,6 +133,8 @@ export interface EnquiryFilterParams {
 }
 
 export interface CreateVehicleEnquiryPayload {
+  accountId?: string;
+  AccountId?: string;
   insuranceTypeId: string;
   vehicleTypeId: string;
   customerName: string;
@@ -141,7 +143,7 @@ export interface CreateVehicleEnquiryPayload {
   miPolicyType: string;
   isRCOwnerChanged: boolean;
   hasPreviousClaim: boolean;
-  ncbPercentage: number;
+  ncbPercentage: number | null;
   priority: number;
   submissionMode: number;
 }

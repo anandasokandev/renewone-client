@@ -1,0 +1,196 @@
+<main class="admin-create-page">
+  <header class="page-heading">
+    <div>
+      <nav class="breadcrumb" aria-label="Breadcrumb">
+        <a routerLink="/admin/enquiries">Enquiry Queue</a><span aria-hidden="true">/</span>
+        <span>{{ step() === 'details' ? 'Create Enquiry' : 'Document Upload' }}</span>
+      </nav>
+      <h1>{{ step() === 'details' ? 'Create Enquiry' : 'Document Upload' }}</h1>
+      <p>{{ step() === 'details' ? 'Create a vehicle enquiry on behalf of an agency.' : 'The enquiry is ready for its supporting documents.' }}</p>
+    </div>
+    <button type="button" class="button-secondary" (click)="backToQueue()">Back to Enquiries</button>
+  </header>
+
+  <nav class="workflow-steps" aria-label="Enquiry creation steps">
+    <div class="workflow-step" [class.active]="step() === 'details'" [class.complete]="step() === 'documents'">
+      <span class="step-number">{{ step() === 'documents' ? '✓' : '1' }}</span>
+      <span>Enquiry details</span>
+    </div>
+    <span class="step-rule" [class.complete]="step() === 'documents'"></span>
+    <div class="workflow-step" [class.active]="step() === 'documents'">
+      <span class="step-number">2</span><span>Document upload</span>
+    </div>
+  </nav>
+
+  @if (step() === 'details') {
+    <form class="creation-form" (ngSubmit)="proceed()" novalidate>
+      <section class="form-section">
+        <div class="section-heading">
+          <span class="section-index">01</span>
+          <div><h2>Agent</h2><p>Choose the agency this enquiry belongs to.</p></div>
+        </div>
+        <div class="section-content">
+          <div class="field search-field">
+            <label for="agent-search">Search agents <span class="required">*</span></label>
+            <div class="search-input-wrap">
+              <input id="agent-search" type="search" autocomplete="off" placeholder="Name, agency, agent code or mobile number"
+                [ngModel]="agentSearch()" (ngModelChange)="loadAgents($event)" [readonly]="!!selectedAgent()" name="agentSearch" />
+              @if (selectedAgent()) {
+                <button type="button" class="clear-selection" aria-label="Clear selected agent" (click)="clearAgent()">×</button>
+              }
+            </div>
+            @if (isAgentLoading()) { <p class="field-hint">Searching agents…</p> }
+            @if (agentError()) { <p class="field-error" role="alert">{{ agentError() }}</p> }
+            @if (!isAgentLoading() && !selectedAgent() && !agentError()) {
+              <div class="search-results" role="listbox" aria-label="Agent search results">
+                @for (agent of visibleAgents(); track agent.accountId) {
+                  <button type="button" class="agent-result" role="option" (click)="chooseAgent(agent)">
+                    <span><strong>{{ agent.agentName }}</strong><small>{{ agent.agencyName || 'Agency not provided' }} · {{ agent.agentCode || agent.agentId || 'No code' }}</small></span>
+                    <span class="result-contact">{{ agent.phoneNumber || agent.mobileNumber || '—' }}</span>
+                  </button>
+                } @empty {
+                  <p class="empty-results">No active agents found.</p>
+                }
+              </div>
+            }
+            @if (attemptedSubmit() && !selectedAgent()) { <p class="field-error">Select an agent to continue.</p> }
+          </div>
+
+          @if (selectedAgent(); as agent) {
+            <article class="agent-summary" aria-label="Selected agent information">
+              <div class="summary-title"><span class="summary-mark">{{ agent.agentName.charAt(0) }}</span><div><strong>{{ agent.agentName }}</strong><small>Selected agent</small></div></div>
+              <dl class="summary-grid">
+                <div><dt>Agent code</dt><dd>{{ agent.agentCode || agent.agentId || '—' }}</dd></div>
+                <div><dt>Agency</dt><dd>{{ agent.agencyName || '—' }}</dd></div>
+                <div><dt>Mobile</dt><dd>{{ agent.phoneNumber || agent.mobileNumber || '—' }}</dd></div>
+                <div><dt>Agent class</dt><dd>{{ agent.agentClass || '—' }}</dd></div>
+                <div><dt>Commission</dt><dd>{{ agent.commissionPercentage == null ? '—' : (agent.commissionPercentage + '%') }}</dd></div>
+                <div><dt>Wallet balance</dt><dd>{{ agent.walletBalance == null ? '—' : (agent.walletBalance | currency:'INR':'symbol':'1.2-2') }}</dd></div>
+              </dl>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="form-section">
+        <div class="section-heading">
+          <span class="section-index">02</span>
+          <div><h2>Insurance details</h2><p>Select the product and vehicle category.</p></div>
+        </div>
+        <div class="section-content selection-grid">
+          <div class="field">
+            <label for="insurance-search">Insurance type <span class="required">*</span></label>
+            <input id="insurance-search" type="search" placeholder="Filter insurance types" [ngModel]="insuranceSearch()" (ngModelChange)="insuranceSearch.set($event)" name="insuranceSearch" />
+            <select aria-label="Insurance type" [ngModel]="selectedInsuranceTypeId()" (ngModelChange)="selectInsuranceType($event)" name="insuranceType" [disabled]="isInsuranceLoading() || !!insuranceError()">
+              <option value="">{{ isInsuranceLoading() ? 'Loading insurance types…' : 'Select insurance type' }}</option>
+              @for (type of visibleInsuranceTypes(); track type.id) { <option [value]="type.id">{{ type.name }}</option> }
+            </select>
+            @if (insuranceError()) { <p class="field-error" role="alert">{{ insuranceError() }} <button type="button" class="text-button" (click)="loadInsuranceTypes()">Retry</button></p> }
+            @if (attemptedSubmit() && !selectedInsuranceTypeId()) { <p class="field-error">Select an insurance type.</p> }
+          </div>
+          @if (isVehicleInsurance()) {
+            <div class="field">
+              <label for="vehicle-search">Vehicle type <span class="required">*</span></label>
+              <input id="vehicle-search" type="search" placeholder="Filter vehicle types" [ngModel]="vehicleSearch()" (ngModelChange)="vehicleSearch.set($event)" name="vehicleSearch" />
+              <select aria-label="Vehicle type" [ngModel]="selectedVehicleTypeId()" (ngModelChange)="selectedVehicleTypeId.set($event)" name="vehicleType" [disabled]="isVehicleLoading() || !!vehicleError()">
+                <option value="">{{ isVehicleLoading() ? 'Loading vehicle types…' : 'Select vehicle type' }}</option>
+                @for (type of visibleVehicleTypes(); track type.id) { <option [value]="type.id">{{ type.typeName }}</option> }
+              </select>
+              @if (vehicleError()) { <p class="field-error" role="alert">{{ vehicleError() }} <button type="button" class="text-button" (click)="loadVehicleTypes()">Retry</button></p> }
+              @if (attemptedSubmit() && !selectedVehicleTypeId()) { <p class="field-error">Select a vehicle type.</p> }
+            </div>
+          } @else if (selectedInsuranceTypeId()) {
+            <div class="support-message" role="status">This assisted creation workflow currently supports Vehicle Insurance.</div>
+          }
+        </div>
+      </section>
+
+      @if (canShowDetails) {
+        <section class="form-section">
+          <div class="section-heading">
+            <span class="section-index">03</span>
+            <div><h2>Customer &amp; vehicle</h2><p>Enter the details exactly as they appear on the registration certificate.</p></div>
+          </div>
+          <div class="section-content">
+            <div class="field-grid">
+              <div class="field">
+                <label for="customer-name">Customer name <span class="required">*</span></label>
+                <input id="customer-name" type="text" autocomplete="name" maxlength="60" placeholder="Enter customer name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" name="customerName" />
+                @if (attemptedSubmit() && customerName().trim().length < 2) { <p class="field-error">Enter at least 2 characters.</p> }
+              </div>
+              <div class="field">
+                <label for="customer-number">Contact number <span class="required">*</span></label>
+                <div class="phone-input"><span>+91</span><input id="customer-number" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile number" [ngModel]="customerNumber()" (ngModelChange)="setCustomerNumber($event)" name="customerNumber" /></div>
+                @if (attemptedSubmit() && !hasValidPhone) { <p class="field-error">Enter a valid 10-digit mobile number.</p> }
+              </div>
+              <div class="field">
+                <label for="vehicle-number">RC number <span class="required">*</span></label>
+                <input id="vehicle-number" type="text" maxlength="15" autocomplete="off" placeholder="e.g. KL 38 K 0014" [ngModel]="vehicleNumber()" (ngModelChange)="setVehicleNumber($event)" name="vehicleNumber" />
+                @if (attemptedSubmit() && !hasValidVehicleNumber) { <p class="field-error">Enter a valid RC number (4–15 letters or digits).</p> }
+              </div>
+              <div class="field">
+                <label>Policy type <span class="required">*</span></label>
+                <div class="choice-tabs" role="group" aria-label="Policy type">
+                  @for (policy of ['Comprehensive', 'Third Party', 'Own Damage']; track policy) {
+                    <button type="button" [class.selected]="policyType() === policy" [attr.aria-pressed]="policyType() === policy" (click)="selectPolicyType($any(policy))">{{ policy }}</button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-options">
+              <fieldset class="quick-option">
+                <legend>Ownership changed? <span class="required">*</span></legend>
+                <div class="choice-tabs compact" role="group" aria-label="Ownership changed">
+                  <button type="button" [class.selected]="isRCOwnerChanged()" [attr.aria-pressed]="isRCOwnerChanged()" (click)="isRCOwnerChanged.set(true)">Yes</button>
+                  <button type="button" [class.selected]="!isRCOwnerChanged()" [attr.aria-pressed]="!isRCOwnerChanged()" (click)="isRCOwnerChanged.set(false)">No</button>
+                </div>
+              </fieldset>
+              @if (!isThirdPartyPolicy()) {
+                <fieldset class="quick-option">
+                  <legend>Previous claim? <span class="required">*</span></legend>
+                  <div class="choice-tabs compact" role="group" aria-label="Previous claim">
+                    <button type="button" [class.selected]="hasPreviousClaim()" [attr.aria-pressed]="hasPreviousClaim()" (click)="selectPreviousClaim(true)">Yes</button>
+                    <button type="button" [class.selected]="!hasPreviousClaim()" [attr.aria-pressed]="!hasPreviousClaim()" (click)="selectPreviousClaim(false)">No</button>
+                  </div>
+                </fieldset>
+              }
+              @if (!isThirdPartyPolicy() && !hasPreviousClaim()) {
+                <fieldset class="quick-option ncb-option">
+                  <legend>NCB percentage <span class="required">*</span></legend>
+                  <div class="choice-tabs compact ncb-tabs" role="group" aria-label="NCB percentage">
+                    @for (ncb of activeNcbOptions; track ncb) {
+                      <button type="button" [class.selected]="ncbPercentage() === ncb" [attr.aria-pressed]="ncbPercentage() === ncb" (click)="ncbPercentage.set(ncb)">{{ ncb }}%</button>
+                    }
+                  </div>
+                </fieldset>
+              }
+            </div>
+          </div>
+        </section>
+      }
+
+      @if (formError()) { <div class="form-error-banner" role="alert">{{ formError() }}</div> }
+      <footer class="form-actions">
+        <p><span class="required">*</span> Required fields</p>
+        <button type="submit" class="button-primary" [disabled]="isSubmitting() || isInsuranceLoading() || isVehicleLoading()">
+          @if (isSubmitting()) { <span class="button-spinner"></span> Creating… } @else { Proceed to document upload <span aria-hidden="true">→</span> }
+        </button>
+      </footer>
+    </form>
+  } @else {
+    <section class="document-placeholder" aria-labelledby="document-step-title">
+      <div class="placeholder-icon" aria-hidden="true">✓</div>
+      <p class="eyebrow">ENQUIRY CREATED</p>
+      <h2 id="document-step-title">Ready for document upload</h2>
+      <p>The enquiry has been created. Document upload will be available in a later step.</p>
+      @if (createdEnquiry(); as created) {
+        <dl class="created-summary">
+          @if (created.enquiryNumber) { <div><dt>Enquiry number</dt><dd>{{ created.enquiryNumber }}</dd></div> }
+          @if (created.enquiryId) { <div><dt>Enquiry ID</dt><dd>{{ created.enquiryId }}</dd></div> }
+        </dl>
+      }
+      <button type="button" class="button-primary" (click)="backToQueue()">Return to Enquiries</button>
+    </section>
+  }
+</main>

@@ -1221,7 +1221,7 @@ export class AdminEnquiry implements OnInit {
 
   // Right Section Control Actions
   onNewEnquiry(): void {
-    this.router.navigate(['/create-enquiry']);
+    this.router.navigate(['/admin/enquiries/create']);
   }
 
   onTransactions(): void {

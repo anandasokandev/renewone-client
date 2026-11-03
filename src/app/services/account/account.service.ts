@@ -75,6 +75,12 @@ export class AccountService {
     });
   }
 
+  getAgentLookup(search = '', pageNumber = 1, pageSize = 20): Observable<ApiResponse<AgentLookupResponse>> {
+    let params = new HttpParams().set('PageNumber', pageNumber).set('PageSize', pageSize);
+    if (search.trim()) params = params.set('Search', search.trim());
+    return this.http.get<ApiResponse<AgentLookupResponse>>(`${this.apiUrl}/agent-lookup`, { params });
+  }
+
   toggleAgentStatus(accountId: string): Observable<ApiResponse<any>> {
     return this.http.put<ApiResponse<any>>(`${this.apiUrl}/${accountId}/toggle-status`, {});
   }
@@ -82,5 +88,29 @@ export class AccountService {
   approveAgent(accountId: string): Observable<ApiResponse<boolean>> {
     return this.http.post<ApiResponse<boolean>>(`${this.apiUrl}/approve-agent/${accountId}`, {});
   }
+}
+
+export interface AgentLookupItem {
+  accountId: string;
+  agentId?: string;
+  agentCode?: string;
+  agentName: string;
+  agencyName?: string;
+  phoneNumber?: string;
+  mobileNumber?: string;
+  agentClass?: string;
+  commissionPercentage?: number;
+  walletBalance?: number;
+  status?: string;
+  isActive?: boolean;
+}
+
+export interface AgentLookupResponse {
+  items: AgentLookupItem[];
+  pageNumber?: number;
+  pageSize?: number;
+  totalRecords?: number;
+  totalPages?: number;
+  hasNextPage?: boolean;
 }
 
