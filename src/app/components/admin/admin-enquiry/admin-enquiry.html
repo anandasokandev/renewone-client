@@ -112,15 +112,14 @@
         <section class="carbon-card-section" id="section-queue-table">
     <!-- Toolbar with Title & Search / Filter Controls -->
     <div class="section-toolbar">
-      <div class="section-title-group">
-        <div class="title-with-badge">
-          <h2 class="section-title">Common Queue</h2>
-          <span class="carbon-count-tag">{{ totalRecords() }} total</span>
+      <div class="toolbar-primary-row">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">Common Queue</h2>
+            <span class="carbon-count-tag">{{ totalRecords() }} total</span>
+          </div>
         </div>
-      </div>
 
-      <!-- Search & Filters (In place of refresh button) -->
-      <div class="toolbar-filters-group">
         <!-- Search Box -->
         <div class="carbon-search-box">
           <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -139,85 +138,95 @@
             <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
           }
         </div>
+      </div>
 
-        <!-- Filters Row -->
-        <div class="filters-selects-row">
-          <!-- Insurance Line Filter -->
-          <div class="filter-field">
-            <label for="filter-insurance-type" class="field-label">Insurance Line:</label>
-            <select
-              id="filter-insurance-type"
-              class="carbon-select"
-              [ngModel]="selectedInsuranceTypeId()"
-              (ngModelChange)="onInsuranceTypeChange($event)"
-            >
-              <option value="All">All Lines</option>
-              @for (type of insuranceTypes(); track type.id) {
-                <option [value]="type.id">{{ type.name }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Vehicle Type Filter -->
-          <div class="filter-field">
-            <label for="filter-vehicle-type" class="field-label">Vehicle Category:</label>
-            <select
-              id="filter-vehicle-type"
-              class="carbon-select"
-              [ngModel]="selectedVehicleTypeId()"
-              (ngModelChange)="onVehicleTypeChange($event)"
-            >
-              <option value="All">All Categories</option>
-              @for (vType of vehicleTypes(); track vType.id) {
-                <option [value]="vType.id">{{ vType.typeName }}</option>
-              }
-            </select>
-          </div>
-
-          <!-- Date Range Filter -->
-          <div class="filter-field">
-            <label for="filter-date-range" class="field-label">Date Filter:</label>
-            <select
-              id="filter-date-range"
-              class="carbon-select"
-              [ngModel]="selectedDateFilter().toString()"
-              (ngModelChange)="onDateFilterChange($event)"
-            >
-              <option value="1">Today</option>
-              <option value="2">Yesterday</option>
-              <option value="3">This Week</option>
-              <option value="4">This Month</option>
-              <option value="6">This Year</option>
-              <option value="5">Custom Range</option>
-            </select>
-          </div>
-
-          <!-- Custom Date Range Inputs (when 5 / Custom is selected) -->
-          @if (selectedDateFilter() === DateFilterType.Custom) {
-            <div class="custom-date-group">
-              <div class="date-input-wrap">
-                <label for="from-date" class="field-label">From:</label>
-                <input
-                  id="from-date"
-                  type="date"
-                  class="carbon-input-date"
-                  [ngModel]="fromDate()"
-                  (ngModelChange)="fromDate.set($event); onCustomDateChange()"
-                />
-              </div>
-              <div class="date-input-wrap">
-                <label for="to-date" class="field-label">To:</label>
-                <input
-                  id="to-date"
-                  type="date"
-                  class="carbon-input-date"
-                  [ngModel]="toDate()"
-                  (ngModelChange)="toDate.set($event); onCustomDateChange()"
-                />
-              </div>
-            </div>
-          }
+      <!-- Filters Row -->
+      <div class="toolbar-filters-row">
+        <!-- Insurance Line Filter -->
+        <div class="compact-filter-field">
+          <label for="filter-insurance-type" class="compact-filter-label">Line:</label>
+          <select
+            id="filter-insurance-type"
+            class="compact-filter-select"
+            [ngModel]="selectedInsuranceTypeId()"
+            (ngModelChange)="onInsuranceTypeChange($event)"
+          >
+            <option value="All">All Lines</option>
+            @for (type of insuranceTypes(); track type.id) {
+              <option [value]="type.id">{{ type.name }}</option>
+            }
+          </select>
         </div>
+
+        <!-- Vehicle Type Filter -->
+        <div class="compact-filter-field">
+          <label for="filter-vehicle-type" class="compact-filter-label">Category:</label>
+          <select
+            id="filter-vehicle-type"
+            class="compact-filter-select"
+            [ngModel]="selectedVehicleTypeId()"
+            (ngModelChange)="onVehicleTypeChange($event)"
+          >
+            <option value="All">All Categories</option>
+            @for (vType of vehicleTypes(); track vType.id) {
+              <option [value]="vType.id">{{ vType.typeName }}</option>
+            }
+          </select>
+        </div>
+
+        <!-- Date Range Filter -->
+        <div class="compact-filter-field">
+          <label for="filter-date-range" class="compact-filter-label">Date:</label>
+          <select
+            id="filter-date-range"
+            class="compact-filter-select"
+            [ngModel]="selectedDateFilter().toString()"
+            (ngModelChange)="onDateFilterChange($event)"
+          >
+            <option value="1">Today</option>
+            <option value="2">Yesterday</option>
+            <option value="3">This Week</option>
+            <option value="4">This Month</option>
+            <option value="6">This Year</option>
+            <option value="5">Custom Range</option>
+          </select>
+        </div>
+
+        <!-- Custom Date Range Inputs (when 5 / Custom is selected) -->
+        @if (selectedDateFilter() === DateFilterType.Custom) {
+          <div class="compact-date-range-group">
+            <div class="compact-filter-field date-field">
+              <label for="from-date" class="compact-filter-label">From:</label>
+              <input
+                id="from-date"
+                type="date"
+                class="compact-filter-date-input"
+                [ngModel]="fromDate()"
+                (ngModelChange)="fromDate.set($event); onCustomDateChange()"
+              />
+            </div>
+            <div class="compact-filter-field date-field">
+              <label for="to-date" class="compact-filter-label">To:</label>
+              <input
+                id="to-date"
+                type="date"
+                class="compact-filter-date-input"
+                [ngModel]="toDate()"
+                (ngModelChange)="toDate.set($event); onCustomDateChange()"
+              />
+            </div>
+          </div>
+        }
+
+        @if (searchQuery() || selectedInsuranceTypeId() !== 'All' || selectedVehicleTypeId() !== 'All' || selectedDateFilter() !== DateFilterType.Today) {
+          <button type="button" class="carbon-filter-reset-btn" (click)="resetAllFilters()" title="Reset all active filters">
+            <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z"/>
+              <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+            </svg>
+            <span>Reset</span>
+          </button>
+        }
       </div>
     </div>
 
@@ -491,15 +500,14 @@
     <section class="carbon-card-section" id="section-all-enquiries-table">
       <!-- Toolbar with Title & Search / Filter Controls -->
       <div class="section-toolbar">
-        <div class="section-title-group">
-          <div class="title-with-badge">
-            <h2 class="section-title">All Enquiries</h2>
-            <span class="carbon-count-tag">{{ allEnquiriesTotalRecords() }} total</span>
+        <div class="toolbar-primary-row">
+          <div class="section-title-group">
+            <div class="title-with-badge">
+              <h2 class="section-title">All Enquiries</h2>
+              <span class="carbon-count-tag">{{ allEnquiriesTotalRecords() }} total</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Search & Filters Toolbar -->
-        <div class="toolbar-filters-group">
           <!-- Global Search Box -->
           <div class="carbon-search-box">
             <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -518,117 +526,127 @@
               <button type="button" class="search-clear-btn" (click)="clearAllEnquiriesSearch()" aria-label="Clear search">&times;</button>
             }
           </div>
+        </div>
 
-          <!-- Filters Row -->
-          <div class="filters-selects-row">
-            <!-- Enquiry Status Filter -->
-            <div class="filter-field">
-              <label for="all-filter-status" class="field-label">Status:</label>
-              <select
-                id="all-filter-status"
-                class="carbon-select"
-                [ngModel]="allEnquiriesSelectedStatus()"
-                (ngModelChange)="onAllEnquiriesStatusChange($event)"
-              >
-                <option value="All">All Statuses</option>
-                @for (opt of statusOptions; track opt.id) {
-                  <option [value]="opt.id">{{ opt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Insurance Line Filter -->
-            <div class="filter-field">
-              <label for="all-filter-insurance-type" class="field-label">Insurance Line:</label>
-              <select
-                id="all-filter-insurance-type"
-                class="carbon-select"
-                [ngModel]="allEnquiriesSelectedInsuranceTypeId()"
-                (ngModelChange)="onAllEnquiriesInsuranceTypeChange($event)"
-              >
-                <option value="All">All Lines</option>
-                @for (type of insuranceTypes(); track type.id) {
-                  <option [value]="type.id">{{ type.name }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Vehicle Category Filter -->
-            <div class="filter-field">
-              <label for="all-filter-vehicle-type" class="field-label">Vehicle Category:</label>
-              <select
-                id="all-filter-vehicle-type"
-                class="carbon-select"
-                [ngModel]="allEnquiriesSelectedVehicleTypeId()"
-                (ngModelChange)="onAllEnquiriesVehicleTypeChange($event)"
-              >
-                <option value="All">All Categories</option>
-                @for (vType of vehicleTypes(); track vType.id) {
-                  <option [value]="vType.id">{{ vType.typeName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Account Filter -->
-            <div class="filter-field">
-              <label for="all-filter-account" class="field-label">Account:</label>
-              <select
-                id="all-filter-account"
-                class="carbon-select"
-                [ngModel]="allEnquiriesSelectedAccountId()"
-                (ngModelChange)="onAllEnquiriesAccountChange($event)"
-              >
-                <option value="All">All Accounts</option>
-                @for (acc of accountOptions(); track acc.accountId) {
-                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Date Range Filter -->
-            <div class="filter-field">
-              <label for="all-filter-date-range" class="field-label">Date Filter:</label>
-              <select
-                id="all-filter-date-range"
-                class="carbon-select"
-                [ngModel]="allEnquiriesSelectedDateFilter().toString()"
-                (ngModelChange)="onAllEnquiriesDateFilterChange($event)"
-              >
-                <option [value]="DateFilterType.Today">Today</option>
-                <option [value]="DateFilterType.Yesterday">Yesterday</option>
-                <option [value]="DateFilterType.ThisWeek">This Week</option>
-                <option [value]="DateFilterType.ThisMonth">This Month</option>
-                <option [value]="DateFilterType.Custom">Custom Range</option>
-                <option [value]="DateFilterType.ThisYear">This Year</option>
-              </select>
-            </div>
-
-            <!-- Custom Date Inputs (when DateFilterType.Custom) -->
-            @if (allEnquiriesSelectedDateFilter() === DateFilterType.Custom) {
-              <div class="custom-date-range-group">
-                <div class="date-input-wrap">
-                  <label for="all-from-date" class="field-label">From:</label>
-                  <input
-                    id="all-from-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="allEnquiriesFromDate()"
-                    (ngModelChange)="allEnquiriesFromDate.set($event); onAllEnquiriesCustomDateChange()"
-                  />
-                </div>
-                <div class="date-input-wrap">
-                  <label for="all-to-date" class="field-label">To:</label>
-                  <input
-                    id="all-to-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="allEnquiriesToDate()"
-                    (ngModelChange)="allEnquiriesToDate.set($event); onAllEnquiriesCustomDateChange()"
-                  />
-                </div>
-              </div>
-            }
+        <!-- Compact Filters Row -->
+        <div class="toolbar-filters-row">
+          <!-- Enquiry Status Filter -->
+          <div class="compact-filter-field">
+            <label for="all-filter-status" class="compact-filter-label">Status:</label>
+            <select
+              id="all-filter-status"
+              class="compact-filter-select"
+              [ngModel]="allEnquiriesSelectedStatus()"
+              (ngModelChange)="onAllEnquiriesStatusChange($event)"
+            >
+              <option value="All">All Statuses</option>
+              @for (opt of statusOptions; track opt.id) {
+                <option [value]="opt.id">{{ opt.label }}</option>
+              }
+            </select>
           </div>
+
+          <!-- Insurance Line Filter -->
+          <div class="compact-filter-field">
+            <label for="all-filter-insurance-type" class="compact-filter-label">Line:</label>
+            <select
+              id="all-filter-insurance-type"
+              class="compact-filter-select"
+              [ngModel]="allEnquiriesSelectedInsuranceTypeId()"
+              (ngModelChange)="onAllEnquiriesInsuranceTypeChange($event)"
+            >
+              <option value="All">All Lines</option>
+              @for (type of insuranceTypes(); track type.id) {
+                <option [value]="type.id">{{ type.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Vehicle Category Filter -->
+          <div class="compact-filter-field">
+            <label for="all-filter-vehicle-type" class="compact-filter-label">Category:</label>
+            <select
+              id="all-filter-vehicle-type"
+              class="compact-filter-select"
+              [ngModel]="allEnquiriesSelectedVehicleTypeId()"
+              (ngModelChange)="onAllEnquiriesVehicleTypeChange($event)"
+            >
+              <option value="All">All Categories</option>
+              @for (vType of vehicleTypes(); track vType.id) {
+                <option [value]="vType.id">{{ vType.typeName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Account Filter -->
+          <div class="compact-filter-field">
+            <label for="all-filter-account" class="compact-filter-label">Account:</label>
+            <select
+              id="all-filter-account"
+              class="compact-filter-select"
+              [ngModel]="allEnquiriesSelectedAccountId()"
+              (ngModelChange)="onAllEnquiriesAccountChange($event)"
+            >
+              <option value="All">All Accounts</option>
+              @for (acc of accountOptions(); track acc.accountId) {
+                <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Date Range Filter -->
+          <div class="compact-filter-field">
+            <label for="all-filter-date-range" class="compact-filter-label">Date:</label>
+            <select
+              id="all-filter-date-range"
+              class="compact-filter-select"
+              [ngModel]="allEnquiriesSelectedDateFilter().toString()"
+              (ngModelChange)="onAllEnquiriesDateFilterChange($event)"
+            >
+              <option [value]="DateFilterType.Today">Today</option>
+              <option [value]="DateFilterType.Yesterday">Yesterday</option>
+              <option [value]="DateFilterType.ThisWeek">This Week</option>
+              <option [value]="DateFilterType.ThisMonth">This Month</option>
+              <option [value]="DateFilterType.ThisYear">This Year</option>
+              <option [value]="DateFilterType.Custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Inputs (when DateFilterType.Custom) -->
+          @if (allEnquiriesSelectedDateFilter() === DateFilterType.Custom) {
+            <div class="compact-date-range-group">
+              <div class="compact-filter-field date-field">
+                <label for="all-from-date" class="compact-filter-label">From:</label>
+                <input
+                  id="all-from-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="allEnquiriesFromDate()"
+                  (ngModelChange)="allEnquiriesFromDate.set($event); onAllEnquiriesCustomDateChange()"
+                />
+              </div>
+              <div class="compact-filter-field date-field">
+                <label for="all-to-date" class="compact-filter-label">To:</label>
+                <input
+                  id="all-to-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="allEnquiriesToDate()"
+                  (ngModelChange)="allEnquiriesToDate.set($event); onAllEnquiriesCustomDateChange()"
+                />
+              </div>
+            </div>
+          }
+
+          @if (allEnquiriesSearchQuery() || allEnquiriesSelectedStatus() !== 'All' || allEnquiriesSelectedInsuranceTypeId() !== 'All' || allEnquiriesSelectedVehicleTypeId() !== 'All' || allEnquiriesSelectedAccountId() !== 'All' || allEnquiriesSelectedDateFilter() !== DateFilterType.Today) {
+            <button type="button" class="carbon-filter-reset-btn" (click)="resetAllFilters()" title="Reset all active filters">
+              <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+              </svg>
+              <span>Reset</span>
+            </button>
+          }
         </div>
       </div>
 
@@ -909,15 +927,14 @@
     <section class="carbon-card-section" id="section-my-tasks-table">
       <!-- Toolbar with Title & Search / Filter Controls -->
       <div class="section-toolbar">
-        <div class="section-title-group">
-          <div class="title-with-badge">
-            <h2 class="section-title">My Tasks</h2>
-            <span class="carbon-count-tag">{{ myTasksTotalRecords() }} total</span>
+        <div class="toolbar-primary-row">
+          <div class="section-title-group">
+            <div class="title-with-badge">
+              <h2 class="section-title">My Tasks</h2>
+              <span class="carbon-count-tag">{{ myTasksTotalRecords() }} total</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Search & Filters Toolbar -->
-        <div class="toolbar-filters-group">
           <!-- Global Search Box -->
           <div class="carbon-search-box">
             <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -936,133 +953,143 @@
               <button type="button" class="search-clear-btn" (click)="clearMyTasksSearch()" aria-label="Clear search">&times;</button>
             }
           </div>
+        </div>
 
-          <!-- Filters Row -->
-          <div class="filters-selects-row">
-            <!-- Enquiry Status Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-status" class="field-label">Status:</label>
-              <select
-                id="mytasks-filter-status"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedEnquiryStatus()"
-                (ngModelChange)="onMyTasksEnquiryStatusChange($event)"
-              >
-                <option value="All">All Statuses</option>
-                @for (opt of statusOptions; track opt.id) {
-                  <option [value]="opt.id">{{ opt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Policy Type Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-policy-type" class="field-label">Policy Type:</label>
-              <select
-                id="mytasks-filter-policy-type"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedPolicyType()"
-                (ngModelChange)="onMyTasksPolicyTypeChange($event)"
-              >
-                <option value="All">All Policy Types</option>
-                @for (pt of policyTypeOptions; track pt.id) {
-                  <option [value]="pt.id">{{ pt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Insurance Line Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-insurance-type" class="field-label">Insurance Line:</label>
-              <select
-                id="mytasks-filter-insurance-type"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedInsuranceTypeId()"
-                (ngModelChange)="onMyTasksInsuranceTypeChange($event)"
-              >
-                <option value="All">All Lines</option>
-                @for (type of insuranceTypes(); track type.id) {
-                  <option [value]="type.id">{{ type.name }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Vehicle Category Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-vehicle-type" class="field-label">Vehicle Category:</label>
-              <select
-                id="mytasks-filter-vehicle-type"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedVehicleTypeId()"
-                (ngModelChange)="onMyTasksVehicleTypeChange($event)"
-              >
-                <option value="All">All Categories</option>
-                @for (vType of vehicleTypes(); track vType.id) {
-                  <option [value]="vType.id">{{ vType.typeName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Account Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-account" class="field-label">Account:</label>
-              <select
-                id="mytasks-filter-account"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedAccountId()"
-                (ngModelChange)="onMyTasksAccountChange($event)"
-              >
-                <option value="All">All Accounts</option>
-                @for (acc of accountOptions(); track acc.accountId) {
-                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Date Range Filter -->
-            <div class="filter-field">
-              <label for="mytasks-filter-date-range" class="field-label">Date Filter:</label>
-              <select
-                id="mytasks-filter-date-range"
-                class="carbon-select"
-                [ngModel]="myTasksSelectedDateFilter().toString()"
-                (ngModelChange)="onMyTasksDateFilterChange($event)"
-              >
-                <option [value]="DateFilterType.Today">Today</option>
-                <option [value]="DateFilterType.Yesterday">Yesterday</option>
-                <option [value]="DateFilterType.ThisWeek">This Week</option>
-                <option [value]="DateFilterType.ThisMonth">This Month</option>
-                <option [value]="DateFilterType.Custom">Custom Range</option>
-                <option [value]="DateFilterType.ThisYear">This Year</option>
-              </select>
-            </div>
-
-            <!-- Custom Date Inputs (when DateFilterType.Custom) -->
-            @if (myTasksSelectedDateFilter() === DateFilterType.Custom) {
-              <div class="custom-date-range-group">
-                <div class="date-input-wrap">
-                  <label for="mytasks-from-date" class="field-label">From:</label>
-                  <input
-                    id="mytasks-from-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="myTasksFromDate()"
-                    (ngModelChange)="myTasksFromDate.set($event); onMyTasksCustomDateChange()"
-                  />
-                </div>
-                <div class="date-input-wrap">
-                  <label for="mytasks-to-date" class="field-label">To:</label>
-                  <input
-                    id="mytasks-to-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="myTasksToDate()"
-                    (ngModelChange)="myTasksToDate.set($event); onMyTasksCustomDateChange()"
-                  />
-                </div>
-              </div>
-            }
+        <!-- Compact Filters Row -->
+        <div class="toolbar-filters-row">
+          <!-- Enquiry Status Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-status" class="compact-filter-label">Status:</label>
+            <select
+              id="mytasks-filter-status"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedEnquiryStatus()"
+              (ngModelChange)="onMyTasksEnquiryStatusChange($event)"
+            >
+              <option value="All">All Statuses</option>
+              @for (opt of statusOptions; track opt.id) {
+                <option [value]="opt.id">{{ opt.label }}</option>
+              }
+            </select>
           </div>
+
+          <!-- Policy Type Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-policy-type" class="compact-filter-label">Policy:</label>
+            <select
+              id="mytasks-filter-policy-type"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedPolicyType()"
+              (ngModelChange)="onMyTasksPolicyTypeChange($event)"
+            >
+              <option value="All">All Policy Types</option>
+              @for (pt of policyTypeOptions; track pt.id) {
+                <option [value]="pt.id">{{ pt.label }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Insurance Line Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-insurance-type" class="compact-filter-label">Line:</label>
+            <select
+              id="mytasks-filter-insurance-type"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedInsuranceTypeId()"
+              (ngModelChange)="onMyTasksInsuranceTypeChange($event)"
+            >
+              <option value="All">All Lines</option>
+              @for (type of insuranceTypes(); track type.id) {
+                <option [value]="type.id">{{ type.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Vehicle Category Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-vehicle-type" class="compact-filter-label">Category:</label>
+            <select
+              id="mytasks-filter-vehicle-type"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedVehicleTypeId()"
+              (ngModelChange)="onMyTasksVehicleTypeChange($event)"
+            >
+              <option value="All">All Categories</option>
+              @for (vType of vehicleTypes(); track vType.id) {
+                <option [value]="vType.id">{{ vType.typeName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Account Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-account" class="compact-filter-label">Account:</label>
+            <select
+              id="mytasks-filter-account"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedAccountId()"
+              (ngModelChange)="onMyTasksAccountChange($event)"
+            >
+              <option value="All">All Accounts</option>
+              @for (acc of accountOptions(); track acc.accountId) {
+                <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Date Range Filter -->
+          <div class="compact-filter-field">
+            <label for="mytasks-filter-date-range" class="compact-filter-label">Date:</label>
+            <select
+              id="mytasks-filter-date-range"
+              class="compact-filter-select"
+              [ngModel]="myTasksSelectedDateFilter().toString()"
+              (ngModelChange)="onMyTasksDateFilterChange($event)"
+            >
+              <option [value]="DateFilterType.Today">Today</option>
+              <option [value]="DateFilterType.Yesterday">Yesterday</option>
+              <option [value]="DateFilterType.ThisWeek">This Week</option>
+              <option [value]="DateFilterType.ThisMonth">This Month</option>
+              <option [value]="DateFilterType.ThisYear">This Year</option>
+              <option [value]="DateFilterType.Custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Inputs (when DateFilterType.Custom) -->
+          @if (myTasksSelectedDateFilter() === DateFilterType.Custom) {
+            <div class="compact-date-range-group">
+              <div class="compact-filter-field date-field">
+                <label for="mytasks-from-date" class="compact-filter-label">From:</label>
+                <input
+                  id="mytasks-from-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="myTasksFromDate()"
+                  (ngModelChange)="myTasksFromDate.set($event); onMyTasksCustomDateChange()"
+                />
+              </div>
+              <div class="compact-filter-field date-field">
+                <label for="mytasks-to-date" class="compact-filter-label">To:</label>
+                <input
+                  id="mytasks-to-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="myTasksToDate()"
+                  (ngModelChange)="myTasksToDate.set($event); onMyTasksCustomDateChange()"
+                />
+              </div>
+            </div>
+          }
+
+          @if (myTasksSearchQuery() || myTasksSelectedEnquiryStatus() !== 'All' || myTasksSelectedPolicyType() !== 'All' || myTasksSelectedInsuranceTypeId() !== 'All' || myTasksSelectedVehicleTypeId() !== 'All' || myTasksSelectedAccountId() !== 'All' || myTasksSelectedDateFilter() !== DateFilterType.Today) {
+            <button type="button" class="carbon-filter-reset-btn" (click)="resetAllFilters()" title="Reset all active filters">
+              <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+              </svg>
+              <span>Reset</span>
+            </button>
+          }
         </div>
       </div>
 
@@ -1329,15 +1356,14 @@
     <section class="carbon-card-section" id="section-quote-queue-table">
       <!-- Toolbar with Title & Search / Filter Controls -->
       <div class="section-toolbar">
-        <div class="section-title-group">
-          <div class="title-with-badge">
-            <h2 class="section-title">{{ activeStage() === 4 ? 'Quote Queue' : 'Quoted Queue' }}</h2>
-            <span class="carbon-count-tag">{{ quoteQueueTotalRecords() }} total</span>
+        <div class="toolbar-primary-row">
+          <div class="section-title-group">
+            <div class="title-with-badge">
+              <h2 class="section-title">{{ activeStage() === 4 ? 'Quote Queue' : 'Quoted Queue' }}</h2>
+              <span class="carbon-count-tag">{{ quoteQueueTotalRecords() }} total</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Search & Filters Toolbar -->
-        <div class="toolbar-filters-group">
           <!-- Global Search Box -->
           <div class="carbon-search-box">
             <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1356,101 +1382,111 @@
               <button type="button" class="search-clear-btn" (click)="clearQuoteQueueSearch()" aria-label="Clear search">&times;</button>
             }
           </div>
+        </div>
 
-          <!-- Filters Row -->
-          <div class="filters-selects-row">
-            <!-- Insurance Type Filter -->
-            <div class="filter-field">
-              <label for="quote-filter-insurance" class="field-label">Insurance:</label>
-              <select
-                id="quote-filter-insurance"
-                class="carbon-select"
-                [ngModel]="quoteQueueSelectedInsuranceTypeId()"
-                (ngModelChange)="onQuoteQueueInsuranceTypeChange($event)"
-              >
-                <option value="All">All Categories</option>
-                @for (item of insuranceTypes(); track item.id) {
-                  <option [value]="item.id">{{ item.name }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Vehicle Type Filter -->
-            <div class="filter-field">
-              <label for="quote-filter-vehicle" class="field-label">Vehicle:</label>
-              <select
-                id="quote-filter-vehicle"
-                class="carbon-select"
-                [ngModel]="quoteQueueSelectedVehicleTypeId()"
-                (ngModelChange)="onQuoteQueueVehicleTypeChange($event)"
-              >
-                <option value="All">All Vehicles</option>
-                @for (item of vehicleTypes(); track item.id) {
-                  <option [value]="item.id">{{ item.typeName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Account Filter -->
-            <div class="filter-field">
-              <label for="quote-filter-account" class="field-label">Account:</label>
-              <select
-                id="quote-filter-account"
-                class="carbon-select"
-                [ngModel]="quoteQueueSelectedAccountId()"
-                (ngModelChange)="onQuoteQueueAccountChange($event)"
-              >
-                <option value="All">All Accounts</option>
-                @for (acc of accountOptions(); track acc.accountId) {
-                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Date Range Predefined Filter -->
-            <div class="filter-field">
-              <label for="quote-filter-date" class="field-label">Date Filter:</label>
-              <select
-                id="quote-filter-date"
-                class="carbon-select"
-                [ngModel]="quoteQueueSelectedDateFilter().toString()"
-                (ngModelChange)="onQuoteQueueDateFilterChange($event)"
-              >
-                <option [value]="DateFilterType.Today">Today</option>
-                <option [value]="DateFilterType.Yesterday">Yesterday</option>
-                <option [value]="DateFilterType.ThisWeek">This Week</option>
-                <option [value]="DateFilterType.ThisMonth">This Month</option>
-                <option [value]="DateFilterType.Custom">Custom Range</option>
-                <option [value]="DateFilterType.ThisYear">This Year</option>
-              </select>
-            </div>
-
-            <!-- Custom Date Range Inputs -->
-            @if (quoteQueueSelectedDateFilter() === DateFilterType.Custom) {
-              <div class="custom-date-range-group">
-                <div class="date-input-wrap">
-                  <label for="quote-from-date" class="field-label">From:</label>
-                  <input
-                    id="quote-from-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="quoteQueueFromDate()"
-                    (ngModelChange)="quoteQueueFromDate.set($event); onQuoteQueueCustomDateChange()"
-                  />
-                </div>
-                <div class="date-input-wrap">
-                  <label for="quote-to-date" class="field-label">To:</label>
-                  <input
-                    id="quote-to-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="quoteQueueToDate()"
-                    (ngModelChange)="quoteQueueToDate.set($event); onQuoteQueueCustomDateChange()"
-                  />
-                </div>
-              </div>
-            }
+        <!-- Compact Filters Row -->
+        <div class="toolbar-filters-row">
+          <!-- Insurance Type Filter -->
+          <div class="compact-filter-field">
+            <label for="quote-filter-insurance" class="compact-filter-label">Line:</label>
+            <select
+              id="quote-filter-insurance"
+              class="compact-filter-select"
+              [ngModel]="quoteQueueSelectedInsuranceTypeId()"
+              (ngModelChange)="onQuoteQueueInsuranceTypeChange($event)"
+            >
+              <option value="All">All Lines</option>
+              @for (item of insuranceTypes(); track item.id) {
+                <option [value]="item.id">{{ item.name }}</option>
+              }
+            </select>
           </div>
+
+          <!-- Vehicle Type Filter -->
+          <div class="compact-filter-field">
+            <label for="quote-filter-vehicle" class="compact-filter-label">Category:</label>
+            <select
+              id="quote-filter-vehicle"
+              class="compact-filter-select"
+              [ngModel]="quoteQueueSelectedVehicleTypeId()"
+              (ngModelChange)="onQuoteQueueVehicleTypeChange($event)"
+            >
+              <option value="All">All Categories</option>
+              @for (item of vehicleTypes(); track item.id) {
+                <option [value]="item.id">{{ item.typeName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Account Filter -->
+          <div class="compact-filter-field">
+            <label for="quote-filter-account" class="compact-filter-label">Account:</label>
+            <select
+              id="quote-filter-account"
+              class="compact-filter-select"
+              [ngModel]="quoteQueueSelectedAccountId()"
+              (ngModelChange)="onQuoteQueueAccountChange($event)"
+            >
+              <option value="All">All Accounts</option>
+              @for (acc of accountOptions(); track acc.accountId) {
+                <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Date Range Predefined Filter -->
+          <div class="compact-filter-field">
+            <label for="quote-filter-date" class="compact-filter-label">Date:</label>
+            <select
+              id="quote-filter-date"
+              class="compact-filter-select"
+              [ngModel]="quoteQueueSelectedDateFilter().toString()"
+              (ngModelChange)="onQuoteQueueDateFilterChange($event)"
+            >
+              <option [value]="DateFilterType.Today">Today</option>
+              <option [value]="DateFilterType.Yesterday">Yesterday</option>
+              <option [value]="DateFilterType.ThisWeek">This Week</option>
+              <option [value]="DateFilterType.ThisMonth">This Month</option>
+              <option [value]="DateFilterType.ThisYear">This Year</option>
+              <option [value]="DateFilterType.Custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Range Inputs -->
+          @if (quoteQueueSelectedDateFilter() === DateFilterType.Custom) {
+            <div class="compact-date-range-group">
+              <div class="compact-filter-field date-field">
+                <label for="quote-from-date" class="compact-filter-label">From:</label>
+                <input
+                  id="quote-from-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="quoteQueueFromDate()"
+                  (ngModelChange)="quoteQueueFromDate.set($event); onQuoteQueueCustomDateChange()"
+                />
+              </div>
+              <div class="compact-filter-field date-field">
+                <label for="quote-to-date" class="compact-filter-label">To:</label>
+                <input
+                  id="quote-to-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="quoteQueueToDate()"
+                  (ngModelChange)="quoteQueueToDate.set($event); onQuoteQueueCustomDateChange()"
+                />
+              </div>
+            </div>
+          }
+
+          @if (quoteQueueSearchQuery() || quoteQueueSelectedInsuranceTypeId() !== 'All' || quoteQueueSelectedVehicleTypeId() !== 'All' || quoteQueueSelectedAccountId() !== 'All' || quoteQueueSelectedDateFilter() !== DateFilterType.Today) {
+            <button type="button" class="carbon-filter-reset-btn" (click)="resetAllFilters()" title="Reset all active filters">
+              <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+              </svg>
+              <span>Reset</span>
+            </button>
+          }
         </div>
       </div>
 
@@ -1773,15 +1809,14 @@
     <section class="carbon-card-section" id="section-policy-queue-table">
       <!-- Toolbar with Title & Search / Filter Controls -->
       <div class="section-toolbar">
-        <div class="section-title-group">
-          <div class="title-with-badge">
-            <h2 class="section-title">{{ activeStage() === 6 ? 'Policy Queue' : 'Policy Issued Queue' }}</h2>
-            <span class="carbon-count-tag">{{ policyQueueTotalRecords() }} total</span>
+        <div class="toolbar-primary-row">
+          <div class="section-title-group">
+            <div class="title-with-badge">
+              <h2 class="section-title">{{ activeStage() === 6 ? 'Policy Queue' : 'Policy Issued Queue' }}</h2>
+              <span class="carbon-count-tag">{{ policyQueueTotalRecords() }} total</span>
+            </div>
           </div>
-        </div>
 
-        <!-- Search & Filters Toolbar -->
-        <div class="toolbar-filters-group">
           <!-- Global Search Box -->
           <div class="carbon-search-box">
             <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -1800,117 +1835,127 @@
               <button type="button" class="search-clear-btn" (click)="clearPolicyQueueSearch()" aria-label="Clear search">&times;</button>
             }
           </div>
+        </div>
 
-          <!-- Filters Row -->
-          <div class="filters-selects-row">
-            <!-- Enquiry Status Filter -->
-            <div class="filter-field">
-              <label for="policy-filter-status" class="field-label">Status:</label>
-              <select
-                id="policy-filter-status"
-                class="carbon-select"
-                [ngModel]="policyQueueSelectedStatus()"
-                (ngModelChange)="onPolicyQueueStatusChange($event)"
-              >
-                <option value="All">All Statuses</option>
-                @for (opt of statusOptions; track opt.id) {
-                  <option [value]="opt.id">{{ opt.label }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Insurance Type Filter -->
-            <div class="filter-field">
-              <label for="policy-filter-insurance" class="field-label">Insurance:</label>
-              <select
-                id="policy-filter-insurance"
-                class="carbon-select"
-                [ngModel]="policyQueueSelectedInsuranceTypeId()"
-                (ngModelChange)="onPolicyQueueInsuranceTypeChange($event)"
-              >
-                <option value="All">All Categories</option>
-                @for (item of insuranceTypes(); track item.id) {
-                  <option [value]="item.id">{{ item.name }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Vehicle Type Filter -->
-            <div class="filter-field">
-              <label for="policy-filter-vehicle" class="field-label">Vehicle:</label>
-              <select
-                id="policy-filter-vehicle"
-                class="carbon-select"
-                [ngModel]="policyQueueSelectedVehicleTypeId()"
-                (ngModelChange)="onPolicyQueueVehicleTypeChange($event)"
-              >
-                <option value="All">All Vehicles</option>
-                @for (item of vehicleTypes(); track item.id) {
-                  <option [value]="item.id">{{ item.typeName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Account Filter -->
-            <div class="filter-field">
-              <label for="policy-filter-account" class="field-label">Account:</label>
-              <select
-                id="policy-filter-account"
-                class="carbon-select"
-                [ngModel]="policyQueueSelectedAccountId()"
-                (ngModelChange)="onPolicyQueueAccountChange($event)"
-              >
-                <option value="All">All Accounts</option>
-                @for (acc of accountOptions(); track acc.accountId) {
-                  <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
-                }
-              </select>
-            </div>
-
-            <!-- Date Range Predefined Filter -->
-            <div class="filter-field">
-              <label for="policy-filter-date" class="field-label">Date Filter:</label>
-              <select
-                id="policy-filter-date"
-                class="carbon-select"
-                [ngModel]="policyQueueSelectedDateFilter().toString()"
-                (ngModelChange)="onPolicyQueueDateFilterChange($event)"
-              >
-                <option [value]="DateFilterType.Today">Today</option>
-                <option [value]="DateFilterType.Yesterday">Yesterday</option>
-                <option [value]="DateFilterType.ThisWeek">This Week</option>
-                <option [value]="DateFilterType.ThisMonth">This Month</option>
-                <option [value]="DateFilterType.Custom">Custom Range</option>
-                <option [value]="DateFilterType.ThisYear">This Year</option>
-              </select>
-            </div>
-
-            <!-- Custom Date Range Inputs -->
-            @if (policyQueueSelectedDateFilter() === DateFilterType.Custom) {
-              <div class="custom-date-range-group">
-                <div class="date-input-wrap">
-                  <label for="policy-from-date" class="field-label">From:</label>
-                  <input
-                    id="policy-from-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="policyQueueFromDate()"
-                    (ngModelChange)="policyQueueFromDate.set($event); onPolicyQueueCustomDateChange()"
-                  />
-                </div>
-                <div class="date-input-wrap">
-                  <label for="policy-to-date" class="field-label">To:</label>
-                  <input
-                    id="policy-to-date"
-                    type="date"
-                    class="carbon-input-date"
-                    [ngModel]="policyQueueToDate()"
-                    (ngModelChange)="policyQueueToDate.set($event); onPolicyQueueCustomDateChange()"
-                  />
-                </div>
-              </div>
-            }
+        <!-- Compact Filters Row -->
+        <div class="toolbar-filters-row">
+          <!-- Enquiry Status Filter -->
+          <div class="compact-filter-field">
+            <label for="policy-filter-status" class="compact-filter-label">Status:</label>
+            <select
+              id="policy-filter-status"
+              class="compact-filter-select"
+              [ngModel]="policyQueueSelectedStatus()"
+              (ngModelChange)="onPolicyQueueStatusChange($event)"
+            >
+              <option value="All">All Statuses</option>
+              @for (opt of statusOptions; track opt.id) {
+                <option [value]="opt.id">{{ opt.label }}</option>
+              }
+            </select>
           </div>
+
+          <!-- Insurance Type Filter -->
+          <div class="compact-filter-field">
+            <label for="policy-filter-insurance" class="compact-filter-label">Line:</label>
+            <select
+              id="policy-filter-insurance"
+              class="compact-filter-select"
+              [ngModel]="policyQueueSelectedInsuranceTypeId()"
+              (ngModelChange)="onPolicyQueueInsuranceTypeChange($event)"
+            >
+              <option value="All">All Lines</option>
+              @for (item of insuranceTypes(); track item.id) {
+                <option [value]="item.id">{{ item.name }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Vehicle Type Filter -->
+          <div class="compact-filter-field">
+            <label for="policy-filter-vehicle" class="compact-filter-label">Category:</label>
+            <select
+              id="policy-filter-vehicle"
+              class="compact-filter-select"
+              [ngModel]="policyQueueSelectedVehicleTypeId()"
+              (ngModelChange)="onPolicyQueueVehicleTypeChange($event)"
+            >
+              <option value="All">All Categories</option>
+              @for (item of vehicleTypes(); track item.id) {
+                <option [value]="item.id">{{ item.typeName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Account Filter -->
+          <div class="compact-filter-field">
+            <label for="policy-filter-account" class="compact-filter-label">Account:</label>
+            <select
+              id="policy-filter-account"
+              class="compact-filter-select"
+              [ngModel]="policyQueueSelectedAccountId()"
+              (ngModelChange)="onPolicyQueueAccountChange($event)"
+            >
+              <option value="All">All Accounts</option>
+              @for (acc of accountOptions(); track acc.accountId) {
+                <option [value]="acc.accountId">{{ acc.agencyName || acc.agentName }}</option>
+              }
+            </select>
+          </div>
+
+          <!-- Date Range Predefined Filter -->
+          <div class="compact-filter-field">
+            <label for="policy-filter-date" class="compact-filter-label">Date:</label>
+            <select
+              id="policy-filter-date"
+              class="compact-filter-select"
+              [ngModel]="policyQueueSelectedDateFilter().toString()"
+              (ngModelChange)="onPolicyQueueDateFilterChange($event)"
+            >
+              <option [value]="DateFilterType.Today">Today</option>
+              <option [value]="DateFilterType.Yesterday">Yesterday</option>
+              <option [value]="DateFilterType.ThisWeek">This Week</option>
+              <option [value]="DateFilterType.ThisMonth">This Month</option>
+              <option [value]="DateFilterType.ThisYear">This Year</option>
+              <option [value]="DateFilterType.Custom">Custom Range</option>
+            </select>
+          </div>
+
+          <!-- Custom Date Range Inputs -->
+          @if (policyQueueSelectedDateFilter() === DateFilterType.Custom) {
+            <div class="compact-date-range-group">
+              <div class="compact-filter-field date-field">
+                <label for="policy-from-date" class="compact-filter-label">From:</label>
+                <input
+                  id="policy-from-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="policyQueueFromDate()"
+                  (ngModelChange)="policyQueueFromDate.set($event); onPolicyQueueCustomDateChange()"
+                />
+              </div>
+              <div class="compact-filter-field date-field">
+                <label for="policy-to-date" class="compact-filter-label">To:</label>
+                <input
+                  id="policy-to-date"
+                  type="date"
+                  class="compact-filter-date-input"
+                  [ngModel]="policyQueueToDate()"
+                  (ngModelChange)="policyQueueToDate.set($event); onPolicyQueueCustomDateChange()"
+                />
+              </div>
+            </div>
+          }
+
+          @if (policyQueueSearchQuery() || policyQueueSelectedStatus() !== 'All' || policyQueueSelectedInsuranceTypeId() !== 'All' || policyQueueSelectedVehicleTypeId() !== 'All' || policyQueueSelectedAccountId() !== 'All' || policyQueueSelectedDateFilter() !== DateFilterType.Today) {
+            <button type="button" class="carbon-filter-reset-btn" (click)="resetAllFilters()" title="Reset all active filters">
+              <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+                <path fill-rule="evenodd" d="M8 3a5 5 0 104.546 2.914.5.5 0 01.908-.417A6 6 0 118 2v1z"/>
+                <path d="M8 4.466V.534a.25.25 0 01.41-.192l2.36 1.966c.12.1.12.284 0 .384L8.41 4.658A.25.25 0 018 4.466z"/>
+              </svg>
+              <span>Reset</span>
+            </button>
+          }
         </div>
       </div>
 
