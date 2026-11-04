@@ -59,7 +59,7 @@ export class Navbar {
       url.includes('/admin/qr-management') ||
       url.includes('/admin/bank-account-management') ||
       url.includes('/admin/pricing-master') ||
-      url.includes('/admin/insurance-management')
+      url.includes('/admin/insurance-management') || url.includes('/admin/vendor-management')
     );
   });
 

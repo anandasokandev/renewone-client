@@ -28,6 +28,7 @@ export class QrManagement implements OnInit {
 
   // --- Add UPI ID Modal State ---
   readonly isAddUpiModalOpen = signal<boolean>(false);
+  readonly editingUpiItem = signal<UpiMasterItem | null>(null);
   readonly isSubmittingUpi = signal<boolean>(false);
   readonly bankAccounts = signal<BankAccountItem[]>([]);
   readonly isBankAccountsLoading = signal<boolean>(false);
@@ -41,6 +42,7 @@ export class QrManagement implements OnInit {
 
   // --- Add QR Mapping Modal State ---
   readonly isAddQrMappingModalOpen = signal<boolean>(false);
+  readonly editingQrMappingItem = signal<QrMappingItem | null>(null);
   readonly isSubmittingMapping = signal<boolean>(false);
   readonly isMappingDropdownsLoading = signal<boolean>(false);
   readonly addMappingError = signal<string | null>(null);
@@ -198,6 +200,7 @@ export class QrManagement implements OnInit {
   }
 
   openAddUpiModal(): void {
+    this.editingUpiItem.set(null);
     this.addUpiError.set(null);
     this.addUpiForm.reset({
       upiId: '',
@@ -210,9 +213,28 @@ export class QrManagement implements OnInit {
     }
   }
 
+  openEditUpiModal(item: UpiMasterItem): void {
+    this.editingUpiItem.set(item);
+    this.addUpiError.set(null);
+    this.addUpiForm.reset({
+      upiId: item.upiId,
+      upiName: item.upiName,
+      bankAccountId: item.bankAccountId,
+    });
+    this.isAddUpiModalOpen.set(true);
+    if (this.bankAccounts().length === 0) this.loadBankAccounts();
+  }
+
+  onUpiRowKeydown(event: KeyboardEvent, item: UpiMasterItem): void {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    this.openEditUpiModal(item);
+  }
+
   closeAddUpiModal(force: boolean = false): void {
     if (this.isSubmittingUpi() && !force) return;
     this.isAddUpiModalOpen.set(false);
+    this.editingUpiItem.set(null);
     this.addUpiError.set(null);
     this.addUpiForm.reset({
       upiId: '',
@@ -252,12 +274,17 @@ export class QrManagement implements OnInit {
     this.isSubmittingUpi.set(true);
     this.addUpiError.set(null);
 
-    this.qrService
-      .createQrMaster({
-        upiId: upiId.trim(),
-        upiName: upiName.trim(),
-        bankAccountId: bankAccountId.trim(),
-      })
+    const editingItem = this.editingUpiItem();
+    const payload = {
+      upiId: upiId.trim(),
+      upiName: upiName.trim(),
+      bankAccountId: bankAccountId.trim(),
+    };
+    const saveRequest = editingItem
+      ? this.qrService.updateQrMaster(editingItem.id, { id: editingItem.id, ...payload, isActive: editingItem.isActive })
+      : this.qrService.createQrMaster(payload);
+
+    saveRequest
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isSubmittingUpi.set(false))
@@ -267,15 +294,15 @@ export class QrManagement implements OnInit {
           if (res.isSuccess) {
             this.isSubmittingUpi.set(false);
             this.closeAddUpiModal(true);
-            this.showToast(res.message || 'QR Master created successfully.', 'success');
+            this.showToast(res.message || (editingItem ? 'QR Master updated successfully.' : 'QR Master created successfully.'), 'success');
             this.loadUpiMasters();
           } else {
-            this.addUpiError.set(res.message || 'Failed to create QR Master.');
+            this.addUpiError.set(res.message || (editingItem ? 'Failed to update QR Master.' : 'Failed to create QR Master.'));
           }
         },
         error: (err) => {
           this.addUpiError.set(
-            err?.error?.message || 'An error occurred while creating the UPI ID.'
+            err?.error?.message || (editingItem ? 'An error occurred while updating the UPI ID.' : 'An error occurred while creating the UPI ID.')
           );
         },
       });
@@ -377,7 +404,14 @@ export class QrManagement implements OnInit {
     this.loadQrMappings();
   }
 
+  onQrMappingRowKeydown(event: KeyboardEvent, item: QrMappingItem): void {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    this.openEditQrMappingModal(item);
+  }
+
   openAddQrMappingModal(): void {
+    this.editingQrMappingItem.set(null);
     this.addMappingError.set(null);
     this.addMappingForm.reset({
       qrMasterId: '',
@@ -388,9 +422,22 @@ export class QrManagement implements OnInit {
     this.loadMappingDropdowns();
   }
 
+  openEditQrMappingModal(item: QrMappingItem): void {
+    this.editingQrMappingItem.set(item);
+    this.addMappingError.set(null);
+    this.addMappingForm.reset({
+      qrMasterId: item.qrMasterId,
+      insuranceTypeId: item.insuranceTypeId,
+      vehicleTypeId: item.vehicleTypeId,
+    });
+    this.isAddQrMappingModalOpen.set(true);
+    this.loadMappingDropdowns();
+  }
+
   closeAddQrMappingModal(force: boolean = false): void {
     if (this.isSubmittingMapping() && !force) return;
     this.isAddQrMappingModalOpen.set(false);
+    this.editingQrMappingItem.set(null);
     this.addMappingError.set(null);
     this.addMappingForm.reset({
       qrMasterId: '',
@@ -439,12 +486,17 @@ export class QrManagement implements OnInit {
     this.isSubmittingMapping.set(true);
     this.addMappingError.set(null);
 
-    this.qrService
-      .createQrMapping({
-        qrMasterId: qrMasterId.trim(),
-        insuranceTypeId: insuranceTypeId.trim(),
-        vehicleTypeId: vehicleTypeId.trim(),
-      })
+    const editingItem = this.editingQrMappingItem();
+    const payload = {
+      qrMasterId: qrMasterId.trim(),
+      insuranceTypeId: insuranceTypeId.trim(),
+      vehicleTypeId: vehicleTypeId.trim(),
+    };
+    const saveRequest = editingItem
+      ? this.qrService.updateQrMapping(editingItem.id, { id: editingItem.id, ...payload, isActive: editingItem.isActive })
+      : this.qrService.createQrMapping(payload);
+
+    saveRequest
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isSubmittingMapping.set(false))
@@ -454,15 +506,15 @@ export class QrManagement implements OnInit {
           if (res.isSuccess) {
             this.isSubmittingMapping.set(false);
             this.closeAddQrMappingModal(true);
-            this.showToast(res.message || 'QR Mapping created successfully.', 'success');
+            this.showToast(res.message || (editingItem ? 'QR Mapping updated successfully.' : 'QR Mapping created successfully.'), 'success');
             this.loadQrMappings();
           } else {
-            this.addMappingError.set(res.message || 'Failed to create QR Mapping.');
+            this.addMappingError.set(res.message || (editingItem ? 'Failed to update QR Mapping.' : 'Failed to create QR Mapping.'));
           }
         },
         error: (err) => {
           this.addMappingError.set(
-            err?.error?.message || 'An error occurred while creating the QR Mapping.'
+            err?.error?.message || (editingItem ? 'An error occurred while updating the QR Mapping.' : 'An error occurred while creating the QR Mapping.')
           );
         },
       });

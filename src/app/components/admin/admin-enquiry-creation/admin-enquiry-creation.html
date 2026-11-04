@@ -366,7 +366,7 @@
           @if (qrLoading()) { <p class="quote-empty">Loading QR and bank details…</p> }
           @else if (qrDetails(); as qr) {
             <div class="bank-payment-layout">
-              <div class="qr-frame">@if (qr.qrImageUrl?.trim()) { <img [src]="qr.qrImageUrl" alt="Payment QR code" /> } @else { <div class="qr-empty"><span aria-hidden="true">▦</span><strong>QR image unavailable</strong><small>Use the bank or UPI details to complete payment.</small></div> }</div>
+              <div class="qr-frame">@if (qr.qrImageUrl.trim()) { <img [src]="qr.qrImageUrl" alt="Payment QR code" /> } @else { <div class="qr-empty"><span aria-hidden="true">▦</span><strong>QR image unavailable</strong><small>Use the bank or UPI details to complete payment.</small></div> }</div>
               <div class="bank-details"><h4>{{ qr.qrName }}</h4><dl>
                 <div><dt>Bank</dt><dd>{{ qr.bankName }}</dd></div><div><dt>Branch</dt><dd>{{ qr.branchName }}</dd></div>
                 <div><dt>Account holder</dt><dd>{{ qr.accountHolderName }}</dd></div><div><dt>Account number</dt><dd>{{ qr.accountNumber }}</dd></div>

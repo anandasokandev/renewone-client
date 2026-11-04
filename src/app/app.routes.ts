@@ -84,6 +84,13 @@ export const routes: Routes = [
                 './components/admin/accelerators/insurance-management/insurance-management'
               ).then(m => m.InsuranceManagement),
           },
+          {
+            path: 'vendor-management',
+            loadComponent: () =>
+              import(
+                './components/admin/accelerators/vendor-management/vendor-management'
+              ).then(m => m.VendorManagement),
+          }
         ],
       },
       { path: 'accelerator', redirectTo: 'accelerators', pathMatch: 'full' },
@@ -91,6 +98,7 @@ export const routes: Routes = [
       { path: 'bank-account-management', redirectTo: 'accelerators/bank-account-management', pathMatch: 'full' },
       { path: 'pricing-master', redirectTo: 'accelerators/pricing-master', pathMatch: 'full' },
       { path: 'insurance-management', redirectTo: 'accelerators/insurance-management', pathMatch: 'full' },
+      { path: 'vendor-management', redirectTo: 'accelerators/vendor-management', pathMatch: 'full' }
     ],
   },
   {

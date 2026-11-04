@@ -445,6 +445,9 @@
   background-color: #f4f4f4;
 }
 
+.editable-row { cursor: pointer; }
+.editable-row:focus-visible { outline: 2px solid #0f62fe; outline-offset: -2px; }
+
 /* Column Widths */
 .th-upi-id { min-width: 240px; }
 .th-upi-name { min-width: 180px; }

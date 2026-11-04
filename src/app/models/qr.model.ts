@@ -41,6 +41,11 @@ export interface CreateUpiMasterRequest {
   bankAccountId: string;
 }
 
+export interface UpdateUpiMasterRequest extends CreateUpiMasterRequest {
+  id: string;
+  isActive: boolean;
+}
+
 export interface BankAccountItem {
   id: string;
   accountName: string;
@@ -60,5 +65,10 @@ export interface CreateQrMappingRequest {
   qrMasterId: string;
   insuranceTypeId: string;
   vehicleTypeId: string;
+}
+
+export interface UpdateQrMappingRequest extends CreateQrMappingRequest {
+  id: string;
+  isActive: boolean;
 }
 

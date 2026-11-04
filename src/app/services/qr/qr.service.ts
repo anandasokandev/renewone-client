@@ -7,6 +7,8 @@ import {
   BankAccountItem,
   CreateQrMappingRequest,
   CreateUpiMasterRequest,
+  UpdateUpiMasterRequest,
+  UpdateQrMappingRequest,
   PagedResult,
   QrFilterParams,
   QrMappingItem,
@@ -42,6 +44,10 @@ export class QrService {
 
   createQrMaster(payload: CreateUpiMasterRequest): Observable<ApiResponse<string>> {
     return this.http.post<ApiResponse<string>>(`${this.baseUrl}/qr-master`, payload);
+  }
+
+  updateQrMaster(id: string, payload: UpdateUpiMasterRequest): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.baseUrl}/qr-master/${encodeURIComponent(id)}`, payload);
   }
 
   getBankAccounts(params: QrFilterParams = {}): Observable<ApiResponse<PagedResult<BankAccountItem>>> {
@@ -86,6 +92,10 @@ export class QrService {
     return this.http.post<ApiResponse<any>>(`${this.baseUrl}/qr-mappings`, payload);
   }
 
+  updateQrMapping(id: string, payload: UpdateQrMappingRequest): Observable<ApiResponse<unknown>> {
+    return this.http.put<ApiResponse<unknown>>(`${this.baseUrl}/qr-mappings/${encodeURIComponent(id)}`, payload);
+  }
+
   getInsuranceTypes(): Observable<ApiResponse<InsuranceTypeItem[]>> {
     return this.http.get<ApiResponse<InsuranceTypeItem[]>>(`${this.baseUrl}/insurance-types`);
   }
@@ -95,11 +105,11 @@ export class QrService {
   }
 
   toggleQrMasterStatus(id: string): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/qr-master/${id}/toggle-status`, {});
+    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/qr-master/${encodeURIComponent(id)}/status`, {});
   }
 
   toggleQrMappingStatus(id: string): Observable<ApiResponse<any>> {
-    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/qr-mappings/${id}/toggle-status`, {});
+    return this.http.put<ApiResponse<any>>(`${this.baseUrl}/qr-mappings/${encodeURIComponent(id)}/status`, {});
   }
 }
 

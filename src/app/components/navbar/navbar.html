@@ -107,6 +107,15 @@
               >
                 Insurance Mgmt
               </a>
+              <a
+                [routerLink]="['/admin/accelerators/vendor-management']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                Vendor Mgmt
+              </a>
             </div>
           </div>
         } @else {
@@ -389,6 +398,14 @@
                 (click)="closeMenus()"
               >
                 Insurance Mgmt
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/vendor-management']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                Vendor Mgmt
               </a>
             </div>
           }

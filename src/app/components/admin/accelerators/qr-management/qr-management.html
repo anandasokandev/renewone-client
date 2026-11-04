@@ -61,6 +61,7 @@
             <h2 class="section-title">UPI IDs</h2>
             <span class="carbon-count-tag">{{ upiTotalRecords() }} configured</span>
           </div>
+          <p class="section-subtitle">Select a row to edit its UPI details.</p>
         </div>
 
         <div class="section-actions-group">
@@ -155,7 +156,7 @@
               </thead>
               <tbody>
                 @for (item of filteredUpiItems(); track item.id) {
-                  <tr class="carbon-table-row">
+                  <tr class="carbon-table-row editable-row" tabindex="0" (click)="openEditUpiModal(item)" (keydown)="onUpiRowKeydown($event, item)" [attr.aria-label]="'Edit UPI ID ' + item.upiName">
                     <!-- UPI ID with Copy -->
                     <td class="td-upi-id">
                       <div class="cell-mono-wrapper">
@@ -163,7 +164,8 @@
                         <button
                           type="button"
                           class="carbon-icon-btn"
-                          (click)="copyToClipboard(item.upiId, 'UPI ID')"
+                          (click)="$event.stopPropagation(); copyToClipboard(item.upiId, 'UPI ID')"
+                          (keydown)="$event.stopPropagation()"
                           [title]="copiedText() === item.upiId ? 'Copied!' : 'Copy UPI ID'"
                         >
                           @if (copiedText() === item.upiId) {
@@ -211,6 +213,7 @@
                           [class.checked]="item.isActive"
                           [disabled]="togglingUpiId() === item.id"
                           (click)="onToggleUpiStatus(item, $event)"
+                          (keydown)="$event.stopPropagation()"
                           role="switch"
                           [attr.aria-checked]="item.isActive"
                           [title]="item.isActive ? 'Disable UPI ID' : 'Enable UPI ID'"
@@ -293,6 +296,7 @@
             <h2 class="section-title">QR Mapping</h2>
             <span class="carbon-count-tag">{{ qrMappingTotalRecords() }} mapped</span>
           </div>
+          <p class="section-subtitle">Select a row to edit its QR mapping.</p>
         </div>
 
         <div class="section-actions-group">
@@ -390,7 +394,7 @@
               </thead>
               <tbody>
                 @for (item of filteredQrMappingItems(); track item.id) {
-                  <tr class="carbon-table-row">
+                  <tr class="carbon-table-row editable-row" tabindex="0" (click)="openEditQrMappingModal(item)" (keydown)="onQrMappingRowKeydown($event, item)" [attr.aria-label]="'Edit QR mapping ' + item.qrName">
                     <!-- QR Name -->
                     <td class="td-mapping-qr">
                       <div class="qr-label-cell">
@@ -435,6 +439,7 @@
                           [class.checked]="item.isActive"
                           [disabled]="togglingQrMappingId() === item.id"
                           (click)="onToggleQrMappingStatus(item, $event)"
+                          (keydown)="$event.stopPropagation()"
                           role="switch"
                           [attr.aria-checked]="item.isActive"
                           [title]="item.isActive ? 'Disable QR Mapping' : 'Enable QR Mapping'"
@@ -517,7 +522,7 @@
         <!-- Modal Header -->
         <div class="modal-header">
           <div class="header-titles">
-            <h2 id="add-upi-title" class="modal-headline">Add UPI ID</h2>
+            <h2 id="add-upi-title" class="modal-headline">{{ editingUpiItem() ? 'Edit UPI ID' : 'Add UPI ID' }}</h2>
           </div>
           <button
             type="button"
@@ -641,12 +646,12 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Creating UPI ID...</span>
+                <span>{{ editingUpiItem() ? 'Saving changes...' : 'Creating UPI ID...' }}</span>
               } @else {
                 <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
                 </svg>
-                <span>Create UPI ID</span>
+                <span>{{ editingUpiItem() ? 'Save changes' : 'Create UPI ID' }}</span>
               }
             </button>
           </div>
@@ -670,7 +675,7 @@
         <!-- Modal Header -->
         <div class="modal-header">
           <div class="header-titles">
-            <h2 id="add-mapping-title" class="modal-headline">Add QR Mapping</h2>
+            <h2 id="add-mapping-title" class="modal-headline">{{ editingQrMappingItem() ? 'Edit QR Mapping' : 'Add QR Mapping' }}</h2>
           </div>
           <button
             type="button"
@@ -808,12 +813,12 @@
                   <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
                   <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
                 </svg>
-                <span>Creating Mapping...</span>
+                <span>{{ editingQrMappingItem() ? 'Saving changes...' : 'Creating Mapping...' }}</span>
               } @else {
                 <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
                   <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
                 </svg>
-                <span>Create Mapping</span>
+                <span>{{ editingQrMappingItem() ? 'Save changes' : 'Create Mapping' }}</span>
               }
             </button>
           </div>
