@@ -32,6 +32,7 @@ import {
   AdminCommonQueueItem,
   AdminCommonQueueFilterParams,
   AdminCommonQueuePagedData,
+  AdminAssistedEnquiriesPagedData,
   AdminAllEnquiryItem,
   AdminAllEnquiriesFilterParams,
   AdminAllEnquiriesPagedData,
@@ -179,6 +180,25 @@ export class EnquiryService {
     );
   }
 
+  deleteVehicleDocument(documentId: string): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${environment.apiUrl}/VehicleEnquiry/delete/${encodeURIComponent(documentId)}`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  replaceVehicleDocument(documentId: string, file: File): Observable<ApiResponse<unknown>> {
+    const formData = new FormData();
+    formData.append('Field', documentId);
+    formData.append('File', file, file.name);
+    return this.http.post<ApiResponse<unknown>>(
+      `${environment.apiUrl}/VehicleEnquiry/replace-document`,
+      formData,
+      { headers: this.getAuthHeadersForFormData() }
+    );
+  }
+
   getVehicleQuotes(params: QuoteFilterParams): Observable<ApiResponse<QuotePagedResult>> {
     let httpParams = new HttpParams().set('EnquiryId', params.enquiryId);
 
@@ -204,6 +224,35 @@ export class EnquiryService {
         headers: this.getAuthHeaders(),
         params: httpParams,
       }
+    );
+  }
+
+  getVendors(): Observable<ApiResponse<Array<{ id: string; name: string; isActive: boolean }>>> {
+    return this.http.get<ApiResponse<Array<{ id: string; name: string; isActive: boolean }>>>(
+      `${environment.apiUrl}/Vendor`, { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getInsuranceCompanies(): Observable<ApiResponse<Array<{ id: string; companyName: string }>>> {
+    return this.http.get<ApiResponse<Array<{ id: string; companyName: string }>>>(
+      `${environment.apiUrl}/InsuranceCompany`, { headers: this.getAuthHeaders() }
+    );
+  }
+
+  addVehicleQuote(payload: {
+    enquiryId: string;
+    insuranceCompanyId: string;
+    vendorId: string | null;
+    premium: number;
+    companyPayable: number;
+    agentPoints: number;
+    adminProfit: number;
+    idv: number;
+    remarks: string;
+  }): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(
+      `${environment.apiUrl}/VehicleEnquiry/add-vehicle-quote`, payload,
+      { headers: this.getAuthHeaders() }
     );
   }
 
@@ -370,6 +419,27 @@ export class EnquiryService {
         headers: this.getAuthHeaders(),
         params: httpParams,
       }
+    );
+  }
+
+  getAdminAssistedEnquiries(
+    params: AdminAllEnquiriesFilterParams = {}
+  ): Observable<ApiResponse<AdminAssistedEnquiriesPagedData>> {
+    let httpParams = new HttpParams();
+    if (params.search?.trim()) httpParams = httpParams.set('Search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) httpParams = httpParams.set('Status', params.status.toString());
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    if (params.accountId && params.accountId !== 'All') httpParams = httpParams.set('AccountId', params.accountId);
+    if (params.fromDate) httpParams = httpParams.set('FromDate', params.fromDate);
+    if (params.toDate) httpParams = httpParams.set('ToDate', params.toDate);
+    if (params.sortDescending !== undefined) httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    if (params.pageNumber) httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    if (params.pageSize) httpParams = httpParams.set('PageSize', params.pageSize.toString());
+
+    return this.http.get<ApiResponse<AdminAssistedEnquiriesPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/admin-assisted-enquiries`,
+      { headers: this.getAuthHeaders(), params: httpParams }
     );
   }
 

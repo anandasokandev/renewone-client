@@ -196,6 +196,8 @@ export interface UploadedDocItem {
 
 export interface SubmitVehicleEnquiryPayload {
   enquiryId: string;
+  accountId?: string;
+  AccountId?: string;
 }
 
 export interface SubmitVehicleEnquiryResponseData {
@@ -268,6 +270,8 @@ export interface VehicleDocumentApiItem {
 
 export interface QuoteItem {
   id: string;
+  vendorId?: string | null;
+  vendorName?: string | null;
   insuranceCompanyName: string;
   idv: number | null;
   premium: number;
@@ -339,6 +343,7 @@ export interface PolicySummaryData {
 }
 
 export interface SubmitPolicyRequestPayload {
+  accountId?: string | null;
   quoteId: string;
   enquiryId: string;
   useLedger: boolean;
@@ -471,6 +476,33 @@ export interface AdminAllEnquiryItem {
   assignedEmployeeName?: string;
   quoteCount?: number;
   priority?: number;
+}
+
+export interface AdminAssistedEnquiryItem {
+  id: string;
+  enquiryNumber: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber?: string;
+  vehicleType?: string;
+  insuranceType?: string;
+  policyType?: string;
+  status: string;
+  currentStep: number | null;
+  adminAssisted: boolean;
+  accountId: string;
+  selectedQuoteId?: string | null;
+  createdAt: string;
+}
+
+export interface AdminAssistedEnquiriesPagedData {
+  pageNumber: number;
+  pageSize: number;
+  totalRecords: number;
+  totalPages: number;
+  hasPreviousPage: boolean;
+  hasNextPage: boolean;
+  items: AdminAssistedEnquiryItem[];
 }
 
 export interface AdminAllEnquiriesFilterParams {
