@@ -1,0 +1,575 @@
+<div class="carbon-bank-page">
+  <!-- Carbon Toast Notification -->
+  @if (toastMessage()) {
+    <div class="carbon-toast" [class.toast-error]="toastType() === 'error'" [class.toast-info]="toastType() === 'info'" role="status">
+      <div class="toast-content">
+        @if (toastType() === 'success') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        } @else if (toastType() === 'info') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        } @else {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        }
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearToast()" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  <!-- Main Card Section -->
+  <section class="carbon-card-section" id="section-bank-accounts">
+    <!-- Toolbar -->
+    <div class="section-toolbar">
+      <div class="section-title-group">
+        <div class="title-with-badge">
+          <h2 class="section-title">Bank Accounts</h2>
+          <span class="carbon-count-tag">{{ totalRecords() }} accounts</span>
+        </div>
+      </div>
+
+      <div class="section-actions-group">
+        <!-- Search Box -->
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            type="text"
+            class="carbon-input search-input"
+            placeholder="Search account, bank, branch, number, IFSC..."
+            [ngModel]="searchQuery()"
+            (ngModelChange)="onSearchChange($event)"
+          />
+          @if (searchQuery()) {
+            <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
+          }
+        </div>
+
+        <!-- Refresh Button -->
+        <button
+          type="button"
+          class="carbon-btn-secondary"
+          (click)="refreshBankAccounts()"
+          [disabled]="isLoading()"
+          title="Refresh bank accounts"
+        >
+          <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span>Refresh</span>
+        </button>
+
+        <!-- Add Button -->
+        <button
+          type="button"
+          class="carbon-btn-primary"
+          (click)="openAddAccountModal()"
+          title="Add new bank account"
+        >
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          <span>Add Bank Account</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Table Container -->
+    <div class="carbon-table-container">
+      @if (isLoading()) {
+        <div class="table-loading-state">
+          <div class="carbon-spinner"></div>
+          <span class="loading-label">Fetching bank accounts...</span>
+        </div>
+      } @else if (filteredAccounts().length === 0) {
+        <div class="table-empty-state">
+          <div class="empty-icon-wrap">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 21h18"></path>
+              <path d="M3 10h18"></path>
+              <path d="M5 6l7-3 7 3"></path>
+              <path d="M4 10v11"></path>
+              <path d="M20 10v11"></path>
+              <path d="M8 14v4"></path>
+              <path d="M12 14v4"></path>
+              <path d="M16 14v4"></path>
+            </svg>
+          </div>
+          <h3 class="empty-title">No bank accounts found</h3>
+          <p class="empty-desc">
+            @if (searchQuery()) {
+              No bank account records matched "{{ searchQuery() }}". Try adjusting your search query.
+            } @else {
+              There are currently no bank accounts configured. Click "Add Bank Account" to create one.
+            }
+          </p>
+          @if (searchQuery()) {
+            <button type="button" class="carbon-btn-secondary" (click)="clearSearch()">
+              Clear Search
+            </button>
+          }
+        </div>
+      } @else {
+        <div class="table-scroll-wrapper">
+          <table class="carbon-table">
+            <thead>
+              <tr>
+                <th class="th-account-details">Account Details</th>
+                <th class="th-bank-branch">Bank &amp; Branch</th>
+                <th class="th-number-ifsc">Number &amp; IFSC</th>
+                <th class="th-status">Status</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (item of filteredAccounts(); track item.id) {
+                <tr class="carbon-table-row">
+                  <!-- 1. Account Details -->
+                  <td class="td-account-details">
+                    <div class="account-details-cell">
+                      <div class="account-name-row">
+                        <span class="account-name">{{ item.accountName }}</span>
+                        @if (item.isPrimary) {
+                          <span class="carbon-tag tag-primary-badge">PRIMARY</span>
+                        }
+                      </div>
+                      <div class="account-sub-info">
+                        <span class="holder-name" title="Account Holder">
+                          <svg class="sub-icon" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 8a3 3 0 1 0 0-6 3 3 0 0 0 0 6zm2-3a2 2 0 1 1-4 0 2 2 0 0 1 4 0zm4 8c0 1-1 1-1 1H3s-1 0-1-1 1-4 6-4 6 3 6 4zm-1-.004c-.001-.246-.154-.986-.832-1.664C11.516 10.68 10.289 10 8 10c-2.29 0-3.516.68-4.168 1.332-.678.678-.83 1.418-.832 1.664h10z"/>
+                          </svg>
+                          {{ item.accountHolderName }}
+                        </span>
+                        @if (item.upiId) {
+                          <span class="upi-handle-row" title="Linked UPI ID">
+                            <span class="upi-text">{{ item.upiId }}</span>
+                            <button
+                              type="button"
+                              class="carbon-icon-btn small-icon-btn"
+                              (click)="copyToClipboard(item.upiId, 'UPI ID')"
+                              [title]="copiedField() === item.upiId ? 'Copied!' : 'Copy UPI ID'"
+                            >
+                              @if (copiedField() === item.upiId) {
+                                <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                                  <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                                </svg>
+                              } @else {
+                                <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                                  <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                                  <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                                </svg>
+                              }
+                            </button>
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- 2. Bank & Branch -->
+                  <td class="td-bank-branch">
+                    <div class="bank-branch-cell">
+                      <div class="bank-title-row">
+                        <svg class="bank-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                        </svg>
+                        <span class="bank-name">{{ item.bankName }}</span>
+                      </div>
+                      <span class="branch-name">{{ item.branchName || 'Main Branch' }}</span>
+                    </div>
+                  </td>
+
+                  <!-- 3. Number & IFSC -->
+                  <td class="td-number-ifsc">
+                    <div class="number-ifsc-cell">
+                      <!-- Account Number -->
+                      <div class="number-row">
+                        <span class="field-label">A/C:</span>
+                        <span class="code-mono">{{ item.accountNumber }}</span>
+                        <button
+                          type="button"
+                          class="carbon-icon-btn small-icon-btn"
+                          (click)="copyToClipboard(item.accountNumber, 'Account Number')"
+                          [title]="copiedField() === item.accountNumber ? 'Copied!' : 'Copy Account Number'"
+                        >
+                          @if (copiedField() === item.accountNumber) {
+                            <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                          } @else {
+                            <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                            </svg>
+                          }
+                        </button>
+                      </div>
+
+                      <!-- IFSC Code -->
+                      <div class="ifsc-row">
+                        <span class="field-label">IFSC:</span>
+                        <span class="code-mono ifsc-mono">{{ item.ifscCode }}</span>
+                        <button
+                          type="button"
+                          class="carbon-icon-btn small-icon-btn"
+                          (click)="copyToClipboard(item.ifscCode, 'IFSC Code')"
+                          [title]="copiedField() === item.ifscCode ? 'Copied!' : 'Copy IFSC Code'"
+                        >
+                          @if (copiedField() === item.ifscCode) {
+                            <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                          } @else {
+                            <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                            </svg>
+                          }
+                        </button>
+                      </div>
+                    </div>
+                  </td>
+
+                  <!-- 4. Status -->
+                  <td class="td-status">
+                    <span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">
+                      {{ item.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+
+                  <!-- 5. Actions (Edit icon + Enable/Disable toggle) -->
+                  <td class="td-actions">
+                    <div class="actions-cell-wrapper">
+                      <!-- Edit Icon Button -->
+                      <button
+                        type="button"
+                        class="carbon-icon-btn edit-action-btn"
+                        (click)="onEditAccount(item, $event)"
+                        title="Edit Bank Account"
+                        aria-label="Edit Bank Account"
+                      >
+                        <svg class="action-svg" viewBox="0 0 16 16" fill="currentColor">
+                          <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.886 2.215 2.215-.886.707-.707-1.329-1.329-.707.707z"/>
+                        </svg>
+                      </button>
+
+                      <!-- Flat Toggle Switch -->
+                      <button
+                        type="button"
+                        class="carbon-toggle-switch"
+                        [class.checked]="item.isActive"
+                        [disabled]="togglingAccountId() === item.id"
+                        (click)="onToggleStatus(item, $event)"
+                        role="switch"
+                        [attr.aria-checked]="item.isActive"
+                        [title]="item.isActive ? 'Disable account' : 'Enable account'"
+                      >
+                        <span class="toggle-slider"></span>
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Pagination Bar -->
+        <div class="carbon-pagination-bar">
+          <div class="pagination-info">
+            Showing <strong>{{ filteredAccounts().length }}</strong> of <strong>{{ totalRecords() }}</strong> items
+          </div>
+
+          <div class="pagination-controls">
+            <div class="page-size-selector">
+              <label for="bank-page-size" class="page-size-label">Items per page:</label>
+              <select
+                id="bank-page-size"
+                class="carbon-select"
+                [ngModel]="pageSize()"
+                (ngModelChange)="onPageSizeChange($event)"
+              >
+                <option [value]="10">10</option>
+                <option [value]="25">25</option>
+                <option [value]="50">50</option>
+              </select>
+            </div>
+
+            <div class="page-nav-buttons">
+              <span class="page-number-display">Page {{ pageNumber() }} of {{ totalPages() }}</span>
+              <button
+                type="button"
+                class="carbon-page-btn"
+                [disabled]="pageNumber() <= 1 || isLoading()"
+                (click)="onPageChange(pageNumber() - 1)"
+                aria-label="Previous page"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                </svg>
+              </button>
+              <button
+                type="button"
+                class="carbon-page-btn"
+                [disabled]="pageNumber() >= totalPages() || isLoading()"
+                (click)="onPageChange(pageNumber() + 1)"
+                aria-label="Next page"
+              >
+                <svg viewBox="0 0 16 16" fill="currentColor">
+                  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ========================================================================= -->
+  <!-- ADD BANK ACCOUNT MODAL (IBM Carbon Design System) -->
+  <!-- ========================================================================= -->
+  @if (isAddModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeAddAccountModal()" role="presentation">
+      <div
+        class="carbon-modal-dialog"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-account-title"
+      >
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="header-titles">
+            <h2 id="add-account-title" class="modal-headline">Add Bank Account</h2>
+          </div>
+          <button
+            type="button"
+            class="modal-close-btn"
+            (click)="closeAddAccountModal()"
+            aria-label="Close modal"
+            [disabled]="isSubmitting()"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.293 8L3.146 3.854a.5.5 0 0 1 .708-.708L8 7.293l4.146-4.147a.5.5 0 0 1 .708.708L8.707 8l4.147 4.146a.5.5 0 0 1-.708.708L8 8.707l-4.146 4.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Form Body -->
+        <form [formGroup]="$any(addAccountForm)" (ngSubmit)="submitAddAccount()" class="modal-form-content">
+          <div class="modal-body">
+            @if (addError()) {
+              <div class="carbon-inline-notification notification-error" role="alert">
+                <svg class="notification-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="notification-text">
+                  <span class="notification-desc">{{ addError() }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="form-grid-2col">
+              <!-- Account Name -->
+              <div class="carbon-form-item">
+                <label for="modal-acc-name" class="carbon-label">
+                  Account Name <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.accountName.touched && addAccountForm.controls.accountName.invalid">
+                  <input
+                    id="modal-acc-name"
+                    type="text"
+                    class="carbon-input-field"
+                    formControlName="accountName"
+                    placeholder="e.g. ANAND TEST or Car UPI"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.accountName.touched && addAccountForm.controls.accountName.hasError('required')) {
+                  <div class="carbon-form-requirement">Account Name is required.</div>
+                }
+              </div>
+
+              <!-- Account Holder Name -->
+              <div class="carbon-form-item">
+                <label for="modal-holder-name" class="carbon-label">
+                  Account Holder Name <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.accountHolderName.touched && addAccountForm.controls.accountHolderName.invalid">
+                  <input
+                    id="modal-holder-name"
+                    type="text"
+                    class="carbon-input-field"
+                    formControlName="accountHolderName"
+                    placeholder="e.g. Anand Asokan"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.accountHolderName.touched && addAccountForm.controls.accountHolderName.hasError('required')) {
+                  <div class="carbon-form-requirement">Account Holder Name is required.</div>
+                }
+              </div>
+
+              <!-- Bank Name -->
+              <div class="carbon-form-item">
+                <label for="modal-bank-name" class="carbon-label">
+                  Bank Name <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.bankName.touched && addAccountForm.controls.bankName.invalid">
+                  <input
+                    id="modal-bank-name"
+                    type="text"
+                    class="carbon-input-field"
+                    formControlName="bankName"
+                    placeholder="e.g. ICICI Bank"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.bankName.touched && addAccountForm.controls.bankName.hasError('required')) {
+                  <div class="carbon-form-requirement">Bank Name is required.</div>
+                }
+              </div>
+
+              <!-- Branch Name -->
+              <div class="carbon-form-item">
+                <label for="modal-branch-name" class="carbon-label">
+                  Branch Name <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.branchName.touched && addAccountForm.controls.branchName.invalid">
+                  <input
+                    id="modal-branch-name"
+                    type="text"
+                    class="carbon-input-field"
+                    formControlName="branchName"
+                    placeholder="e.g. Mumbai"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.branchName.touched && addAccountForm.controls.branchName.hasError('required')) {
+                  <div class="carbon-form-requirement">Branch Name is required.</div>
+                }
+              </div>
+
+              <!-- Account Number -->
+              <div class="carbon-form-item">
+                <label for="modal-acc-num" class="carbon-label">
+                  Account Number <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.accountNumber.touched && addAccountForm.controls.accountNumber.invalid">
+                  <input
+                    id="modal-acc-num"
+                    type="text"
+                    class="carbon-input-field mono-font"
+                    formControlName="accountNumber"
+                    placeholder="e.g. 159744510308"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.accountNumber.touched && addAccountForm.controls.accountNumber.hasError('required')) {
+                  <div class="carbon-form-requirement">Account Number is required.</div>
+                }
+              </div>
+
+              <!-- IFSC Code -->
+              <div class="carbon-form-item">
+                <label for="modal-ifsc" class="carbon-label">
+                  IFSC Code <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addAccountForm.controls.ifscCode.touched && addAccountForm.controls.ifscCode.invalid">
+                  <input
+                    id="modal-ifsc"
+                    type="text"
+                    class="carbon-input-field mono-font uppercase-input"
+                    formControlName="ifscCode"
+                    placeholder="e.g. ICICI000760"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addAccountForm.controls.ifscCode.touched && addAccountForm.controls.ifscCode.hasError('required')) {
+                  <div class="carbon-form-requirement">IFSC Code is required.</div>
+                }
+              </div>
+
+              <!-- UPI ID (Optional) -->
+              <div class="carbon-form-item col-span-2">
+                <label for="modal-upi-id" class="carbon-label">
+                  UPI ID (Optional)
+                </label>
+                <div class="carbon-input-wrapper">
+                  <input
+                    id="modal-upi-id"
+                    type="text"
+                    class="carbon-input-field mono-font"
+                    formControlName="upiId"
+                    placeholder="e.g. merchant@icici or rahulsasi@upi"
+                    autocomplete="off"
+                  />
+                </div>
+              </div>
+
+              <!-- Checkbox Toggles -->
+              <div class="carbon-checkboxes-row col-span-2">
+                <label class="carbon-checkbox-label">
+                  <input
+                    type="checkbox"
+                    class="carbon-checkbox"
+                    formControlName="isPrimary"
+                  />
+                  <span>Set as Primary Settlement Account</span>
+                </label>
+
+                <label class="carbon-checkbox-label">
+                  <input
+                    type="checkbox"
+                    class="carbon-checkbox"
+                    formControlName="isActive"
+                  />
+                  <span>Active</span>
+                </label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="carbon-btn-secondary"
+              (click)="closeAddAccountModal()"
+              [disabled]="isSubmitting()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="carbon-btn-primary"
+              [disabled]="isSubmitting() || addAccountForm.invalid"
+            >
+              @if (isSubmitting()) {
+                <svg class="btn-spinner" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>Creating Account...</span>
+              } @else {
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>Create Account</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

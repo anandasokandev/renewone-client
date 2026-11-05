@@ -29,9 +29,31 @@ import {
   QuotePaymentSummaryData,
   PolicyPreviewData,
   AgentEnquiryDetailsData,
+  AdminCommonQueueItem,
+  AdminCommonQueueFilterParams,
+  AdminCommonQueuePagedData,
+  AdminAssistedEnquiriesPagedData,
+  AdminAllEnquiryItem,
+  AdminAllEnquiriesFilterParams,
+  AdminAllEnquiriesPagedData,
+  AdminMyTaskItem,
+  AdminMyTasksFilterParams,
+  AdminMyTasksPagedData,
+  AdminQuoteQueueFilterParams,
+  AdminQuoteQueuePagedData,
+  AdminPolicyQueueFilterParams,
+  AdminPolicyQueuePagedData,
 } from '../../models/enquiry.model';
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
+
+export interface AssignableEmployee {
+  userId: string;
+  fullName: string;
+  email?: string | null;
+  phoneNumber?: string | null;
+  isCurrentlyAssigned: boolean;
+}
 
 export const PROGRESSIVE_STATUS_SEQUENCE: EnquiryStatus[] = [
   'Created',
@@ -64,6 +86,22 @@ export class EnquiryService {
   private enquiriesSignal = signal<EnquiryItem[]>(this.loadInitial());
 
   readonly enquiries = this.enquiriesSignal.asReadonly();
+
+  getAssignableEmployees(enquiryId: string): Observable<ApiResponse<AssignableEmployee[]>> {
+    return this.http.get<ApiResponse<AssignableEmployee[]>>(
+      `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}/assignable-employees`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  assignEnquiry(enquiryId: string, employeeId: string, remarks = ''): Observable<ApiResponse<unknown>> {
+    const params = new HttpParams().set('employeeId', employeeId).set('remarks', remarks);
+    return this.http.put<ApiResponse<unknown>>(
+      `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}/assign`,
+      null,
+      { headers: this.getAuthHeaders(), params }
+    );
+  }
 
   private getAuthHeaders(): HttpHeaders {
     const token = sessionStorage.getItem('token');
@@ -142,6 +180,25 @@ export class EnquiryService {
     );
   }
 
+  deleteVehicleDocument(documentId: string): Observable<ApiResponse<unknown>> {
+    return this.http.post<ApiResponse<unknown>>(
+      `${environment.apiUrl}/VehicleEnquiry/delete/${encodeURIComponent(documentId)}`,
+      {},
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  replaceVehicleDocument(documentId: string, file: File): Observable<ApiResponse<unknown>> {
+    const formData = new FormData();
+    formData.append('Field', documentId);
+    formData.append('File', file, file.name);
+    return this.http.post<ApiResponse<unknown>>(
+      `${environment.apiUrl}/VehicleEnquiry/replace-document`,
+      formData,
+      { headers: this.getAuthHeadersForFormData() }
+    );
+  }
+
   getVehicleQuotes(params: QuoteFilterParams): Observable<ApiResponse<QuotePagedResult>> {
     let httpParams = new HttpParams().set('EnquiryId', params.enquiryId);
 
@@ -167,6 +224,35 @@ export class EnquiryService {
         headers: this.getAuthHeaders(),
         params: httpParams,
       }
+    );
+  }
+
+  getVendors(): Observable<ApiResponse<Array<{ id: string; name: string; isActive: boolean }>>> {
+    return this.http.get<ApiResponse<Array<{ id: string; name: string; isActive: boolean }>>>(
+      `${environment.apiUrl}/Vendor`, { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getInsuranceCompanies(): Observable<ApiResponse<Array<{ id: string; companyName: string }>>> {
+    return this.http.get<ApiResponse<Array<{ id: string; companyName: string }>>>(
+      `${environment.apiUrl}/InsuranceCompany`, { headers: this.getAuthHeaders() }
+    );
+  }
+
+  addVehicleQuote(payload: {
+    enquiryId: string;
+    insuranceCompanyId: string;
+    vendorId: string | null;
+    premium: number;
+    companyPayable: number;
+    agentPoints: number;
+    adminProfit: number;
+    idv: number;
+    remarks: string;
+  }): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(
+      `${environment.apiUrl}/VehicleEnquiry/add-vehicle-quote`, payload,
+      { headers: this.getAuthHeaders() }
     );
   }
 
@@ -242,6 +328,267 @@ export class EnquiryService {
       `${environment.apiUrl}/Enquiry/admin/quote-summary/${enquiryId}`,
       {
         headers: this.getAuthHeaders(),
+      }
+    );
+  }
+
+  getAdminCommonQueue(
+    params: AdminCommonQueueFilterParams = {}
+  ): Observable<ApiResponse<AdminCommonQueuePagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminCommonQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/common-queue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminAllEnquiries(
+    params: AdminAllEnquiriesFilterParams = {}
+  ): Observable<ApiResponse<AdminAllEnquiriesPagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.status !== undefined && params.status !== null) {
+      httpParams = httpParams.set('Status', params.status.toString());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminAllEnquiriesPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/all-enquiries`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminAssistedEnquiries(
+    params: AdminAllEnquiriesFilterParams = {}
+  ): Observable<ApiResponse<AdminAssistedEnquiriesPagedData>> {
+    let httpParams = new HttpParams();
+    if (params.search?.trim()) httpParams = httpParams.set('Search', params.search.trim());
+    if (params.status !== undefined && params.status !== null) httpParams = httpParams.set('Status', params.status.toString());
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    if (params.accountId && params.accountId !== 'All') httpParams = httpParams.set('AccountId', params.accountId);
+    if (params.fromDate) httpParams = httpParams.set('FromDate', params.fromDate);
+    if (params.toDate) httpParams = httpParams.set('ToDate', params.toDate);
+    if (params.sortDescending !== undefined) httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    if (params.pageNumber) httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    if (params.pageSize) httpParams = httpParams.set('PageSize', params.pageSize.toString());
+
+    return this.http.get<ApiResponse<AdminAssistedEnquiriesPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/admin-assisted-enquiries`,
+      { headers: this.getAuthHeaders(), params: httpParams }
+    );
+  }
+
+  getAdminMyTasks(
+    params: AdminMyTasksFilterParams = {}
+  ): Observable<ApiResponse<AdminMyTasksPagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.policyType !== undefined && params.policyType !== null) {
+      httpParams = httpParams.set('PolicyType', params.policyType.toString());
+    }
+    if (params.enquiryStatus !== undefined && params.enquiryStatus !== null) {
+      httpParams = httpParams.set('EnquiryStatus', params.enquiryStatus.toString());
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortBy !== undefined && params.sortBy !== null) {
+      httpParams = httpParams.set('SortBy', params.sortBy.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.sortDirection !== undefined && params.sortDirection !== null) {
+      httpParams = httpParams.set('SortDirection', params.sortDirection.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminMyTasksPagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/mytask`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminMyQuoteQueue(
+    params: AdminQuoteQueueFilterParams
+  ): Observable<ApiResponse<AdminQuoteQueuePagedData>> {
+    let httpParams = new HttpParams().set('Type', (params.type ?? 0).toString());
+
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminQuoteQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/myquotequeue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
+      }
+    );
+  }
+
+  getAdminMyPolicyQueue(
+    params: AdminPolicyQueueFilterParams = {}
+  ): Observable<ApiResponse<AdminPolicyQueuePagedData>> {
+    let httpParams = new HttpParams();
+
+    if (params.type !== undefined && params.type !== null) {
+      httpParams = httpParams.set('Type', params.type.toString());
+    }
+    if (params.search && params.search.trim()) {
+      httpParams = httpParams.set('Search', params.search.trim());
+    }
+    if (params.status !== undefined && params.status !== null) {
+      httpParams = httpParams.set('Status', params.status.toString());
+    }
+    if (params.insuranceTypeId && params.insuranceTypeId !== 'All') {
+      httpParams = httpParams.set('InsuranceTypeId', params.insuranceTypeId);
+    }
+    if (params.vehicleTypeId && params.vehicleTypeId !== 'All') {
+      httpParams = httpParams.set('VehicleTypeId', params.vehicleTypeId);
+    }
+    if (params.accountId && params.accountId !== 'All') {
+      httpParams = httpParams.set('AccountId', params.accountId);
+    }
+    if (params.fromDate) {
+      httpParams = httpParams.set('FromDate', params.fromDate);
+    }
+    if (params.toDate) {
+      httpParams = httpParams.set('ToDate', params.toDate);
+    }
+    if (params.sortDescending !== undefined) {
+      httpParams = httpParams.set('SortDescending', params.sortDescending.toString());
+    }
+    if (params.dateFilter !== undefined && params.dateFilter !== null) {
+      httpParams = httpParams.set('DateFilter', params.dateFilter.toString());
+    }
+    if (params.pageNumber) {
+      httpParams = httpParams.set('PageNumber', params.pageNumber.toString());
+    }
+    if (params.pageSize) {
+      httpParams = httpParams.set('PageSize', params.pageSize.toString());
+    }
+
+    return this.http.get<ApiResponse<AdminPolicyQueuePagedData>>(
+      `${environment.apiUrl}/Enquiry/admin/mypolicyqueue`,
+      {
+        headers: this.getAuthHeaders(),
+        params: httpParams,
       }
     );
   }

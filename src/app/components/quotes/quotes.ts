@@ -117,6 +117,11 @@ export class Quotes implements OnInit, OnChanges {
   }
 
   ngOnInit(): void {
+    const navigationMessage = this.router.getCurrentNavigation()?.extras.state?.['successMessage'];
+    const historyMessage = (window.history.state as { successMessage?: string } | null)?.successMessage;
+    const submittedMessage = navigationMessage || historyMessage;
+    if (typeof submittedMessage === 'string') this.successMessage.set(submittedMessage);
+
     if (this.enquiryId) {
       this.activeEnquiryId.set(this.enquiryId);
       this.loadQuotes();

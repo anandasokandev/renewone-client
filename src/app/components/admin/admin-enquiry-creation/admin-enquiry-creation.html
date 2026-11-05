@@ -1,0 +1,406 @@
+<main class="admin-create-page" [class.details-step]="step() === 'details'">
+  <nav class="workflow-steps" aria-label="Enquiry creation steps">
+    <div class="workflow-step" [class.active]="step() === 'details'" [class.complete]="step() !== 'details'">
+      <span class="step-number">{{ step() !== 'details' ? '✓' : '1' }}</span>
+      <span>Enquiry details</span>
+    </div>
+    <span class="step-rule" [class.complete]="step() !== 'details'"></span>
+    <div class="workflow-step" [class.active]="step() === 'documents'" [class.complete]="step() === 'quote' || step() === 'payment' || step() === 'review'">
+      <span class="step-number">{{ step() === 'quote' || step() === 'payment' || step() === 'review' ? '✓' : '2' }}</span><span>Document upload</span>
+    </div>
+    <span class="step-rule" [class.complete]="step() === 'payment' || step() === 'review'"></span>
+    <div class="workflow-step" [class.active]="step() === 'quote'" [class.complete]="step() === 'payment' || step() === 'review'">
+      <span class="step-number">{{ step() === 'payment' || step() === 'review' ? '✓' : '3' }}</span><span>Quote management</span>
+    </div>
+    <span class="step-rule" [class.complete]="step() === 'review'"></span>
+    <div class="workflow-step" [class.active]="step() === 'payment'" [class.complete]="step() === 'review'">
+      <span class="step-number">{{ step() === 'review' ? '✓' : '4' }}</span><span>Payment</span>
+    </div>
+    <span class="step-rule" [class.complete]="step() === 'review'"></span>
+    <div class="workflow-step" [class.active]="step() === 'review'">
+      <span class="step-number">5</span><span>Review</span>
+    </div>
+  </nav>
+
+  @if (step() === 'details') {
+    <details class="admin-created-list">
+      <summary class="admin-created-toggle">
+        <span class="resume-chevron" aria-hidden="true">›</span>
+        <span><strong>Resume an existing enquiry</strong><small>Continue an admin-assisted enquiry from its current stage.</small></span>
+        <span class="resume-count">{{ adminAssistedEnquiries().length }} saved</span>
+      </summary>
+      <div class="admin-created-panel" aria-labelledby="admin-created-title">
+        <header class="admin-created-heading">
+          <div><h2 id="admin-created-title">Enquiries created by admin</h2><p>Select an enquiry to continue its workflow.</p></div>
+          <button type="button" class="button-secondary" (click)="loadAdminAssistedEnquiries()" [disabled]="isAdminEnquiriesLoading()">{{ isAdminEnquiriesLoading() ? 'Refreshing…' : 'Refresh' }}</button>
+        </header>
+        @if (adminEnquiriesError()) {
+          <p class="admin-created-message error" role="alert">{{ adminEnquiriesError() }} <button type="button" class="text-button" (click)="loadAdminAssistedEnquiries()">Retry</button></p>
+        } @else if (isAdminEnquiriesLoading()) {
+          <p class="admin-created-message">Loading admin-assisted enquiries…</p>
+        } @else if (adminAssistedEnquiries().length === 0) {
+          <p class="admin-created-message">No admin-assisted enquiries were found.</p>
+        } @else {
+          <div class="admin-created-items">
+            @for (item of adminAssistedEnquiries(); track item.id) {
+              <button type="button" class="admin-created-item" (click)="openAdminAssistedEnquiry(item)">
+                <span class="admin-created-customer"><strong>{{ item.customerName || 'Customer' }}</strong><small>{{ item.vehicleNumber || 'Vehicle not provided' }} · {{ item.enquiryNumber || item.id }}</small></span>
+                <span class="admin-created-stage">{{ currentStageFor(item.currentStep) | titlecase }} <span aria-hidden="true">→</span></span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </details>
+
+    <form class="creation-form" (ngSubmit)="proceed()" novalidate>
+      <section class="form-section agent-section">
+        <div class="section-content">
+          <div class="field search-field">
+            <label for="agent-search">Search agents <span class="required">*</span></label>
+            <div class="search-input-wrap">
+              <input id="agent-search" type="search" autocomplete="off" placeholder="Name, agency, agent code or mobile number"
+                [ngModel]="agentSearch()" (ngModelChange)="loadAgents($event)" [readonly]="!!selectedAgent()" name="agentSearch" />
+              @if (selectedAgent()) {
+                <button type="button" class="clear-selection" aria-label="Clear selected agent" (click)="clearAgent()">×</button>
+              }
+            </div>
+            @if (isAgentLoading()) { <p class="field-hint">Searching agents…</p> }
+            @if (agentError()) { <p class="field-error" role="alert">{{ agentError() }}</p> }
+            @if (!isAgentLoading() && !selectedAgent() && !agentError()) {
+              <div class="search-results" role="listbox" aria-label="Agent search results">
+                @for (agent of visibleAgents(); track agent.accountId) {
+                  <button type="button" class="agent-result" role="option" (click)="chooseAgent(agent)">
+                    <span><strong>{{ agent.agentName }}</strong><small>{{ agent.agencyName || 'Agency not provided' }} · {{ agent.agentCode || agent.agentId || 'No code' }}</small></span>
+                    <span class="result-contact">{{ agent.phoneNumber || agent.mobileNumber || '—' }}</span>
+                  </button>
+                } @empty {
+                  <p class="empty-results">No active agents found.</p>
+                }
+              </div>
+            }
+            @if (attemptedSubmit() && !selectedAgent()) { <p class="field-error">Select an agent to continue.</p> }
+          </div>
+
+          @if (selectedAgent(); as agent) {
+            <article class="agent-summary" aria-label="Selected agent information">
+              <div class="summary-title"><span class="summary-mark">{{ agent.agentName.charAt(0) }}</span><div><strong>{{ agent.agentName }}</strong><small>Selected agent</small></div></div>
+              <dl class="summary-grid">
+                <div><dt>Agent code</dt><dd>{{ agent.agentCode || agent.agentId || '—' }}</dd></div>
+                <div><dt>Agency</dt><dd>{{ agent.agencyName || '—' }}</dd></div>
+                <div><dt>Mobile</dt><dd>{{ agent.phoneNumber || agent.mobileNumber || '—' }}</dd></div>
+                <div><dt>Agent class</dt><dd>{{ agent.agentClass || '—' }}</dd></div>
+                <div><dt>Commission</dt><dd>{{ agent.commissionPercentage == null ? '—' : (agent.commissionPercentage + '%') }}</dd></div>
+                <div><dt>Wallet balance</dt><dd>{{ agent.walletBalance == null ? '—' : (agent.walletBalance | currency:'INR':'symbol':'1.2-2') }}</dd></div>
+              </dl>
+            </article>
+          }
+        </div>
+      </section>
+
+      <section class="form-section insurance-section">
+        <div class="section-heading">
+          <span class="section-index">02</span>
+          <div><h2>Insurance details</h2></div>
+        </div>
+        <div class="section-content selection-grid">
+          <div class="field">
+            <label for="insurance-search">Insurance type <span class="required">*</span></label>
+            <input id="insurance-search" type="search" placeholder="Filter insurance types" [ngModel]="insuranceSearch()" (ngModelChange)="insuranceSearch.set($event)" name="insuranceSearch" />
+            <select aria-label="Insurance type" [ngModel]="selectedInsuranceTypeId()" (ngModelChange)="selectInsuranceType($event)" name="insuranceType" [disabled]="isInsuranceLoading() || !!insuranceError()">
+              <option value="">{{ isInsuranceLoading() ? 'Loading insurance types…' : 'Select insurance type' }}</option>
+              @for (type of visibleInsuranceTypes(); track type.id) { <option [value]="type.id">{{ type.name }}</option> }
+            </select>
+            @if (insuranceError()) { <p class="field-error" role="alert">{{ insuranceError() }} <button type="button" class="text-button" (click)="loadInsuranceTypes()">Retry</button></p> }
+            @if (attemptedSubmit() && !selectedInsuranceTypeId()) { <p class="field-error">Select an insurance type.</p> }
+          </div>
+          @if (isVehicleInsurance()) {
+            <div class="field">
+              <label for="vehicle-search">Vehicle type <span class="required">*</span></label>
+              <input id="vehicle-search" type="search" placeholder="Filter vehicle types" [ngModel]="vehicleSearch()" (ngModelChange)="vehicleSearch.set($event)" name="vehicleSearch" />
+              <select aria-label="Vehicle type" [ngModel]="selectedVehicleTypeId()" (ngModelChange)="selectedVehicleTypeId.set($event)" name="vehicleType" [disabled]="isVehicleLoading() || !!vehicleError()">
+                <option value="">{{ isVehicleLoading() ? 'Loading vehicle types…' : 'Select vehicle type' }}</option>
+                @for (type of visibleVehicleTypes(); track type.id) { <option [value]="type.id">{{ type.typeName }}</option> }
+              </select>
+              @if (vehicleError()) { <p class="field-error" role="alert">{{ vehicleError() }} <button type="button" class="text-button" (click)="loadVehicleTypes()">Retry</button></p> }
+              @if (attemptedSubmit() && !selectedVehicleTypeId()) { <p class="field-error">Select a vehicle type.</p> }
+            </div>
+          } @else if (selectedInsuranceTypeId()) {
+            <div class="support-message" role="status">This assisted creation workflow currently supports Vehicle Insurance.</div>
+          }
+        </div>
+      </section>
+
+      @if (canShowDetails) {
+        <section class="form-section customer-section">
+          <div class="section-heading">
+            <span class="section-index">03</span>
+            <div><h2>Customer &amp; vehicle</h2><p>Enter the details exactly as they appear on the registration certificate.</p></div>
+          </div>
+          <div class="section-content">
+            <div class="field-grid">
+              <div class="field">
+                <label for="customer-name">Customer name <span class="required">*</span></label>
+                <input id="customer-name" type="text" autocomplete="name" maxlength="60" placeholder="Enter customer name" [ngModel]="customerName()" (ngModelChange)="customerName.set($event)" name="customerName" />
+                @if (attemptedSubmit() && customerName().trim().length < 2) { <p class="field-error">Enter at least 2 characters.</p> }
+              </div>
+              <div class="field">
+                <label for="customer-number">Contact number <span class="required">*</span></label>
+                <div class="phone-input"><span>+91</span><input id="customer-number" type="tel" inputmode="numeric" autocomplete="tel-national" maxlength="10" placeholder="10-digit mobile number" [ngModel]="customerNumber()" (ngModelChange)="setCustomerNumber($event)" name="customerNumber" /></div>
+                @if (attemptedSubmit() && !hasValidPhone) { <p class="field-error">Enter a valid 10-digit mobile number.</p> }
+              </div>
+              <div class="field">
+                <label for="vehicle-number">RC number <span class="required">*</span></label>
+                <input id="vehicle-number" type="text" maxlength="15" autocomplete="off" placeholder="e.g. KL 38 K 0014" [ngModel]="vehicleNumber()" (ngModelChange)="setVehicleNumber($event)" name="vehicleNumber" />
+                @if (attemptedSubmit() && !hasValidVehicleNumber) { <p class="field-error">Enter a valid RC number (4–15 letters or digits).</p> }
+              </div>
+              <div class="field policy-type-field">
+                <label>Policy type <span class="required">*</span></label>
+                <div class="choice-tabs" role="group" aria-label="Policy type">
+                  @for (policy of ['Comprehensive', 'ThirdParty', 'OwnDamage']; track policy) {
+                    <button type="button" [class.selected]="policyType() === policy" [attr.aria-pressed]="policyType() === policy" (click)="selectPolicyType($any(policy))">{{ policy }}</button>
+                  }
+                </div>
+              </div>
+            </div>
+
+            <div class="quick-options">
+              <fieldset class="quick-option">
+                <legend>Ownership changed? <span class="required">*</span></legend>
+                <div class="choice-tabs compact" role="group" aria-label="Ownership changed">
+                  <button type="button" [class.selected]="isRCOwnerChanged()" [attr.aria-pressed]="isRCOwnerChanged()" (click)="isRCOwnerChanged.set(true)">Yes</button>
+                  <button type="button" [class.selected]="!isRCOwnerChanged()" [attr.aria-pressed]="!isRCOwnerChanged()" (click)="isRCOwnerChanged.set(false)">No</button>
+                </div>
+              </fieldset>
+              @if (!isThirdPartyPolicy()) {
+                <fieldset class="quick-option">
+                  <legend>Previous claim? <span class="required">*</span></legend>
+                  <div class="choice-tabs compact" role="group" aria-label="Previous claim">
+                    <button type="button" [class.selected]="hasPreviousClaim()" [attr.aria-pressed]="hasPreviousClaim()" (click)="selectPreviousClaim(true)">Yes</button>
+                    <button type="button" [class.selected]="!hasPreviousClaim()" [attr.aria-pressed]="!hasPreviousClaim()" (click)="selectPreviousClaim(false)">No</button>
+                  </div>
+                </fieldset>
+              }
+              @if (!isThirdPartyPolicy() && !hasPreviousClaim()) {
+                <fieldset class="quick-option ncb-option">
+                  <legend>NCB percentage <span class="required">*</span></legend>
+                  <div class="choice-tabs compact ncb-tabs" role="group" aria-label="NCB percentage">
+                    @for (ncb of activeNcbOptions; track ncb) {
+                      <button type="button" [class.selected]="ncbPercentage() === ncb" [attr.aria-pressed]="ncbPercentage() === ncb" (click)="ncbPercentage.set(ncb)">{{ ncb }}%</button>
+                    }
+                  </div>
+                </fieldset>
+              }
+            </div>
+          </div>
+        </section>
+      }
+
+      @if (formError()) { <div class="form-error-banner" role="alert">{{ formError() }}</div> }
+      <footer class="form-actions">
+        <p><span class="required">*</span> Required fields</p>
+        <button type="submit" class="button-primary" [disabled]="isSubmitting() || isInsuranceLoading() || isVehicleLoading()">
+          @if (isSubmitting()) { <span class="button-spinner"></span> Creating… } @else { Proceed to document upload <span aria-hidden="true">→</span> }
+        </button>
+      </footer>
+    </form>
+  } @else if (step() === 'documents') {
+    <section class="upload-workspace" aria-labelledby="document-step-title">
+      <header class="upload-heading">
+        <div>
+          <p class="eyebrow">ENQUIRY DOCUMENTS</p>
+          <!-- <h2 id="document-step-title">Upload and review documents</h2> -->
+        </div>
+        @if (createdEnquiry(); as created) {
+          <div class="enquiry-reference">
+            @if (created.enquiryNumber) { <span>Enquiry <strong>{{ created.enquiryNumber }}</strong></span> }
+          </div>
+        }
+      </header>
+
+      <div class="upload-status-row">
+        <span class="upload-status-label">Required documents</span>
+        <span class="completion-count">{{ (categoryComplete('RC') ? 1 : 0) + (categoryComplete('Identity') ? 1 : 0) }} of 2 complete</span>
+        <div class="completion-track" aria-label="Required document completion">
+          <span [style.width.%]="(categoryComplete('RC') ? 50 : 0) + (categoryComplete('Identity') ? 50 : 0)"></span>
+        </div>
+      </div>
+
+      @if (isDocumentsLoading()) {
+        <div class="documents-loading"><span class="loading-spinner"></span> Loading saved documents…</div>
+      }
+      @if (documentsError()) {
+        <div class="upload-error-banner" role="alert">{{ documentsError() }} <button type="button" class="text-button" (click)="loadDocuments(createdEnquiry()?.enquiryId || '')">Retry</button></div>
+      }
+      @if (uploadError()) { <div class="upload-error-banner" role="alert">{{ uploadError() }}</div> }
+      @if (submitEnquiryError()) { <div class="upload-error-banner" role="alert">{{ submitEnquiryError() }}</div> }
+      @if (uploadCount() > 0) {
+        <div class="upload-progress-message" role="status"><span class="loading-spinner"></span> Uploading {{ uploadCount() }} {{ uploadCount() === 1 ? 'image' : 'images' }}…</div>
+      }
+
+      <div class="document-category-grid">
+        @for (category of documentCategories; track category.type) {
+          <article class="document-category" [class.category-complete]="categoryComplete(category.type)">
+            <header class="category-heading">
+              <div class="category-title-wrap">
+                <span class="category-status" [class.status-complete]="categoryComplete(category.type)" aria-hidden="true">{{ categoryComplete(category.type) ? '✓' : '!' }}</span>
+                <div><h3>{{ category.title }} @if (category.required) { <span class="required">*</span> } @else { <span class="optional-label">Optional</span> }</h3><p>{{ category.description }}</p></div>
+              </div>
+              <span class="document-count">{{ documentsFor(category.type).length }} {{ documentsFor(category.type).length === 1 ? 'image' : 'images' }}</span>
+            </header>
+
+            <div class="side-upload-list">
+              @for (side of ['Front', 'Back']; track side) {
+                <section class="side-upload">
+                  <div class="side-heading"><h4>{{ side }}</h4><span>{{ documentsFor(category.type, $any(side)).length }} uploaded</span></div>
+                  <div class="document-thumbnail-grid">
+                    @for (document of documentsFor(category.type, $any(side)); track document.id) {
+                      <figure class="document-thumbnail">
+                        <button type="button" class="thumbnail-preview" (click)="previewDocument.set(document)" [attr.aria-label]="'Preview ' + document.fileName">
+                          <img [src]="document.url" [alt]="document.fileName" loading="lazy" />
+                        </button>
+                        <figcaption><span [title]="document.fileName">{{ document.fileName }}</span>
+                          <label class="replace-document" [class.busy]="replacingDocumentId() === document.id" [attr.aria-label]="'Replace ' + document.fileName" title="Replace document">
+                            <input type="file" accept="image/*" [disabled]="!!replacingDocumentId() || !!deletingDocumentId()" (change)="onReplacementSelected($event, document)" />
+                            @if (replacingDocumentId() === document.id) { <span class="mini-spinner"></span> } @else { ↻ }
+                          </label>
+                          <button type="button" class="delete-document" [disabled]="!!deletingDocumentId() || !!replacingDocumentId()" (click)="deleteDocument(document)" [attr.aria-label]="'Delete ' + document.fileName" title="Delete document">
+                            @if (deletingDocumentId() === document.id) { <span class="mini-spinner"></span> } @else { × }
+                          </button>
+                        </figcaption>
+                      </figure>
+                    }
+                    <label class="add-document-tile" [class.disabled]="!createdEnquiry()?.enquiryId || isDocumentsLoading()">
+                      <input type="file" accept="image/*" multiple [disabled]="!createdEnquiry()?.enquiryId || isDocumentsLoading()" (change)="onDocumentFilesSelected($event, category.type, $any(side))" />
+                      <span class="add-icon" aria-hidden="true">+</span>
+                      <span>Add images</span>
+                    </label>
+                  </div>
+                </section>
+              }
+            </div>
+            @if (category.required && !categoryComplete(category.type)) {
+              <p class="required-pending"><span aria-hidden="true">!</span> At least one {{ category.title.toLowerCase() }} image is required.</p>
+            }
+          </article>
+        }
+      </div>
+
+      <footer class="upload-actions">
+        <button type="button" class="button-secondary" (click)="backToQueue()">Save and exit</button>
+        <div class="upload-action-copy">RC and ID proof must each have at least one successful upload.</div>
+        <button type="button" class="button-primary" [disabled]="!canFinishUpload || isSubmittingEnquiry()" (click)="submitEnquiry()">
+          @if (isSubmittingEnquiry()) { <span class="button-spinner"></span> Submitting enquiry… } @else if (uploadCount() > 0 || deletingDocumentId() || replacingDocumentId() || isDocumentsLoading()) { <span class="button-spinner"></span> Please wait… } @else { Submit Enquiry <span aria-hidden="true">→</span> }
+        </button>
+      </footer>
+    </section>
+
+    @if (previewDocument(); as document) {
+      <div class="preview-backdrop" role="presentation" (click)="previewDocument.set(null)">
+        <section class="preview-dialog" role="dialog" aria-modal="true" [attr.aria-label]="'Preview ' + document.fileName" (click)="$event.stopPropagation()">
+          <header><div><strong>{{ document.fileName }}</strong><span>{{ document.docType }} · {{ document.docSide }}</span></div><button type="button" (click)="previewDocument.set(null)" aria-label="Close preview">×</button></header>
+          <img [src]="document.url" [alt]="document.fileName" />
+        </section>
+      </div>
+    }
+  } @else if (step() === 'quote') {
+    <section class="quote-step" aria-labelledby="quote-step-title">
+      <header class="quote-step-heading">
+        <div><p class="eyebrow">ENQUIRY QUOTES</p><h2 id="quote-step-title">Quotes for {{ createdEnquiry()?.enquiryNumber || 'this enquiry' }}</h2>
+          <p>{{ quotes().length }} {{ quotes().length === 1 ? 'quote' : 'quotes' }} recorded</p></div>
+        <span class="quote-policy-tag">{{ createdEnquiry()?.policyType || policyType() }}</span>
+      </header>
+      @if (quoteSuccess()) { <div class="quote-success" role="status">{{ quoteSuccess() }}</div> }
+      @if (quoteError()) { <div class="form-error-banner" role="alert">{{ quoteError() }}</div> }
+      <div class="quote-step-grid">
+        <section class="quote-list-panel" aria-label="Quotes list">
+          <h3>Submitted quotes</h3>
+          @if (quoteLoading()) { <p class="quote-empty">Loading quotes…</p> }
+          @else if (quotes().length === 0) { <p class="quote-empty">No quotes have been added yet.</p> }
+          @else {
+            <div class="quote-table-scroll"><table class="quote-table"><thead><tr><th>Select</th><th>Insurance company</th><th>Vendor</th><th>Premium</th><th>Agent points</th><th>IDV</th><th>Remarks</th></tr></thead>
+              <tbody>@for (quote of quotes(); track quote.id) { <tr [class.quote-selected-row]="selectedQuoteId() === quote.id"><td><input type="radio" name="selectedQuote" [checked]="selectedQuoteId() === quote.id" [disabled]="isSubmittingQuote()" (change)="selectQuote(quote)" [attr.aria-label]="'Select quote from ' + quote.insuranceCompanyName" /></td><td>{{ quote.insuranceCompanyName }}</td><td>{{ quote.vendorName || '—' }}</td><td>{{ quote.premium | currency:'INR':'symbol':'1.0-2' }}</td><td>{{ quote.agentPoints }}</td><td>{{ isThirdPartyQuote ? '—' : (quote.idv | currency:'INR':'symbol':'1.0-0') }}</td><td>{{ quote.remarks || '—' }}</td></tr> }</tbody>
+            </table></div>
+          }
+        </section>
+        <form class="quote-add-panel" (ngSubmit)="addQuote()">
+          <h3>Add a quote</h3>
+          <div class="field-grid">
+            <div class="field"><label for="quote-company">Insurance company <span class="required">*</span></label><select id="quote-company" name="quoteCompany" [(ngModel)]="quoteForm.insuranceCompanyId" required><option value="">Select company</option>@for (company of insuranceCompanies(); track company.id) { <option [value]="company.id">{{ company.companyName }}</option> }</select></div>
+            <div class="field"><label for="quote-vendor">Vendor</label><select id="quote-vendor" name="quoteVendor" [(ngModel)]="quoteForm.vendorId"><option value="">Select vendor (optional)</option>@for (vendor of vendors(); track vendor.id) { <option [value]="vendor.id">{{ vendor.name }}</option> }</select></div>
+            <div class="field"><label for="quote-premium">Premium <span class="required">*</span></label><input id="quote-premium" type="number" min="0" step="0.01" name="quotePremium" [(ngModel)]="quoteForm.premium" required /></div>
+            <div class="field"><label for="quote-company-payable">Company payable <span class="required">*</span></label><input id="quote-company-payable" type="number" min="0" step="0.01" name="quoteCompanyPayable" [(ngModel)]="quoteForm.companyPayable" required /></div>
+            <div class="field"><label for="quote-agent-points">Agent points <span class="required">*</span></label><input id="quote-agent-points" type="number" min="0" step="0.01" name="quoteAgentPoints" [(ngModel)]="quoteForm.agentPoints" required /></div>
+            <div class="field"><label for="quote-admin-profit">Admin profit <span class="required">*</span></label><input id="quote-admin-profit" type="number" min="0" step="0.01" name="quoteAdminProfit" [(ngModel)]="quoteForm.adminProfit" required /></div>
+            @if (!isThirdPartyQuote) { <div class="field"><label for="quote-idv">IDV <span class="required">*</span></label><input id="quote-idv" type="number" min="0" step="0.01" name="quoteIdv" [(ngModel)]="quoteForm.idv" required /></div> }
+            @else { <p class="quote-idv-note">IDV is hidden for Third Party; the API receives 0.</p> }
+            <div class="field quote-remarks"><label for="quote-remarks">Remarks</label><textarea id="quote-remarks" name="quoteRemarks" rows="3" [(ngModel)]="quoteForm.remarks"></textarea></div>
+          </div>
+          <button type="submit" class="button-primary" [disabled]="quoteSaving()">{{ quoteSaving() ? 'Saving quote…' : 'Add quote' }}</button>
+        </form>
+      </div>
+      @if (quoteSubmitError()) { <div class="form-error-banner" role="alert">{{ quoteSubmitError() }}</div> }
+      <footer class="quote-step-actions"><button type="button" class="button-primary" [disabled]="!selectedQuoteId() || isSubmittingQuote()" (click)="proceedToPayment()">{{ isSubmittingQuote() ? 'Submitting quote…' : 'Proceed to payment' }}</button></footer>
+    </section>
+  } @else if (step() === 'payment') {
+    <section class="payment-step" aria-labelledby="payment-step-title">
+      <header class="payment-step-heading"><div><p class="eyebrow">PAYMENT</p><h2 id="payment-step-title">Pay for the selected quote</h2><p>Selected quote: {{ selectedPolicySummary()?.insuranceCompany || 'Loading quote details…' }}</p></div></header>
+      @if (workflowNotice()) { <div class="quote-success" role="status">{{ workflowNotice() }}</div> }
+      @if (paymentError()) { <div class="form-error-banner" role="alert">{{ paymentError() }} <button type="button" class="text-button" (click)="retryPaymentDetails()">Retry</button></div> }
+      <section class="payable-amount" aria-label="Exact amount payable"><span>Agent payable</span>@if (agentPayable() !== null) { <strong>{{ agentPayable() | currency:'INR':'symbol':'1.2-2' }}</strong> } @else { <strong>Loading…</strong> }<small>Amount from the selected quote summary</small></section>
+      <div class="payment-mode-selector" role="group" aria-label="Payment mode">
+        <button type="button" [class.active]="paymentMode() === 'bank'" [attr.aria-pressed]="paymentMode() === 'bank'" (click)="setPaymentMode('bank')">Bank Transfer</button>
+        <button type="button" [class.active]="paymentMode() === 'ledger'" [attr.aria-pressed]="paymentMode() === 'ledger'" (click)="setPaymentMode('ledger')">Ledger</button>
+      </div>
+      @if (paymentMode() === 'bank') {
+        <section class="payment-detail-panel">
+          <h3>Bank transfer details</h3>
+          @if (qrLoading()) { <p class="quote-empty">Loading QR and bank details…</p> }
+          @else if (qrDetails(); as qr) {
+            <div class="bank-payment-layout">
+              <div class="qr-frame">@if (qr.qrImageUrl.trim()) { <img [src]="qr.qrImageUrl" alt="Payment QR code" /> } @else { <div class="qr-empty"><span aria-hidden="true">▦</span><strong>QR image unavailable</strong><small>Use the bank or UPI details to complete payment.</small></div> }</div>
+              <div class="bank-details"><h4>{{ qr.qrName }}</h4><dl>
+                <div><dt>Bank</dt><dd>{{ qr.bankName }}</dd></div><div><dt>Branch</dt><dd>{{ qr.branchName }}</dd></div>
+                <div><dt>Account holder</dt><dd>{{ qr.accountHolderName }}</dd></div><div><dt>Account number</dt><dd>{{ qr.accountNumber }}</dd></div>
+                <div><dt>IFSC</dt><dd>{{ qr.ifscCode }}</dd></div><div><dt>UPI ID</dt><dd>{{ qr.upiId }}</dd></div>
+              </dl></div>
+            </div>
+            <div class="payment-fields">
+              <div class="field"><label for="transaction-id">Transaction ID <span class="required">*</span></label><input id="transaction-id" type="text" autocomplete="off" [ngModel]="transactionId()" (ngModelChange)="transactionId.set($event)" name="transactionId" /></div>
+              <div class="field"><label for="payment-remarks">Remarks</label><textarea id="payment-remarks" rows="3" [ngModel]="paymentRemarks()" (ngModelChange)="paymentRemarks.set($event)" name="paymentRemarks"></textarea></div>
+            </div>
+          }
+        </section>
+      } @else {
+        <section class="payment-detail-panel">
+          <h3>Ledger summary</h3>
+          @if (ledgerLoading()) { <p class="quote-empty">Loading ledger details…</p> }
+          @else if (ledgerDetails(); as ledger) {
+            <div class="ledger-summary" [class.ledger-insufficient]="ledger.balanceAfterCut < 0">
+              <div><span>Current ledger balance</span><strong>{{ ledger.ledgerBalance | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+              <div><span>Amount to deduct</span><strong>{{ ledger.finalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+              <div><span>Balance after deduction</span><strong>{{ ledger.balanceAfterCut | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+            </div>
+            @if (ledger.balanceAfterCut < 0) { <p class="ledger-warning" role="alert">Insufficient ledger balance. Add funds or choose Bank Transfer to continue.</p> }
+            <div class="field payment-remarks-field"><label for="ledger-payment-remarks">Remarks</label><textarea id="ledger-payment-remarks" rows="3" [ngModel]="paymentRemarks()" (ngModelChange)="paymentRemarks.set($event)" name="ledgerPaymentRemarks"></textarea></div>
+          }
+        </section>
+      }
+      <footer class="payment-actions"><button type="button" class="button-secondary" (click)="backToQuoteSelection()">Back to quote selection</button><button type="button" class="button-primary" [disabled]="!canSubmitPayment" (click)="submitPolicyRequest()">{{ paymentSubmitting() ? 'Submitting payment…' : 'Submit payment' }}</button></footer>
+    </section>
+  } @else {
+    <section class="review-step"><p class="eyebrow">REVIEW</p><h2>Policy request submitted</h2><p>{{ workflowNotice() || 'The payment request was submitted successfully.' }}</p>@if (policyRequestId()) { <p>Request ID: <strong>{{ policyRequestId() }}</strong></p> }<p>Review details will be added in a future workflow update.</p><button type="button" class="button-secondary" (click)="backToQueue()">Back to Enquiries</button></section>
+  }
+  @if (existingEnquiryStep() !== null) {
+    <div class="existing-enquiry-backdrop">
+      <section class="existing-enquiry-dialog" role="alertdialog" aria-modal="true" aria-labelledby="existing-enquiry-title" aria-describedby="existing-enquiry-description">
+        <h2 id="existing-enquiry-title">Enquiry already exists</h2>
+        <p id="existing-enquiry-description">An enquiry already exists for these details. Proceed to its current stage or cancel.</p>
+        <div class="existing-enquiry-actions">
+          <button type="button" class="button-secondary" (click)="cancelExistingEnquiry()">Cancel</button>
+          <button type="button" class="button-primary" (click)="proceedToExistingEnquiry()">Proceed to current stage</button>
+        </div>
+      </section>
+    </div>
+  }
+</main>

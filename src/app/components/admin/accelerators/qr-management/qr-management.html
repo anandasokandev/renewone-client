@@ -1,0 +1,829 @@
+<div class="carbon-qr-page">
+  <!-- Carbon Toast Notification -->
+  @if (toastMessage()) {
+    <div class="carbon-toast" [class.toast-error]="toastType() === 'error'" [class.toast-info]="toastType() === 'info'" role="status">
+      <div class="toast-content">
+        @if (toastType() === 'success') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        } @else if (toastType() === 'info') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M18 10a8 8 0 11-16 0 8 8 0 0116 0zm-7-4a1 1 0 11-2 0 1 1 0 012 0zM9 9a1 1 0 000 2v3a1 1 0 001 1h1a1 1 0 100-2v-3a1 1 0 00-1-1H9z" clip-rule="evenodd"/>
+          </svg>
+        } @else {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        }
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearToast()" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  <!-- Header Area -->
+  <header class="page-header">
+
+    <!-- Carbon View Tabs (Only 2 Tabs) -->
+    <div class="tabs-bar" role="tablist">
+      <button
+        type="button"
+        class="product-tab"
+        [class.product-tab-selected]="activeTab() === 'upi'"
+        (click)="activeTab.set('upi')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'upi'"
+      >
+        UPI IDs
+        <span class="tab-badge">{{ upiTotalRecords() }}</span>
+      </button>
+      <button
+        type="button"
+        class="product-tab"
+        [class.product-tab-selected]="activeTab() === 'mappings'"
+        (click)="activeTab.set('mappings')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'mappings'"
+      >
+        QR Mapping
+        <span class="tab-badge">{{ qrMappingTotalRecords() }}</span>
+      </button>
+    </div>
+  </header>
+
+  @if (activeTab() === 'upi') {
+    <section class="carbon-card-section" id="section-upi-ids">
+      <!-- Section Header with Title, Search, Refresh and Add Button -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">UPI IDs</h2>
+            <span class="carbon-count-tag">{{ upiTotalRecords() }} configured</span>
+          </div>
+          <p class="section-subtitle">Select a row to edit its UPI details.</p>
+        </div>
+
+        <div class="section-actions-group">
+          <!-- Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search UPI ID, name, bank..."
+              [ngModel]="upiSearchQuery()"
+              (ngModelChange)="onUpiSearchChange($event)"
+            />
+            @if (upiSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearUpiSearch()" aria-label="Clear UPI search">&times;</button>
+            }
+          </div>
+
+          <!-- Refresh Button -->
+          <button
+            type="button"
+            class="carbon-btn-secondary"
+            (click)="refreshUpiMasters()"
+            [disabled]="isUpiLoading()"
+            title="Refresh UPI IDs"
+          >
+            <svg class="btn-svg" [class.spinning]="isUpiLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Refresh</span>
+          </button>
+
+          <!-- Add Button -->
+          <button
+            type="button"
+            class="carbon-btn-primary"
+            (click)="openAddUpiModal()"
+            title="Add new UPI ID"
+          >
+            <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Add UPI ID</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isUpiLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching UPI IDs...</span>
+          </div>
+        } @else if (filteredUpiItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="2" y="4" width="20" height="16" rx="0"></rect>
+                <line x1="2" y1="10" x2="22" y2="10"></line>
+              </svg>
+            </div>
+            <h3 class="empty-title">No UPI IDs found</h3>
+            <p class="empty-desc">
+              @if (upiSearchQuery()) {
+                No UPI records matched "{{ upiSearchQuery() }}". Try adjusting your search query.
+              } @else {
+                There are currently no UPI IDs configured. Click "Add UPI ID" to create one.
+              }
+            </p>
+            @if (upiSearchQuery()) {
+              <button type="button" class="carbon-btn-secondary" (click)="clearUpiSearch()">
+                Clear Search
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table">
+              <thead>
+                <tr>
+                  <th class="th-upi-id">UPI ID</th>
+                  <th class="th-upi-name">UPI Name</th>
+                  <th class="th-bank">Bank Account</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-actions">Actions / Enable</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredUpiItems(); track item.id) {
+                  <tr class="carbon-table-row editable-row" tabindex="0" (click)="openEditUpiModal(item)" (keydown)="onUpiRowKeydown($event, item)" [attr.aria-label]="'Edit UPI ID ' + item.upiName">
+                    <!-- UPI ID with Copy -->
+                    <td class="td-upi-id">
+                      <div class="cell-mono-wrapper">
+                        <span class="code-mono">{{ item.upiId }}</span>
+                        <button
+                          type="button"
+                          class="carbon-icon-btn"
+                          (click)="$event.stopPropagation(); copyToClipboard(item.upiId, 'UPI ID')"
+                          (keydown)="$event.stopPropagation()"
+                          [title]="copiedText() === item.upiId ? 'Copied!' : 'Copy UPI ID'"
+                        >
+                          @if (copiedText() === item.upiId) {
+                            <svg class="icon-svg text-success" viewBox="0 0 20 20" fill="currentColor">
+                              <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                            </svg>
+                          } @else {
+                            <svg class="icon-svg" viewBox="0 0 20 20" fill="currentColor">
+                              <path d="M8 3a1 1 0 011-1h2a1 1 0 110 2H9a1 1 0 01-1-1z"/>
+                              <path d="M6 3a2 2 0 00-2 2v11a2 2 0 002 2h8a2 2 0 002-2V5a2 2 0 00-2-2 3 3 0 01-3 3H9a3 3 0 01-3-3z"/>
+                            </svg>
+                          }
+                        </button>
+                      </div>
+                    </td>
+
+                    <!-- UPI Name -->
+                    <td class="td-upi-name">
+                      <span class="primary-text">{{ item.upiName }}</span>
+                    </td>
+
+                    <!-- Bank Account -->
+                    <td class="td-bank">
+                      <div class="bank-tag-cell">
+                        <svg class="bank-icon" viewBox="0 0 20 20" fill="currentColor">
+                          <path d="M10.707 2.293a1 1 0 00-1.414 0l-7 7a1 1 0 001.414 1.414L4 10.414V17a1 1 0 001 1h2a1 1 0 001-1v-2a1 1 0 011-1h2a1 1 0 011 1v2a1 1 0 001 1h2a1 1 0 001-1v-6.586l.293.293a1 1 0 001.414-1.414l-7-7z"/>
+                        </svg>
+                        <span>{{ item.bankAccount }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="td-status">
+                      <span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">
+                        {{ item.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+
+                    <!-- Toggle Switch Action -->
+                    <td class="td-actions">
+                      <div class="switch-action-cell">
+                        <button
+                          type="button"
+                          class="carbon-toggle-switch"
+                          [class.checked]="item.isActive"
+                          [disabled]="togglingUpiId() === item.id"
+                          (click)="onToggleUpiStatus(item, $event)"
+                          (keydown)="$event.stopPropagation()"
+                          role="switch"
+                          [attr.aria-checked]="item.isActive"
+                          [title]="item.isActive ? 'Disable UPI ID' : 'Enable UPI ID'"
+                        >
+                          <span class="toggle-slider"></span>
+                        </button>
+                        <span class="switch-status-label" [class.active]="item.isActive">
+                          {{ item.isActive ? 'Enabled' : 'Disabled' }}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              Showing <strong>{{ filteredUpiItems().length }}</strong> of <strong>{{ upiTotalRecords() }}</strong> items
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="upi-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="upi-page-size"
+                  class="carbon-select"
+                  [ngModel]="upiPageSize()"
+                  (ngModelChange)="onUpiPageSizeChange($event)"
+                >
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ upiPageNumber() }} of {{ upiTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="upiPageNumber() <= 1 || isUpiLoading()"
+                  (click)="onUpiPageChange(upiPageNumber() - 1)"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="upiPageNumber() >= upiTotalPages() || isUpiLoading()"
+                  (click)="onUpiPageChange(upiPageNumber() + 1)"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- SECTION 2: QR Mapping -->
+  <!-- ========================================================================= -->
+  @if (activeTab() === 'mappings') {
+    <section class="carbon-card-section" id="section-qr-mappings">
+      <!-- Section Header with Title, Search, Refresh and Add Button -->
+      <div class="section-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 class="section-title">QR Mapping</h2>
+            <span class="carbon-count-tag">{{ qrMappingTotalRecords() }} mapped</span>
+          </div>
+          <p class="section-subtitle">Select a row to edit its QR mapping.</p>
+        </div>
+
+        <div class="section-actions-group">
+          <!-- Search Box -->
+          <div class="carbon-search-box">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="text"
+              class="carbon-input search-input"
+              placeholder="Search QR, bank, insurance, vehicle..."
+              [ngModel]="qrMappingSearchQuery()"
+              (ngModelChange)="onQrMappingSearchChange($event)"
+            />
+            @if (qrMappingSearchQuery()) {
+              <button type="button" class="search-clear-btn" (click)="clearQrMappingSearch()" aria-label="Clear QR Mapping search">&times;</button>
+            }
+          </div>
+
+          <!-- Refresh Button -->
+          <button
+            type="button"
+            class="carbon-btn-secondary"
+            (click)="refreshQrMappings()"
+            [disabled]="isQrMappingLoading()"
+            title="Refresh QR Mappings"
+          >
+            <svg class="btn-svg" [class.spinning]="isQrMappingLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M23 4v6h-6"></path>
+              <path d="M1 20v-6h6"></path>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+            </svg>
+            <span>Refresh</span>
+          </button>
+
+          <!-- Add Button -->
+          <button
+            type="button"
+            class="carbon-btn-primary"
+            (click)="openAddQrMappingModal()"
+            title="Add new QR Mapping"
+          >
+            <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+            </svg>
+            <span>Add QR Mapping</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- Table Container -->
+      <div class="carbon-table-container">
+        @if (isQrMappingLoading()) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Fetching QR Mappings...</span>
+          </div>
+        } @else if (filteredQrMappingItems().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                <rect x="3" y="3" width="7" height="7"></rect>
+                <rect x="14" y="3" width="7" height="7"></rect>
+                <rect x="14" y="14" width="7" height="7"></rect>
+                <rect x="3" y="14" width="7" height="7"></rect>
+              </svg>
+            </div>
+            <h3 class="empty-title">No QR Mappings found</h3>
+            <p class="empty-desc">
+              @if (qrMappingSearchQuery()) {
+                No QR mapping records matched "{{ qrMappingSearchQuery() }}". Try adjusting your search query.
+              } @else {
+                There are currently no QR mappings configured. Click "Add QR Mapping" to create one.
+              }
+            </p>
+            @if (qrMappingSearchQuery()) {
+              <button type="button" class="carbon-btn-secondary" (click)="clearQrMappingSearch()">
+                Clear Search
+              </button>
+            }
+          </div>
+        } @else {
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table">
+              <thead>
+                <tr>
+                  <th class="th-mapping-qr">UPI ID / QR Name</th>
+                  <th class="th-mapping-bank">Bank Account</th>
+                  <th class="th-mapping-insurance">Insurance Type</th>
+                  <th class="th-mapping-vehicle">Vehicle Type</th>
+                  <th class="th-status">Status</th>
+                  <th class="th-actions">Actions / Enable</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredQrMappingItems(); track item.id) {
+                  <tr class="carbon-table-row editable-row" tabindex="0" (click)="openEditQrMappingModal(item)" (keydown)="onQrMappingRowKeydown($event, item)" [attr.aria-label]="'Edit QR mapping ' + item.qrName">
+                    <!-- QR Name -->
+                    <td class="td-mapping-qr">
+                      <div class="qr-label-cell">
+                        <svg class="qr-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                          <rect x="3" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="3" width="7" height="7"></rect>
+                          <rect x="14" y="14" width="7" height="7"></rect>
+                          <rect x="3" y="14" width="7" height="7"></rect>
+                        </svg>
+                        <span class="primary-text">{{ item.qrName }}</span>
+                      </div>
+                    </td>
+
+                    <!-- Bank Account -->
+                    <td class="td-mapping-bank">
+                      <span class="secondary-text">{{ item.bankName }}</span>
+                    </td>
+
+                    <!-- Insurance Type -->
+                    <td class="td-mapping-insurance">
+                      <span class="category-tag">{{ item.insuranceType }}</span>
+                    </td>
+
+                    <!-- Vehicle Type -->
+                    <td class="td-mapping-vehicle">
+                      <span class="secondary-text">{{ item.vehicleType }}</span>
+                    </td>
+
+                    <!-- Status -->
+                    <td class="td-status">
+                      <span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">
+                        {{ item.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+
+                    <!-- Toggle Switch Action -->
+                    <td class="td-actions">
+                      <div class="switch-action-cell">
+                        <button
+                          type="button"
+                          class="carbon-toggle-switch"
+                          [class.checked]="item.isActive"
+                          [disabled]="togglingQrMappingId() === item.id"
+                          (click)="onToggleQrMappingStatus(item, $event)"
+                          (keydown)="$event.stopPropagation()"
+                          role="switch"
+                          [attr.aria-checked]="item.isActive"
+                          [title]="item.isActive ? 'Disable QR Mapping' : 'Enable QR Mapping'"
+                        >
+                          <span class="toggle-slider"></span>
+                        </button>
+                        <span class="switch-status-label" [class.active]="item.isActive">
+                          {{ item.isActive ? 'Enabled' : 'Disabled' }}
+                        </span>
+                      </div>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Pagination Bar -->
+          <div class="carbon-pagination-bar">
+            <div class="pagination-info">
+              Showing <strong>{{ filteredQrMappingItems().length }}</strong> of <strong>{{ qrMappingTotalRecords() }}</strong> items
+            </div>
+
+            <div class="pagination-controls">
+              <div class="page-size-selector">
+                <label for="mapping-page-size" class="page-size-label">Items per page:</label>
+                <select
+                  id="mapping-page-size"
+                  class="carbon-select"
+                  [ngModel]="qrMappingPageSize()"
+                  (ngModelChange)="onQrMappingPageSizeChange($event)"
+                >
+                  <option [value]="10">10</option>
+                  <option [value]="25">25</option>
+                  <option [value]="50">50</option>
+                </select>
+              </div>
+
+              <div class="page-nav-buttons">
+                <span class="page-number-display">Page {{ qrMappingPageNumber() }} of {{ qrMappingTotalPages() }}</span>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="qrMappingPageNumber() <= 1 || isQrMappingLoading()"
+                  (click)="onQrMappingPageChange(qrMappingPageNumber() - 1)"
+                  aria-label="Previous page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+                  </svg>
+                </button>
+                <button
+                  type="button"
+                  class="carbon-page-btn"
+                  [disabled]="qrMappingPageNumber() >= qrMappingTotalPages() || isQrMappingLoading()"
+                  (click)="onQrMappingPageChange(qrMappingPageNumber() + 1)"
+                  aria-label="Next page"
+                >
+                  <svg viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  @if (isAddUpiModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeAddUpiModal()" role="presentation">
+      <div
+        class="carbon-modal-dialog"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-upi-title"
+      >
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="header-titles">
+            <h2 id="add-upi-title" class="modal-headline">{{ editingUpiItem() ? 'Edit UPI ID' : 'Add UPI ID' }}</h2>
+          </div>
+          <button
+            type="button"
+            class="modal-close-btn"
+            (click)="closeAddUpiModal()"
+            aria-label="Close modal"
+            [disabled]="isSubmittingUpi()"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.293 8L3.146 3.854a.5.5 0 0 1 .708-.708L8 7.293l4.146-4.147a.5.5 0 0 1 .708.708L8.707 8l4.147 4.146a.5.5 0 0 1-.708.708L8 8.707l-4.146 4.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Form Body -->
+        <form [formGroup]="addUpiForm" (ngSubmit)="submitAddUpi()" class="modal-form-content">
+          <div class="modal-body">
+            <!-- Inline Error Banner -->
+            @if (addUpiError()) {
+              <div class="carbon-inline-notification notification-error" role="alert">
+                <svg class="notification-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="notification-text">
+                  <span class="notification-title">Error:</span>
+                  <span class="notification-desc">{{ addUpiError() }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="form-fields-grid">
+              <!-- UPI ID Field -->
+              <div class="carbon-form-item">
+                <label for="modal-upi-id" class="carbon-label">
+                  UPI ID <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addUpiForm.controls.upiId.touched && addUpiForm.controls.upiId.invalid">
+                  <input
+                    id="modal-upi-id"
+                    type="text"
+                    class="carbon-input-field mono-font"
+                    formControlName="upiId"
+                    placeholder="e.g. 9846645576@upi"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addUpiForm.controls.upiId.touched && addUpiForm.controls.upiId.hasError('required')) {
+                  <div class="carbon-form-requirement">UPI ID is required.</div>
+                }
+              </div>
+
+              <!-- UPI Name Field -->
+              <div class="carbon-form-item">
+                <label for="modal-upi-name" class="carbon-label">
+                  UPI Name <span class="required-star">*</span>
+                </label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="addUpiForm.controls.upiName.touched && addUpiForm.controls.upiName.invalid">
+                  <input
+                    id="modal-upi-name"
+                    type="text"
+                    class="carbon-input-field"
+                    formControlName="upiName"
+                    placeholder="e.g. CAR, BIKE, MAIN"
+                    autocomplete="off"
+                  />
+                </div>
+                @if (addUpiForm.controls.upiName.touched && addUpiForm.controls.upiName.hasError('required')) {
+                  <div class="carbon-form-requirement">UPI Name is required.</div>
+                }
+              </div>
+
+              <!-- Settlement Bank Account Dropdown -->
+              <div class="carbon-form-item">
+                <label for="modal-bank-account" class="carbon-label">
+                  Settlement Bank Account <span class="required-star">*</span>
+                </label>
+                <div class="carbon-select-wrapper" [class.input-invalid]="addUpiForm.controls.bankAccountId.touched && addUpiForm.controls.bankAccountId.invalid">
+                  <select
+                    id="modal-bank-account"
+                    class="carbon-select-field"
+                    formControlName="bankAccountId"
+                    [disabled]="isBankAccountsLoading() || isSubmittingUpi()"
+                  >
+                    <option value="" disabled selected>
+                      {{ isBankAccountsLoading() ? 'Loading bank accounts...' : 'Select linked bank account' }}
+                    </option>
+                    @for (account of bankAccounts(); track account.id) {
+                      <option [value]="account.id">
+                        {{ account.accountName }} - {{ account.bankName }} (A/C {{ account.accountNumber }})
+                      </option>
+                    }
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </div>
+                @if (addUpiForm.controls.bankAccountId.touched && addUpiForm.controls.bankAccountId.hasError('required')) {
+                  <div class="carbon-form-requirement">Please select a bank account.</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="carbon-btn-secondary"
+              (click)="closeAddUpiModal()"
+              [disabled]="isSubmittingUpi()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="carbon-btn-primary"
+              [disabled]="isSubmittingUpi() || addUpiForm.invalid"
+            >
+              @if (isSubmittingUpi()) {
+                <svg class="btn-spinner" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ editingUpiItem() ? 'Saving changes...' : 'Creating UPI ID...' }}</span>
+              } @else {
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ editingUpiItem() ? 'Save changes' : 'Create UPI ID' }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+
+  <!-- ========================================================================= -->
+  <!-- ADD QR MAPPING MODAL (Clean UI, IBM Carbon Design System) -->
+  <!-- ========================================================================= -->
+  @if (isAddQrMappingModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeAddQrMappingModal()" role="presentation">
+      <div
+        class="carbon-modal-dialog"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-mapping-title"
+      >
+        <!-- Modal Header -->
+        <div class="modal-header">
+          <div class="header-titles">
+            <h2 id="add-mapping-title" class="modal-headline">{{ editingQrMappingItem() ? 'Edit QR Mapping' : 'Add QR Mapping' }}</h2>
+          </div>
+          <button
+            type="button"
+            class="modal-close-btn"
+            (click)="closeAddQrMappingModal()"
+            aria-label="Close modal"
+            [disabled]="isSubmittingMapping()"
+          >
+            <svg viewBox="0 0 16 16" fill="currentColor">
+              <path d="M7.293 8L3.146 3.854a.5.5 0 0 1 .708-.708L8 7.293l4.146-4.147a.5.5 0 0 1 .708.708L8.707 8l4.147 4.146a.5.5 0 0 1-.708.708L8 8.707l-4.146 4.147a.5.5 0 0 1-.708-.708L7.293 8z"/>
+            </svg>
+          </button>
+        </div>
+
+        <!-- Modal Form Body -->
+        <form [formGroup]="$any(addMappingForm)" (ngSubmit)="submitAddMapping()" class="modal-form-content">
+          <div class="modal-body">
+            @if (addMappingError()) {
+              <div class="carbon-inline-notification notification-error" role="alert">
+                <svg class="notification-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <div class="notification-text">
+                  <span class="notification-desc">{{ addMappingError() }}</span>
+                </div>
+              </div>
+            }
+
+            <div class="form-fields-grid">
+              <!-- UPI ID / QR Master Dropdown -->
+              <div class="carbon-form-item">
+                <label for="modal-qr-master" class="carbon-label">
+                  UPI ID / QR Master <span class="required-star">*</span>
+                </label>
+                <div class="carbon-select-wrapper" [class.input-invalid]="addMappingForm.controls.qrMasterId.touched && addMappingForm.controls.qrMasterId.invalid">
+                  <select
+                    id="modal-qr-master"
+                    class="carbon-select-field"
+                    formControlName="qrMasterId"
+                    [disabled]="isMappingDropdownsLoading() || isSubmittingMapping()"
+                  >
+                    <option value="" disabled selected>
+                      {{ isMappingDropdownsLoading() ? 'Loading QR Masters...' : 'Select UPI ID / QR Master' }}
+                    </option>
+                    @for (item of availableQrMasters(); track item.id) {
+                      <option [value]="item.id">
+                        {{ item.upiName }} &mdash; {{ item.upiId }} ({{ item.bankAccount }})
+                      </option>
+                    }
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </div>
+                @if (addMappingForm.controls.qrMasterId.touched && addMappingForm.controls.qrMasterId.hasError('required')) {
+                  <div class="carbon-form-requirement">Please select a QR Master.</div>
+                }
+              </div>
+
+              <!-- Insurance Type Dropdown -->
+              <div class="carbon-form-item">
+                <label for="modal-insurance-type" class="carbon-label">
+                  Insurance Type <span class="required-star">*</span>
+                </label>
+                <div class="carbon-select-wrapper" [class.input-invalid]="addMappingForm.controls.insuranceTypeId.touched && addMappingForm.controls.insuranceTypeId.invalid">
+                  <select
+                    id="modal-insurance-type"
+                    class="carbon-select-field"
+                    formControlName="insuranceTypeId"
+                    [disabled]="isMappingDropdownsLoading() || isSubmittingMapping()"
+                  >
+                    <option value="" disabled selected>
+                      {{ isMappingDropdownsLoading() ? 'Loading Insurance Types...' : 'Select Insurance Type' }}
+                    </option>
+                    @for (type of availableInsuranceTypes(); track type.id) {
+                      <option [value]="type.id">{{ type.name }}</option>
+                    }
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </div>
+                @if (addMappingForm.controls.insuranceTypeId.touched && addMappingForm.controls.insuranceTypeId.hasError('required')) {
+                  <div class="carbon-form-requirement">Please select an Insurance Type.</div>
+                }
+              </div>
+
+              <!-- Vehicle Type Dropdown -->
+              <div class="carbon-form-item">
+                <label for="modal-vehicle-type" class="carbon-label">
+                  Vehicle Type <span class="required-star">*</span>
+                </label>
+                <div class="carbon-select-wrapper" [class.input-invalid]="addMappingForm.controls.vehicleTypeId.touched && addMappingForm.controls.vehicleTypeId.invalid">
+                  <select
+                    id="modal-vehicle-type"
+                    class="carbon-select-field"
+                    formControlName="vehicleTypeId"
+                    [disabled]="isMappingDropdownsLoading() || isSubmittingMapping()"
+                  >
+                    <option value="" disabled selected>
+                      {{ isMappingDropdownsLoading() ? 'Loading Vehicle Types...' : 'Select Vehicle Type' }}
+                    </option>
+                    @for (vehicle of availableVehicleTypes(); track vehicle.id) {
+                      <option [value]="vehicle.id">{{ vehicle.typeName }}</option>
+                    }
+                  </select>
+                  <svg class="select-chevron" viewBox="0 0 16 16" fill="currentColor">
+                    <path fill-rule="evenodd" d="M1.646 4.646a.5.5 0 0 1 .708 0L8 10.293l5.646-5.647a.5.5 0 0 1 .708.708l-6 6a.5.5 0 0 1-.708 0l-6-6a.5.5 0 0 1 0-.708z"/>
+                  </svg>
+                </div>
+                @if (addMappingForm.controls.vehicleTypeId.touched && addMappingForm.controls.vehicleTypeId.hasError('required')) {
+                  <div class="carbon-form-requirement">Please select a Vehicle Type.</div>
+                }
+              </div>
+            </div>
+          </div>
+
+          <!-- Modal Footer -->
+          <div class="modal-footer">
+            <button
+              type="button"
+              class="carbon-btn-secondary"
+              (click)="closeAddQrMappingModal()"
+              [disabled]="isSubmittingMapping()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="carbon-btn-primary"
+              [disabled]="isSubmittingMapping() || addMappingForm.invalid"
+            >
+              @if (isSubmittingMapping()) {
+                <svg class="btn-spinner" viewBox="0 0 24 24" fill="none">
+                  <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                  <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                </svg>
+                <span>{{ editingQrMappingItem() ? 'Saving changes...' : 'Creating Mapping...' }}</span>
+              } @else {
+                <svg class="btn-icon" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ editingQrMappingItem() ? 'Save changes' : 'Create Mapping' }}</span>
+              }
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

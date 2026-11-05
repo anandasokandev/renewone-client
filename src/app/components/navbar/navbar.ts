@@ -1,7 +1,10 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, HostListener, inject, signal } from '@angular/core';
-import { Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
+import { filter } from 'rxjs';
+import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Auth } from '../../services/auth/auth';
+import { ADMIN_USER_TYPES } from '../../models/auth.model';
 
 @Component({
   selector: 'app-navbar',
@@ -10,17 +13,57 @@ import { Auth } from '../../services/auth/auth';
   styleUrl: './navbar.css',
 })
 export class Navbar {
-  protected authService = inject(Auth);
-  private router = inject(Router);
-  private elementRef = inject(ElementRef);
+  protected readonly authService = inject(Auth);
+  private readonly router = inject(Router);
+  private readonly elementRef = inject(ElementRef);
 
-  isProfileMenuOpen = signal<boolean>(false);
-  isMobileDrawerOpen = signal<boolean>(false);
+  readonly isProfileMenuOpen = signal<boolean>(false);
+  readonly isMobileDrawerOpen = signal<boolean>(false);
+  readonly isAcceleratorMenuOpen = signal<boolean>(false);
+  readonly isAcceleratorDrawerOpen = signal<boolean>(false);
+  readonly currentUrl = signal<string>(this.router?.url || '');
 
-  isAgent = computed<boolean>(() => {
+  constructor() {
+    if (this.router && this.router.events) {
+      this.router.events
+        .pipe(
+          filter((e): e is NavigationEnd => e instanceof NavigationEnd),
+          takeUntilDestroyed()
+        )
+        .subscribe((e) => {
+          this.currentUrl.set(e.urlAfterRedirects);
+        });
+    }
+  }
+
+  readonly isAgent = computed<boolean>(() => {
+    if (typeof this.authService.isAgent === 'function') {
+      return this.authService.isAgent();
+    }
     return this.authService.currentUser()?.userType?.trim().toLowerCase() === 'agent';
   });
 
+  readonly isAdmin = computed<boolean>(() => {
+    if (typeof this.authService.isAdmin === 'function') {
+      return this.authService.isAdmin();
+    }
+    const userType = this.authService.currentUser()?.userType?.trim().toLowerCase();
+    return !!userType && ADMIN_USER_TYPES.some((role) => role.toLowerCase() === userType);
+  });
+
+  readonly isAcceleratorActive = computed<boolean>(() => {
+    const url = this.currentUrl();
+    return (
+      url.includes('/admin/accelerators') ||
+      url.includes('/admin/accelerator') ||
+      url.includes('/admin/qr-management') ||
+      url.includes('/admin/bank-account-management') ||
+      url.includes('/admin/pricing-master') ||
+      url.includes('/admin/insurance-management') || url.includes('/admin/vendor-management')
+    );
+  });
+
+  readonly homeRoute = computed<string>(() => (this.isAdmin() ? '/admin/dashboard' : '/dashboard'));
 
   getUserInitials(): string {
     const name = this.authService.currentUser()?.fullName;
@@ -36,6 +79,7 @@ export class Navbar {
     this.isProfileMenuOpen.update((v) => !v);
     if (this.isProfileMenuOpen()) {
       this.isMobileDrawerOpen.set(false);
+      this.isAcceleratorMenuOpen.set(false);
     }
   }
 
@@ -43,12 +87,34 @@ export class Navbar {
     this.isMobileDrawerOpen.update((v) => !v);
     if (this.isMobileDrawerOpen()) {
       this.isProfileMenuOpen.set(false);
+      this.isAcceleratorMenuOpen.set(false);
     }
+  }
+
+  toggleAcceleratorMenu(): void {
+    this.isAcceleratorMenuOpen.update((v) => !v);
+    if (this.isAcceleratorMenuOpen()) {
+      this.isProfileMenuOpen.set(false);
+    }
+  }
+
+  openAcceleratorMenu(): void {
+    this.isAcceleratorMenuOpen.set(true);
+  }
+
+  closeAcceleratorMenu(): void {
+    this.isAcceleratorMenuOpen.set(false);
+  }
+
+  toggleAcceleratorDrawer(): void {
+    this.isAcceleratorDrawerOpen.update((v) => !v);
   }
 
   closeMenus(): void {
     this.isProfileMenuOpen.set(false);
     this.isMobileDrawerOpen.set(false);
+    this.isAcceleratorMenuOpen.set(false);
+    this.isAcceleratorDrawerOpen.set(false);
   }
 
   onLogout(): void {
@@ -69,4 +135,3 @@ export class Navbar {
     this.closeMenus();
   }
 }
-

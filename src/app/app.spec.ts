@@ -9,12 +9,16 @@ import { UserData } from './models/auth.model';
 describe('App', () => {
   let authServiceMock: {
     isAuthenticated: ReturnType<typeof signal<boolean>>;
+    isAdmin: ReturnType<typeof signal<boolean>>;
+    isAgent: ReturnType<typeof signal<boolean>>;
     currentUser: ReturnType<typeof signal<UserData | null>>;
   };
 
   beforeEach(async () => {
     authServiceMock = {
       isAuthenticated: signal(false),
+      isAdmin: signal(false),
+      isAgent: signal(false),
       currentUser: signal<UserData | null>(null),
     };
 
@@ -61,5 +65,3 @@ describe('App', () => {
     expect(compiled.querySelector('router-outlet')).toBeTruthy();
   });
 });
-
-
