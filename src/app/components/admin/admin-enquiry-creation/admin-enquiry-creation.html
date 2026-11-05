@@ -55,6 +55,10 @@
 
     <form class="creation-form" (ngSubmit)="proceed()" novalidate>
       <section class="form-section agent-section">
+        <div class="section-heading">
+          <span class="section-index">01</span>
+          <div><h2>Agent</h2></div>
+        </div>
         <div class="section-content">
           <div class="field search-field">
             <label for="agent-search">Search agents <span class="required">*</span></label>
@@ -71,7 +75,7 @@
               <div class="search-results" role="listbox" aria-label="Agent search results">
                 @for (agent of visibleAgents(); track agent.accountId) {
                   <button type="button" class="agent-result" role="option" (click)="chooseAgent(agent)">
-                    <span><strong>{{ agent.agentName }}</strong><small>{{ agent.agencyName || 'Agency not provided' }} · {{ agent.agentCode || agent.agentId || 'No code' }}</small></span>
+                    <span><strong>{{ agent.agentName }}</strong><small>{{ agent.agencyName || '' }} · {{ agent.agentCode || agent.agentId || 'No code' }}</small></span>
                     <span class="result-contact">{{ agent.phoneNumber || agent.mobileNumber || '—' }}</span>
                   </button>
                 } @empty {
@@ -89,9 +93,6 @@
                 <div><dt>Agent code</dt><dd>{{ agent.agentCode || agent.agentId || '—' }}</dd></div>
                 <div><dt>Agency</dt><dd>{{ agent.agencyName || '—' }}</dd></div>
                 <div><dt>Mobile</dt><dd>{{ agent.phoneNumber || agent.mobileNumber || '—' }}</dd></div>
-                <div><dt>Agent class</dt><dd>{{ agent.agentClass || '—' }}</dd></div>
-                <div><dt>Commission</dt><dd>{{ agent.commissionPercentage == null ? '—' : (agent.commissionPercentage + '%') }}</dd></div>
-                <div><dt>Wallet balance</dt><dd>{{ agent.walletBalance == null ? '—' : (agent.walletBalance | currency:'INR':'symbol':'1.2-2') }}</dd></div>
               </dl>
             </article>
           }
