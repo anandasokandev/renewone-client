@@ -1,15 +1,4 @@
-<main class="admin-create-page">
-  <header class="page-heading">
-    <div>
-      <nav class="breadcrumb" aria-label="Breadcrumb">
-        <a routerLink="/admin/enquiries">Enquiry Queue</a><span aria-hidden="true">/</span>
-        <span>{{ step() === 'details' ? 'Create Enquiry' : step() === 'documents' ? 'Document Upload' : step() === 'quote' ? 'Quote Management' : step() === 'payment' ? 'Payment' : 'Review' }}</span>
-      </nav>
-      <h1>{{ step() === 'details' ? 'Create Enquiry' : step() === 'documents' ? 'Document Upload' : step() === 'quote' ? 'Quote Management' : step() === 'payment' ? 'Payment' : 'Review' }}</h1>
-    </div>
-    <button type="button" class="button-secondary" (click)="backToQueue()">Back to Enquiries</button>
-  </header>
-
+<main class="admin-create-page" [class.details-step]="step() === 'details'">
   <nav class="workflow-steps" aria-label="Enquiry creation steps">
     <div class="workflow-step" [class.active]="step() === 'details'" [class.complete]="step() !== 'details'">
       <span class="step-number">{{ step() !== 'details' ? '✓' : '1' }}</span>
@@ -34,31 +23,38 @@
   </nav>
 
   @if (step() === 'details') {
-    <section class="admin-created-list" aria-labelledby="admin-created-title">
-      <header class="admin-created-heading">
-        <div><h2 id="admin-created-title">Enquiries created by admin</h2><p>Resume an admin-assisted enquiry from its current workflow stage.</p></div>
-        <button type="button" class="button-secondary" (click)="loadAdminAssistedEnquiries()" [disabled]="isAdminEnquiriesLoading()">{{ isAdminEnquiriesLoading() ? 'Refreshing…' : 'Refresh' }}</button>
-      </header>
-      @if (adminEnquiriesError()) {
-        <p class="admin-created-message error" role="alert">{{ adminEnquiriesError() }} <button type="button" class="text-button" (click)="loadAdminAssistedEnquiries()">Retry</button></p>
-      } @else if (isAdminEnquiriesLoading()) {
-        <p class="admin-created-message">Loading admin-assisted enquiries…</p>
-      } @else if (adminAssistedEnquiries().length === 0) {
-        <p class="admin-created-message">No admin-assisted enquiries were found.</p>
-      } @else {
-        <div class="admin-created-items">
-          @for (item of adminAssistedEnquiries(); track item.id) {
-            <button type="button" class="admin-created-item" (click)="openAdminAssistedEnquiry(item)">
-              <span class="admin-created-customer"><strong>{{ item.customerName || 'Customer' }}</strong><small>{{ item.vehicleNumber || 'Vehicle not provided' }} · {{ item.enquiryNumber || item.id }}</small></span>
-              <span class="admin-created-stage">{{ currentStageFor(item.currentStep) | titlecase }} <span aria-hidden="true">→</span></span>
-            </button>
-          }
-        </div>
-      }
-    </section>
+    <details class="admin-created-list">
+      <summary class="admin-created-toggle">
+        <span class="resume-chevron" aria-hidden="true">›</span>
+        <span><strong>Resume an existing enquiry</strong><small>Continue an admin-assisted enquiry from its current stage.</small></span>
+        <span class="resume-count">{{ adminAssistedEnquiries().length }} saved</span>
+      </summary>
+      <div class="admin-created-panel" aria-labelledby="admin-created-title">
+        <header class="admin-created-heading">
+          <div><h2 id="admin-created-title">Enquiries created by admin</h2><p>Select an enquiry to continue its workflow.</p></div>
+          <button type="button" class="button-secondary" (click)="loadAdminAssistedEnquiries()" [disabled]="isAdminEnquiriesLoading()">{{ isAdminEnquiriesLoading() ? 'Refreshing…' : 'Refresh' }}</button>
+        </header>
+        @if (adminEnquiriesError()) {
+          <p class="admin-created-message error" role="alert">{{ adminEnquiriesError() }} <button type="button" class="text-button" (click)="loadAdminAssistedEnquiries()">Retry</button></p>
+        } @else if (isAdminEnquiriesLoading()) {
+          <p class="admin-created-message">Loading admin-assisted enquiries…</p>
+        } @else if (adminAssistedEnquiries().length === 0) {
+          <p class="admin-created-message">No admin-assisted enquiries were found.</p>
+        } @else {
+          <div class="admin-created-items">
+            @for (item of adminAssistedEnquiries(); track item.id) {
+              <button type="button" class="admin-created-item" (click)="openAdminAssistedEnquiry(item)">
+                <span class="admin-created-customer"><strong>{{ item.customerName || 'Customer' }}</strong><small>{{ item.vehicleNumber || 'Vehicle not provided' }} · {{ item.enquiryNumber || item.id }}</small></span>
+                <span class="admin-created-stage">{{ currentStageFor(item.currentStep) | titlecase }} <span aria-hidden="true">→</span></span>
+              </button>
+            }
+          </div>
+        }
+      </div>
+    </details>
 
     <form class="creation-form" (ngSubmit)="proceed()" novalidate>
-      <section class="form-section">
+      <section class="form-section agent-section">
         <div class="section-heading">
           <span class="section-index">01</span>
           <div><h2>Agent</h2><p>Choose the agency this enquiry belongs to.</p></div>
@@ -106,7 +102,7 @@
         </div>
       </section>
 
-      <section class="form-section">
+      <section class="form-section insurance-section">
         <div class="section-heading">
           <span class="section-index">02</span>
           <div><h2>Insurance details</h2><p>Select the product and vehicle category.</p></div>
@@ -140,7 +136,7 @@
       </section>
 
       @if (canShowDetails) {
-        <section class="form-section">
+        <section class="form-section customer-section">
           <div class="section-heading">
             <span class="section-index">03</span>
             <div><h2>Customer &amp; vehicle</h2><p>Enter the details exactly as they appear on the registration certificate.</p></div>
