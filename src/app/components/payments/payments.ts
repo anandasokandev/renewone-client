@@ -163,11 +163,11 @@ export class Payments implements OnInit {
   hasSufficientBalance = computed<boolean>(() => {
     const ldg = this.ledgerDetails();
     if (!ldg) return false;
-    // Sufficient if balanceAfterCut >= 0 or ledgerBalance >= finalAmount
+    // Sufficient if balanceAfterCut >= 0 or manualWalletBalance >= finalAmount
     if (ldg.balanceAfterCut !== undefined && ldg.balanceAfterCut !== null) {
       return ldg.balanceAfterCut >= 0;
     }
-    return ldg.ledgerBalance >= this.payableAmount();
+    return ldg.manualWalletBalance >= this.payableAmount();
   });
 
   remainingBalance = computed<number>(() => {
@@ -176,7 +176,7 @@ export class Payments implements OnInit {
     if (ldg.balanceAfterCut !== undefined && ldg.balanceAfterCut !== null) {
       return ldg.balanceAfterCut;
     }
-    return Math.max(0, ldg.ledgerBalance - this.payableAmount());
+    return Math.max(0, ldg.manualWalletBalance - this.payableAmount());
   });
 
   // Dynamic QR Code Formats
@@ -247,7 +247,7 @@ export class Payments implements OnInit {
           this.quotePaymentSummary.set(data);
           if (data.paymentMode) {
             const mode = data.paymentMode.toLowerCase();
-            if (mode.includes('ledger')) {
+            if (mode.includes('ledger') || mode.includes('manualwallet')) {
               this.paymentMethod.set('Ledger');
             } else {
               this.paymentMethod.set('BankTransaction');
@@ -375,7 +375,7 @@ export class Payments implements OnInit {
     const amount = this.payableAmount();
 
     if (!this.hasSufficientBalance()) {
-      this.errorMessage.set('Insufficient ledger balance to complete this transaction.');
+      this.errorMessage.set('Insufficient Manual Wallet balance to complete this transaction.');
       return;
     }
 
@@ -388,7 +388,7 @@ export class Payments implements OnInit {
       useLedger: true,
       transactionId: null,
       bankAccountId: null,
-      remarks: this.remark()?.trim() || 'Paid via Ledger',
+      remarks: this.remark()?.trim() || 'Paid via Manual Wallet',
     };
 
     this.enquiryService.submitPolicyRequest(payload).subscribe({
@@ -396,7 +396,7 @@ export class Payments implements OnInit {
         this.isVerifyingLedger.set(false);
         this.ledgerSuccess.set(true);
         this.successMessage.set(
-          res?.message || `Policy payment of ₹${amount.toLocaleString('en-IN')} verified successfully from ledger!`
+          res?.message || `Policy payment of ₹${amount.toLocaleString('en-IN')} verified successfully from Manual Wallet!`
         );
         setTimeout(() => {
           this.paymentCompleted.emit({

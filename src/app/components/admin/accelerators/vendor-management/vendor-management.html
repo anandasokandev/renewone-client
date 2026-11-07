@@ -1,1 +1,156 @@
-<p>vendor-management works!</p>
+<div class="carbon-vendors-page">
+  @if (toastMessage()) {
+    <div class="carbon-toast" [class.toast-error]="toastType() === 'error'" [class.toast-info]="toastType() === 'info'" role="status">
+      <div class="toast-content">
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearToast()" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  <section class="summary-cards-grid" aria-label="Vendor summary">
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-active" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Active Vendors</span>
+        <div class="mini-card-val-row"><span class="mini-card-value">{{ activeCount() }}</span><span class="mini-card-badge badge-active">Available</span></div>
+      </div>
+    </article>
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-inactive" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke-linecap="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Inactive Vendors</span>
+        <div class="mini-card-val-row"><span class="mini-card-value">{{ inactiveCount() }}</span><span class="mini-card-badge badge-inactive">Unavailable</span></div>
+      </div>
+    </article>
+  </section>
+
+  <section class="carbon-card-section" id="section-vendors-table">
+    <div class="section-toolbar">
+      <div class="section-title-group">
+        <div class="title-with-badge"><h2 class="section-title">Vendors</h2><span class="carbon-count-tag">{{ vendors().length }} total</span></div>
+      </div>
+      <div class="section-actions-group">
+        <div class="status-filter-wrapper">
+          <label for="vendor-status-filter" class="filter-label">Status:</label>
+          <select id="vendor-status-filter" class="carbon-select status-select" [value]="statusFilter()" (change)="setStatusFilter($any($event.target).value)">
+            <option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option>
+          </select>
+        </div>
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
+          <input type="search" class="carbon-input search-input" placeholder="Search code, name, email, phone..." [value]="searchQuery()" (input)="onSearchChange($any($event.target).value)" aria-label="Search vendors">
+          @if (searchQuery()) { <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button> }
+        </div>
+        <button type="button" class="carbon-btn-secondary" (click)="refresh()" [disabled]="isLoading()" title="Refresh vendors">
+          <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>Refresh</span>
+        </button>
+        <button type="button" class="carbon-btn-primary" (click)="openCreateModal()">
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg><span>Add Vendor</span>
+        </button>
+      </div>
+    </div>
+
+    <div class="carbon-table-container">
+      @if (isLoading() && vendors().length === 0) {
+        <div class="table-loading-state"><div class="carbon-spinner"></div><span class="loading-label">Fetching vendors...</span></div>
+      } @else if (filteredVendors().length === 0) {
+        <div class="table-empty-state">
+          <div class="empty-icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <h3 class="empty-title">{{ vendors().length ? 'No vendors found' : 'No vendors registered' }}</h3>
+          <p class="empty-desc">{{ vendors().length ? 'No vendor records match the current search or status filter.' : 'Add a vendor to start managing settlement contacts.' }}</p>
+          @if (vendors().length) { <button type="button" class="carbon-btn-secondary" (click)="clearSearch(); setStatusFilter('all')">Clear Filters</button> }
+          @else { <button type="button" class="carbon-btn-primary" (click)="openCreateModal()">Add Vendor</button> }
+        </div>
+      } @else {
+        <div class="table-scroll-wrapper">
+          <table class="carbon-table">
+            <thead><tr><th class="th-code">Vendor Code</th><th class="th-name">Vendor</th><th class="th-contact">Contact</th><th class="th-status">Status</th><th class="th-actions">Actions</th></tr></thead>
+            <tbody>
+              @for (vendor of pagedVendors(); track vendor.id) {
+                <tr class="carbon-table-row">
+                  <td><span class="vendor-code">{{ vendor.code }}</span></td>
+                  <td><div class="vendor-name">{{ vendor.name }}</div></td>
+                  <td><div class="vendor-contact"><a [href]="'mailto:' + vendor.email">{{ vendor.email }}</a><a [href]="'tel:' + vendor.phone">{{ vendor.phone }}</a></div></td>
+                  <td><span class="carbon-tag" [class.tag-active]="vendor.isActive" [class.tag-inactive]="!vendor.isActive">{{ vendor.isActive ? 'Active' : 'Inactive' }}</span></td>
+                  <td>
+                    <div class="actions-cell-wrapper">
+                      <button type="button" class="carbon-icon-btn edit-action-btn" (click)="openEditModal(vendor)" [disabled]="!!loadingVendorId()" [attr.aria-label]="'Edit ' + vendor.name" title="Edit vendor">
+                        @if (loadingVendorId() === vendor.id) { <span class="carbon-spinner tiny-spinner"></span> } @else { <svg class="action-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 012.828 2.828l-.707.707-2.828-2.828.707-.707zM11.465 5.707l2.828 2.828-8.9 8.9H2.565v-2.828l8.9-8.9z"/></svg> }
+                      </button>
+                      <button type="button" class="carbon-toggle-switch" [class.checked]="vendor.isActive" (click)="toggleStatus(vendor)" [disabled]="!!togglingVendorId()" role="switch" [attr.aria-checked]="vendor.isActive" [attr.aria-label]="(vendor.isActive ? 'Deactivate ' : 'Activate ') + vendor.name" [title]="vendor.isActive ? 'Deactivate vendor' : 'Activate vendor'"><span class="toggle-slider"></span></button>
+                    </div>
+                  </td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <div class="carbon-pagination-bar">
+          <span class="pagination-info">Showing {{ pageStart() }}–{{ pageEnd() }} of {{ filteredVendors().length }} vendors</span>
+          <div class="pagination-controls">
+            <label class="page-size-selector"><span class="page-size-label">Rows per page</span><select class="carbon-select" [value]="pageSize()" (change)="onPageSizeChange($any($event.target).value)"><option value="5">5</option><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
+            <div class="page-nav-buttons"><span class="page-number-display">Page {{ pageNumber() }} of {{ totalPages() }}</span><button type="button" class="carbon-page-btn" (click)="changePage(pageNumber() - 1)" [disabled]="pageNumber() <= 1" aria-label="Previous page">‹</button><button type="button" class="carbon-page-btn" (click)="changePage(pageNumber() + 1)" [disabled]="pageNumber() >= totalPages()" aria-label="Next page">›</button></div>
+          </div>
+        </div>
+      }
+    </div>
+  </section>
+
+  @if (isModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeModal()" role="presentation">
+      <div class="carbon-modal-dialog" (click)="$event.stopPropagation()" role="dialog" aria-modal="true" aria-labelledby="vendor-modal-title">
+        <div class="modal-header">
+          <div><h2 id="vendor-modal-title" class="modal-headline">{{ editingVendorId() ? 'Edit Vendor' : 'Add Vendor' }}</h2></div>
+          <button type="button" class="modal-close-btn" (click)="closeModal()" [disabled]="isSubmitting()" aria-label="Close modal"><svg viewBox="0 0 16 16" fill="currentColor"><path d="M7.293 8L3.146 3.854a.5.5 0 0 1 .708-.708L8 7.293l4.146-4.147a.5.5 0 0 1 .708.708L8.707 8l4.147 4.146a.5.5 0 0 1-.708.708L8 8.707l-4.146 4.147a.5.5 0 0 1-.708-.708L7.293 8z"/></svg></button>
+        </div>
+        <form [formGroup]="vendorForm" (ngSubmit)="submitVendor()" class="modal-form-content" novalidate>
+          <div class="modal-body">
+            @if (formError()) { <div class="carbon-inline-notification notification-error" role="alert"><span class="notification-desc">{{ formError() }}</span></div> }
+            <div class="form-grid-2col">
+              <div class="carbon-form-item col-span-2">
+                <label for="vendor-name" class="carbon-label">Vendor Name <span class="required-star">*</span></label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="vendorForm.controls.name.touched && vendorForm.controls.name.invalid"><input id="vendor-name" class="carbon-input-field" type="text" formControlName="name" maxlength="100" autocomplete="organization" placeholder="e.g. Sunrise Insurance Services"></div>
+                @if (vendorForm.controls.name.touched && vendorForm.controls.name.hasError('required')) { <div class="carbon-form-requirement">Vendor name is required.</div> }
+                @if (vendorForm.controls.name.touched && vendorForm.controls.name.hasError('maxlength')) { <div class="carbon-form-requirement">Name must be 100 characters or fewer.</div> }
+              </div>
+              @if (editingVendorId()) {
+                <div class="carbon-form-item">
+                  <label for="vendor-code" class="carbon-label">Vendor Code <span class="required-star">*</span></label>
+                  <div class="carbon-input-wrapper" [class.input-invalid]="vendorForm.controls.code.touched && vendorForm.controls.code.invalid"><input id="vendor-code" class="carbon-input-field mono-font uppercase-input" type="text" formControlName="code" maxlength="20" autocomplete="off"></div>
+                  @if (vendorForm.controls.code.touched && vendorForm.controls.code.invalid) { <div class="carbon-form-requirement">Use letters, numbers, and hyphens only.</div> }
+                </div>
+              } @else {
+                <div class="carbon-form-item generated-code-field"><label class="carbon-label">Vendor Code</label><div class="generated-code-display">Assigned automatically after creation</div></div>
+              }
+              <div class="carbon-form-item">
+                <label for="vendor-phone" class="carbon-label">Phone Number <span class="required-star">*</span></label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="vendorForm.controls.phone.touched && vendorForm.controls.phone.invalid"><input id="vendor-phone" class="carbon-input-field" type="tel" formControlName="phone" maxlength="25" autocomplete="tel" placeholder="+91 98765 43210"></div>
+                @if (vendorForm.controls.phone.touched && vendorForm.controls.phone.hasError('required')) { <div class="carbon-form-requirement">Phone number is required.</div> }
+                @if (vendorForm.controls.phone.touched && vendorForm.controls.phone.hasError('pattern')) { <div class="carbon-form-requirement">Enter a valid phone number.</div> }
+              </div>
+              <div class="carbon-form-item col-span-2">
+                <label for="vendor-email" class="carbon-label">Email Address <span class="required-star">*</span></label>
+                <div class="carbon-input-wrapper" [class.input-invalid]="vendorForm.controls.email.touched && vendorForm.controls.email.invalid"><input id="vendor-email" class="carbon-input-field" type="email" formControlName="email" maxlength="150" autocomplete="email" placeholder="vendor@example.com"></div>
+                @if (vendorForm.controls.email.touched && vendorForm.controls.email.hasError('required')) { <div class="carbon-form-requirement">Email address is required.</div> }
+                @if (vendorForm.controls.email.touched && vendorForm.controls.email.hasError('email')) { <div class="carbon-form-requirement">Enter a valid email address.</div> }
+              </div>
+            </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="carbon-btn-secondary" (click)="closeModal()" [disabled]="isSubmitting()">Cancel</button>
+            <button type="submit" class="carbon-btn-primary" [disabled]="isSubmitting() || vendorForm.invalid">{{ isSubmitting() ? 'Saving…' : (editingVendorId() ? 'Save Changes' : 'Create Vendor') }}</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  }
+</div>

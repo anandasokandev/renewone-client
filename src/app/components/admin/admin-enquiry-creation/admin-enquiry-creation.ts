@@ -102,7 +102,31 @@ export class AdminEnquiryCreation implements OnInit {
   readonly quoteSuccess = signal<string | null>(null);
   readonly quoteForm = { insuranceCompanyId: '', vendorId: '', premium: null as number | null,
     companyPayable: null as number | null, agentPoints: null as number | null,
-    adminProfit: null as number | null, idv: null as number | null, remarks: '' };
+    adminProfit: null as number | null, idv: null as number | null, remarks: '',
+    agentClassCommissionApplicable: false };
+  readonly agentClassCommissionRate = computed(() => {
+    const accountId = this.createdEnquiry()?.accountId;
+    const currentAgent = this.agents().find(agent => agent.accountId === accountId)
+      ?? (this.selectedAgent()?.accountId === accountId ? this.selectedAgent() : null);
+    return currentAgent?.commissionPercentage ?? null;
+  });
+  get agentClassCommissionDeductionPreview(): number {
+    const amount = this.quoteForm.agentPoints;
+    const rate = this.agentClassCommissionRate();
+    return this.quoteForm.agentClassCommissionApplicable && amount != null && rate != null
+      ? Math.round((amount * rate / 100 + Number.EPSILON) * 100) / 100
+      : 0;
+  }
+  get netAgentCommissionPreview(): number | null {
+    return this.quoteForm.agentPoints == null
+      ? null
+      : Math.max(0, this.quoteForm.agentPoints - this.agentClassCommissionDeductionPreview);
+  }
+  get adjustedAdminProfitPreview(): number | null {
+    return this.quoteForm.adminProfit == null
+      ? null
+      : this.quoteForm.adminProfit + this.agentClassCommissionDeductionPreview;
+  }
   readonly selectedQuoteId = signal<string | null>(null);
   readonly isSubmittingQuote = signal(false);
   readonly quoteSubmitError = signal<string | null>(null);
@@ -714,14 +738,15 @@ export class AdminEnquiryCreation implements OnInit {
     this.enquiryService.addVehicleQuote({
       enquiryId, insuranceCompanyId: form.insuranceCompanyId, vendorId: form.vendorId || null,
       premium: form.premium, companyPayable: form.companyPayable, agentPoints: form.agentPoints,
-      adminProfit: form.adminProfit, idv: this.isThirdPartyQuote ? 0 : (form.idv || 0), remarks: form.remarks,
+      adminProfit: form.adminProfit, agentClassCommissionApplicable: form.agentClassCommissionApplicable,
+      idv: this.isThirdPartyQuote ? 0 : (form.idv || 0), remarks: form.remarks,
     }).pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.quoteSaving.set(false))).subscribe({
       next: response => {
         if (!response.isSuccess) { this.quoteError.set(response.message || 'Unable to add quote.'); return; }
         this.quoteSuccess.set('Quote added successfully.');
         this.quoteForm.insuranceCompanyId = ''; this.quoteForm.vendorId = ''; this.quoteForm.premium = null;
         this.quoteForm.companyPayable = null; this.quoteForm.agentPoints = null; this.quoteForm.adminProfit = null;
-        this.quoteForm.idv = null; this.quoteForm.remarks = '';
+        this.quoteForm.idv = null; this.quoteForm.remarks = ''; this.quoteForm.agentClassCommissionApplicable = false;
         this.loadQuoteStep(enquiryId);
       },
       error: error => this.quoteError.set(error?.error?.message || 'Unable to add quote.'),
@@ -823,7 +848,7 @@ export class AdminEnquiryCreation implements OnInit {
       next: response => {
         if (!response.isSuccess || !response.data) {
           this.ledgerDetails.set(null); this.ledgerLoadedForEnquiry = null;
-          this.paymentError.set(response.message || 'Ledger details are unavailable.');
+          this.paymentError.set(response.message || 'Manual Wallet details are unavailable.');
           return;
         }
         this.ledgerDetails.set(response.data); this.ledgerLoadedForEnquiry = enquiryId;
@@ -842,7 +867,7 @@ export class AdminEnquiryCreation implements OnInit {
     if (!this.canSubmitPayment) {
       this.paymentError.set(this.paymentMode() === 'bank'
         ? 'Enter a transaction ID and wait for bank details to load.'
-        : 'Ledger payment is unavailable or the balance is insufficient.');
+        : 'Manual Wallet payment is unavailable or the balance is insufficient.');
       return;
     }
     const enquiryId = this.createdEnquiry()?.enquiryId;

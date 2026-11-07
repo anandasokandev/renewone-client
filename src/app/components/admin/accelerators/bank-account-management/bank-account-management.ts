@@ -3,8 +3,9 @@ import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angula
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { Router } from '@angular/router';
 import { BankAccountService } from '../../../../services/bank-account/bank-account.service';
-import { BankAccountItem } from '../../../../models/bank-account.model';
+import { BankAccountItem, UpdateBankAccountRequest } from '../../../../models/bank-account.model';
 
 @Component({
   selector: 'app-bank-account-management',
@@ -16,6 +17,7 @@ export class BankAccountManagement implements OnInit {
   private readonly bankAccountService = inject(BankAccountService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+  private readonly router = inject(Router);
 
   // Bank Accounts State
   readonly accounts = signal<BankAccountItem[]>([]);
@@ -26,6 +28,7 @@ export class BankAccountManagement implements OnInit {
   readonly totalRecords = signal<number>(0);
   readonly totalPages = signal<number>(1);
   readonly togglingAccountId = signal<string | null>(null);
+  readonly editingAccountId = signal<string | null>(null);
 
   // Add Bank Account Modal State
   readonly isAddModalOpen = signal<boolean>(false);
@@ -132,7 +135,12 @@ export class BankAccountManagement implements OnInit {
         finalize(() => this.togglingAccountId.set(null))
       )
       .subscribe({
-        next: () => {
+        next: (response) => {
+          if (!response.isSuccess) {
+            this.accounts.update((items) => items.map((acc) => acc.id === account.id ? { ...acc, isActive: originalStatus } : acc));
+            this.showToast(response.message || 'Failed to update bank account status.', 'error');
+            return;
+          }
           this.showToast(
             `Account "${account.accountName}" is now ${newStatus ? 'Active' : 'Inactive'}.`,
             'success'
@@ -150,11 +158,33 @@ export class BankAccountManagement implements OnInit {
 
   onEditAccount(account: BankAccountItem, event?: Event): void {
     if (event) event.stopPropagation();
-    this.showToast(`Edit Bank Account for "${account.accountName}" will be configured next.`, 'info');
+    this.openEditAccountModal(account);
+  }
+
+  openAccountDetails(account: BankAccountItem): void {
+    void this.router.navigate(['/admin/accelerators/bank-account-details', account.id]);
+  }
+
+  openEditAccountModal(account: BankAccountItem): void {
+    this.addError.set(null);
+    this.editingAccountId.set(account.id);
+    this.addAccountForm.reset({
+      accountName: account.accountName,
+      bankName: account.bankName,
+      branchName: account.branchName,
+      accountNumber: account.accountNumber,
+      ifscCode: account.ifscCode,
+      upiId: account.upiId || '',
+      accountHolderName: account.accountHolderName,
+      isPrimary: account.isPrimary,
+      isActive: account.isActive,
+    });
+    this.isAddModalOpen.set(true);
   }
 
   openAddAccountModal(): void {
     this.addError.set(null);
+    this.editingAccountId.set(null);
     this.addAccountForm.reset({
       accountName: '',
       bankName: '',
@@ -173,6 +203,7 @@ export class BankAccountManagement implements OnInit {
     if (this.isSubmitting() && !force) return;
     this.isAddModalOpen.set(false);
     this.addError.set(null);
+    this.editingAccountId.set(null);
     this.addAccountForm.reset({
       accountName: '',
       bankName: '',
@@ -196,7 +227,7 @@ export class BankAccountManagement implements OnInit {
     this.isSubmitting.set(true);
     this.addError.set(null);
 
-    const payload = {
+    const payload: UpdateBankAccountRequest = {
       accountName: val.accountName.trim(),
       bankName: val.bankName.trim(),
       branchName: val.branchName.trim(),
@@ -208,8 +239,12 @@ export class BankAccountManagement implements OnInit {
       isActive: val.isActive,
     };
 
-    this.bankAccountService
-      .createBankAccount(payload)
+    const accountId = this.editingAccountId();
+    const request = accountId
+      ? this.bankAccountService.updateBankAccount(accountId, payload)
+      : this.bankAccountService.createBankAccount(payload);
+
+    request
       .pipe(
         takeUntilDestroyed(this.destroyRef),
         finalize(() => this.isSubmitting.set(false))
@@ -219,15 +254,15 @@ export class BankAccountManagement implements OnInit {
           if (res.isSuccess) {
             this.isSubmitting.set(false);
             this.closeAddAccountModal(true);
-            this.showToast(res.message || 'Bank account created successfully.', 'success');
+            this.showToast(res.message || (accountId ? 'Bank account updated successfully.' : 'Bank account created successfully.'), 'success');
             this.loadBankAccounts();
           } else {
-            this.addError.set(res.message || 'Failed to create bank account.');
+            this.addError.set(res.message || (accountId ? 'Failed to update bank account.' : 'Failed to create bank account.'));
           }
         },
         error: (err) => {
           this.addError.set(
-            err?.error?.message || 'An error occurred while creating the bank account.'
+            err?.error?.message || (accountId ? 'An error occurred while updating the bank account.' : 'An error occurred while creating the bank account.')
           );
         },
       });
@@ -245,7 +280,8 @@ export class BankAccountManagement implements OnInit {
     this.loadBankAccounts();
   }
 
-  copyToClipboard(text: string, label: string): void {
+  copyToClipboard(text: string, label: string, event?: Event): void {
+    event?.stopPropagation();
     if (!text) return;
     navigator.clipboard.writeText(text).then(() => {
       this.copiedField.set(text);

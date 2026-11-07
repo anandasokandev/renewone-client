@@ -180,7 +180,7 @@
             </thead>
             <tbody>
               @for (item of filteredAgents(); track item.accountId) {
-                <tr class="carbon-table-row">
+                <tr class="carbon-table-row" tabindex="0" role="link" (click)="openAgent(item)" (keydown.enter)="openAgent(item)" (keydown.space)="$event.preventDefault(); openAgent(item)">
                   <!-- 1. Agent ID -->
                   <td class="td-agent-id">
                     <div class="agent-id-cell">

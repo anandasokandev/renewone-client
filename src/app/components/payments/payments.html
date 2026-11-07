@@ -105,7 +105,7 @@
           d="M18 9H2v5a2 2 0 002 2h12a2 2 0 002-2V9zM4 13a1 1 0 011-1h1a1 1 0 110 2H5a1 1 0 01-1-1zm5-1a1 1 0 100 2h1a1 1 0 100-2H9z"
           clip-rule="evenodd" />
       </svg>
-      <span class="tab-title">Pay from Ledger</span>
+      <span class="tab-title">Pay from Manual Wallet</span>
       <span class="tab-badge">Instant Verification</span>
     </button>
 
@@ -123,16 +123,16 @@
 
   <div class="payments-body">
     @if (paymentMethod() === 'Ledger') {
-    <section class="ledger-panel" aria-label="Ledger Payment Details">
+    <section class="ledger-panel" aria-label="Manual Wallet Payment Details">
       <!-- 3-Column Carbon Metric Tiles -->
       <div class="ledger-metrics-grid">
         <div class="ledger-metric-tile tile-current-balance">
-          <span class="tile-label">Current Ledger Balance</span>
+          <span class="tile-label">Current Manual Wallet Balance</span>
           <span class="tile-amount text-success">
             @if (isLoadingLedger()) {
             <span class="carbon-spinner tile-spinner"></span>
             } @else {
-            {{ formatCurrency(ledgerDetails()?.ledgerBalance) }}
+            {{ formatCurrency(ledgerDetails()?.manualWalletBalance) }}
             }
           </span>
           <span class="tile-hint">Available agent credit balance</span>
@@ -168,7 +168,7 @@
             }
           </span>
           <span class="tile-hint">
-            {{ hasSufficientBalance() ? 'Safe balance remains' : 'Insufficient ledger balance' }}
+            {{ hasSufficientBalance() ? 'Safe balance remains' : 'Insufficient Manual Wallet balance' }}
           </span>
         </div>
       </div>
@@ -182,8 +182,8 @@
             clip-rule="evenodd" />
         </svg>
         <div class="status-desc">
-          <strong>Sufficient Ledger Balance Available</strong>
-          <p>The final amount will be automatically deducted from your agency ledger balance upon confirmation, and the
+          <strong>Sufficient Manual Wallet Balance Available</strong>
+          <p>The final amount will be automatically deducted from your agency Manual Wallet balance upon confirmation, and the
             policy will immediately proceed to verification.</p>
         </div>
       </div>
@@ -195,8 +195,8 @@
             clip-rule="evenodd" />
         </svg>
         <div class="status-desc">
-          <strong>Insufficient Balance in Agency Ledger</strong>
-          <p>Your current ledger balance ({{ formatCurrency(ledgerDetails()?.ledgerBalance) }}) is lower than the
+          <strong>Insufficient Balance in Agency Manual Wallet</strong>
+          <p>Your current Manual Wallet balance ({{ formatCurrency(ledgerDetails()?.manualWalletBalance) }}) is lower than the
             payable amount ({{
             formatCurrency(payableAmount()) }}). Please switch to the "Bank Transaction" tab to pay via dynamic UPI QR
             or Bank Transfer.</p>
@@ -245,7 +245,7 @@
           <svg viewBox="0 0 16 16" fill="currentColor" class="status-check-icon" style="width: 16px; height: 16px; margin-right: 6px;">
             <path fill-rule="evenodd" d="M13.854 3.646a.5.5 0 0 1 0 .708l-7 7a.5.5 0 0 1-.708 0l-3.5-3.5a.5.5 0 1 1 .708-.708L6.5 10.293l6.646-6.647a.5.5 0 0 1 .708 0z"/>
           </svg>
-          <span>Payment Submitted via Ledger</span>
+          <span>Payment Submitted via Manual Wallet</span>
         </button>
         } @else {
         <button type="button" class="btn-primary"
@@ -253,7 +253,7 @@
           (click)="proceedLedgerVerification()">
           @if (isVerifyingLedger()) {
           <span class="carbon-spinner btn-spinner" aria-hidden="true"></span>
-          <span>Verifying Ledger...</span>
+          <span>Verifying Manual Wallet...</span>
           } @else if (ledgerSuccess()) {
           <span>✓ Verified & Proceeding</span>
           } @else {

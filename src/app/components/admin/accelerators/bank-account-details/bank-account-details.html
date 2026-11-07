@@ -1,0 +1,203 @@
+<main class="bank-details-page">
+  <a class="back-link" routerLink="/admin/accelerators/bank-account-management">← Bank accounts</a>
+
+  @if (isLoading() && !account()) {
+  <section class="loading-panel" role="status"><span class="spinner"></span> Loading account and financial records…
+  </section>
+  } @else if (errorMessage() && !account()) {
+  <section class="error-panel" role="alert">
+    <h1>Account details unavailable</h1>
+    <p>{{ errorMessage() }}</p>
+    <button class="btn-primary" type="button" (click)="load()">Retry</button>
+  </section>
+  } @else if (account(); as bank) {
+  <header class="page-header">
+    <div>
+      <p class="eyebrow">Bank account · {{ bank.isActive ? 'Active' : 'Inactive' }}</p>
+      <h1>{{ bank.accountName }}</h1>
+      <p class="account-subtitle">{{ bank.bankName }} · {{ bank.branchName }} · {{ bank.accountHolderName }}</p>
+    </div>
+    @if (bank.isPrimary) { <span class="primary-badge">Primary settlement account</span> }
+  </header>
+
+  @if (isLoading()) {
+  <div class="refreshing" role="status"><span class="spinner small"></span> Refreshing financial records…</div>
+  }
+  @if (errorMessage()) { <div class="inline-error" role="alert">{{ errorMessage() }}</div> }
+
+  <section class="account-strip" aria-label="Bank account information">
+    <div><span>Account number</span><strong>•••• {{ (bank.accountNumber || '').slice(-4) }}</strong></div>
+    <div><span>IFSC</span><strong>{{ bank.ifscCode || '—' }}</strong></div>
+    <div><span>UPI ID</span><strong>{{ bank.upiId || '—' }}</strong></div>
+    <div><span>Account status</span><strong [class.negative-text]="!bank.isActive">{{ bank.isActive ? 'Active' :
+        'Inactive' }}</strong></div>
+  </section>
+
+  <section class="section-block">
+    <div class="section-heading">
+      <div>
+        <h2>Balance reconciliation</h2>
+      </div>
+      <button class="btn-secondary" type="button" (click)="load()" [disabled]="isLoading()">Refresh</button>
+    </div>
+    <div class="balance-grid">
+      <article class="metric-card stored-card"><span>Stored current balance</span><strong>{{ bank.currentBalance |
+          currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong><small>Official balance saved on the account</small>
+      </article>
+      <article class="metric-card"><span>Ledger-derived balance</span><strong>{{ (derivedBalance() ?? 0) |
+          currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong><small>Opening balance + all-time credits − all-time
+          debits</small></article>
+      <article class="metric-card" [class.variance-card]="hasBalanceVariance()"><span>Variance (ledger −
+          stored)</span><strong>{{ (balanceVariance() ?? 0) | currency:'INR':'symbol':'1.2-2':'en-IN'
+          }}</strong><small>{{ hasBalanceVariance() ? 'Reconciliation required — review transaction history.' :
+          'Balances reconcile to the nearest paise.' }}</small></article>
+    </div>
+    <div class="reconciliation-note" [class.note-warning]="hasBalanceVariance()">
+      <strong>{{ hasBalanceVariance() ? 'Balance mismatch detected' : 'Balance reconciled' }}</strong>
+      <span>Transactions currently recorded: {{ allTimeSummary()?.totalTransactions ?? 0 }}. Confirm opening balance and
+        transaction coverage before relying on a derived figure.</span>
+    </div>
+  </section>
+
+  <section class="section-block activity-section">
+    <div class="section-heading">
+      <div>
+        <h2>Transactions</h2>
+      </div>
+    </div>
+
+    <div class="period-summary">
+      <div class="period-metrics">
+        <article class="metric-card compact"><span>Filtered credits</span><strong class="positive-text">{{
+            (periodSummary()?.totalCredited ?? 0) | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
+        <article class="metric-card compact"><span>Filtered debits</span><strong class="negative-text">{{
+            (periodSummary()?.totalDebited ?? 0) | currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
+        <article class="metric-card compact"><span>Net cash flow</span><strong
+            [class.positive-text]="(periodSummary()?.netCashFlow ?? 0) >= 0"
+            [class.negative-text]="(periodSummary()?.netCashFlow ?? 0) < 0">{{ (periodSummary()?.netCashFlow ?? 0) |
+            currency:'INR':'symbol':'1.2-2':'en-IN' }}</strong></article>
+        <article class="metric-card compact"><span>Transactions matching filters</span><strong>{{
+            periodSummary()?.totalTransactions ?? 0 }}</strong></article>
+      </div>
+      <div class="flow-chart-wrap">
+        <div class="flow-chart" [style.background]="periodFlowStyle()" role="img"
+          [attr.aria-label]="'Filtered movement mix: credits ' + (periodSummary()?.totalCredited ?? 0) + ', debits ' + (periodSummary()?.totalDebited ?? 0)">
+        </div>
+        <div class="chart-legend"><span><i class="credit-dot"></i> Credits</span><span><i class="debit-dot"></i>
+            Debits</span><small>Filtered movement mix</small></div>
+      </div>
+    </div>
+
+    <form class="filter-panel" (submit)="$event.preventDefault(); applyFilters()">
+      <div class="preset-row" aria-label="Date presets">
+        <button type="button" [class.selected]="datePreset() === 'today'"
+          (click)="setDatePreset('today')">Today</button>
+        <button type="button" [class.selected]="datePreset() === '7days'" (click)="setDatePreset('7days')">7
+          days</button>
+        <button type="button" [class.selected]="datePreset() === '30days'" (click)="setDatePreset('30days')">30
+          days</button>
+        <button type="button" [class.selected]="datePreset() === 'month'" (click)="setDatePreset('month')">This
+          month</button>
+        <button type="button" [class.selected]="datePreset() === 'year'" (click)="setDatePreset('year')">This
+          year</button>
+        <button type="button" [class.selected]="datePreset() === 'custom'"
+          (click)="setDatePreset('custom')">Custom</button>
+      </div>
+      <div class="filter-grid">
+        <label>From date (IST)<input type="date" [ngModel]="fromDate()"
+            (ngModelChange)="fromDate.set($event); onDateChanged()" name="fromDate"></label>
+        <label>To date (IST)<input type="date" [ngModel]="toDate()"
+            (ngModelChange)="toDate.set($event); onDateChanged()" name="toDate"></label>
+        <label>Type<select [ngModel]="transactionType()" (ngModelChange)="transactionType.set($event)"
+            name="transactionType">
+            <option value="">All types</option>
+            <option value="Credit">Credit</option>
+            <option value="Debit">Debit</option>
+          </select></label>
+        <label>Category<input type="text" [ngModel]="category()" (ngModelChange)="category.set($event)" name="category"
+            placeholder="Any category"></label>
+        <label class="search-filter">Search<input type="search" [ngModel]="search()"
+            (ngModelChange)="search.set($event)" name="search" placeholder="Description, category…"></label>
+        <label>Sort by<select [ngModel]="sortBy()" (ngModelChange)="sortBy.set($event)" name="sortBy">
+            <option value="date">Transaction date</option>
+            <option value="amount">Amount</option>
+          </select></label>
+        <label>Order<select [ngModel]="sortOrder()" (ngModelChange)="sortOrder.set($event)" name="sortOrder">
+            <option value="desc">Newest / highest first</option>
+            <option value="asc">Oldest / lowest first</option>
+          </select></label>
+      </div>
+      <details class="advanced-filters">
+        <summary>Related record filters</summary>
+        <div class="filter-grid related-grid">
+          <label>User ID<input type="text" [ngModel]="userId()" (ngModelChange)="userId.set($event)" name="userId"
+              placeholder="UUID"></label>
+          <label>Vendor ID<input type="text" [ngModel]="vendorId()" (ngModelChange)="vendorId.set($event)"
+              name="vendorId" placeholder="UUID"></label>
+          <label>Policy payment ID<input type="text" [ngModel]="policyPaymentId()"
+              (ngModelChange)="policyPaymentId.set($event)" name="policyPaymentId" placeholder="UUID"></label>
+        </div>
+      </details>
+      @if (filterError()) { <p class="filter-error" role="alert">{{ filterError() }}</p> }
+      <div class="filter-actions">
+        <div><button class="btn-secondary" type="button" (click)="resetFilters()">Reset</button><button
+            class="btn-primary" type="submit" [disabled]="isLoading()">Apply filters</button></div>
+      </div>
+    </form>
+
+    <div class="table-toolbar"><strong>{{ totalRecords() }} matching transactions</strong><label>Rows per page <select
+          [ngModel]="pageSize()" (ngModelChange)="changePageSize($event)">
+          <option [value]="10">10</option>
+          <option [value]="25">25</option>
+          <option [value]="50">50</option>
+          <option [value]="100">100</option>
+        </select></label></div>
+    @if (isLoading() && transactions().length === 0) {
+    <div class="loading-panel compact-loading" role="status"><span class="spinner"></span> Loading transactions…</div>
+    } @else if (transactions().length === 0) {
+    <div class="empty-panel"><strong>No transactions match these filters.</strong><span>Adjust the dates or clear one or
+        more filters to see account activity.</span></div>
+    } @else {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Date &amp; time (IST)</th>
+            <th>Transaction</th>
+            <th>Category</th>
+            <th>Description</th>
+            <th>Related record</th>
+            <th class="amount-col">Amount</th>
+            <th class="amount-col">Recorded at</th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (transaction of transactions(); track transaction.id) {
+          <tr>
+            <td>{{ transaction.transactionDate | date:'dd MMM yyyy, HH:mm':'Asia/Kolkata' }}</td>
+            <td><span class="type-badge" [class.credit-badge]="transaction.transactionType.toLowerCase() === 'credit'"
+                [class.debit-badge]="transaction.transactionType.toLowerCase() === 'debit'">{{
+                transaction.transactionType }}</span></td>
+            <td>{{ transaction.category || '—' }}</td>
+            <td class="description-cell">{{ transaction.description || '—' }}</td>
+            <td>{{ transactionSource(transaction) }}</td>
+            <td class="amount-col" [class.positive-text]="transaction.transactionType.toLowerCase() === 'credit'"
+              [class.negative-text]="transaction.transactionType.toLowerCase() === 'debit'">{{
+              transaction.transactionType.toLowerCase() === 'debit' ? '−' : '+' }}{{ transaction.amount |
+              currency:'INR':'symbol':'1.2-2':'en-IN' }}</td>
+            <td class="amount-col muted">{{ transaction.createdAt | date:'dd MMM yyyy, HH:mm':'Asia/Kolkata' }}</td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <div class="pagination"><span>Page {{ pageNumber() }} of {{ totalPages() || 1 }}</span>
+      <div><button type="button" class="btn-secondary" (click)="changePage(pageNumber() - 1)"
+          [disabled]="pageNumber() <= 1 || isLoading()">Previous</button><button type="button" class="btn-secondary"
+          (click)="changePage(pageNumber() + 1)" [disabled]="pageNumber() >= totalPages() || isLoading()">Next</button>
+      </div>
+    </div>
+    }
+  </section>
+  }
+</main>

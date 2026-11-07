@@ -6,8 +6,16 @@ import { ApiResponse } from '../../models/response.model';
 import {
   AgentFilterParams,
   AgentsResponseData,
+  AgentAdminDetails,
+  AgentDashboardOverview,
+  AgentStaffPerformanceData,
+  AgentFinanceData,
+  AgentActivityData,
+  AgentProfitabilityData,
+  GeneratedPasswordResetData,
   RegisterAgentPayload,
   UpdateUserProfilePayload,
+  UpdateAgentAdminDetailsRequest,
   UserProfileData,
 } from '../../models/account.model';
 
@@ -73,6 +81,52 @@ export class AccountService {
     return this.http.get<ApiResponse<AgentsResponseData>>(`${this.apiUrl}/agents`, {
       params: httpParams,
     });
+  }
+
+  getAgentDetails(accountId: string): Observable<ApiResponse<AgentAdminDetails>> {
+    return this.http.get<ApiResponse<AgentAdminDetails>>(`${this.apiUrl}/admin/agent-details/${accountId}`);
+  }
+
+  updateAgentDetails(accountId: string, payload: UpdateAgentAdminDetailsRequest): Observable<ApiResponse<AgentAdminDetails>> {
+    return this.http.put<ApiResponse<AgentAdminDetails>>(`${this.apiUrl}/admin/agent-details/${accountId}`, payload);
+  }
+
+  resetAgentPassword(accountId: string): Observable<ApiResponse<GeneratedPasswordResetData>> {
+    return this.http.post<ApiResponse<GeneratedPasswordResetData>>(`${environment.apiUrl}/Auth/reset-agent-password/${accountId}`, {});
+  }
+
+  resetStaffPassword(accountId: string, staffUserId: string): Observable<ApiResponse<GeneratedPasswordResetData>> {
+    return this.http.post<ApiResponse<GeneratedPasswordResetData>>(`${environment.apiUrl}/Auth/reset-staff-password/${accountId}/${staffUserId}`, {});
+  }
+
+  getAgentDashboardOverview(accountId: string): Observable<ApiResponse<AgentDashboardOverview>> {
+    return this.http.get<ApiResponse<AgentDashboardOverview>>(`${this.apiUrl}/admin/agent-dashboard-overview/${accountId}`);
+  }
+
+  getAgentProfitability(accountId: string): Observable<ApiResponse<AgentProfitabilityData>> {
+    return this.http.get<ApiResponse<AgentProfitabilityData>>(`${this.apiUrl}/admin/agent-profitability/${accountId}`);
+  }
+
+  getAgentStaffPerformance(accountId: string): Observable<ApiResponse<AgentStaffPerformanceData>> {
+    return this.http.get<ApiResponse<AgentStaffPerformanceData>>(`${this.apiUrl}/admin/agent-staff-performance/${accountId}`);
+  }
+
+  getAgentFinance(accountId: string): Observable<ApiResponse<AgentFinanceData>> {
+    return this.http.get<ApiResponse<AgentFinanceData>>(`${this.apiUrl}/admin/agent-finance/${accountId}`);
+  }
+
+  getAgentActivity(accountId: string): Observable<ApiResponse<AgentActivityData>> {
+    return this.http.get<ApiResponse<AgentActivityData>>(`${this.apiUrl}/admin/agent-activity/${accountId}`);
+  }
+
+  adjustAgentWallet(payload: { accountId: string; transactionType: 'Credit' | 'Debit'; amount: number; remarks: string }) {
+    const request = { ...payload, transactionType: payload.transactionType === 'Debit' ? 0 : 1 };
+    return this.http.post<ApiResponse<boolean>>(`${environment.apiUrl}/Admin/wallet/transactions`, request);
+  }
+
+  adjustAgentManualWallet(payload: { accountId: string; transactionType: 'Credit' | 'Debit'; amount: number; remarks: string }) {
+    const request = { ...payload, transactionType: payload.transactionType === 'Debit' ? 0 : 1 };
+    return this.http.post<ApiResponse<boolean>>(`${environment.apiUrl}/Ledger/adjust-manual-wallet`, request);
   }
 
   getAgentLookup(search = '', pageNumber = 1, pageSize = 20): Observable<ApiResponse<AgentLookupResponse>> {

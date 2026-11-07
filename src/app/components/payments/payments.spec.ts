@@ -52,7 +52,7 @@ describe('Payments', () => {
   };
 
   const mockLedgerDetails: LedgerPaymentDetailsData = {
-    ledgerBalance: 1328,
+    manualWalletBalance: 1328,
     finalAmount: 1050,
     balanceAfterCut: 278,
   };
@@ -129,7 +129,7 @@ describe('Payments', () => {
     expect(ledgerDetailsCalledWith).toBe('4a1684d5-3eb5-4c2c-84f2-02bcaec740f3');
     expect(component.policySummary()?.customerName).toBe('Rahul');
     expect(component.policySummary()?.selectedQuoteId).toBe('7dd273f3-5598-4d25-8fe6-4e96f5b8d4e1');
-    expect(component.ledgerDetails()?.ledgerBalance).toBe(1328);
+    expect(component.ledgerDetails()?.manualWalletBalance).toBe(1328);
   });
 
   it('should compute payable amount and remaining balance accurately from live API data', () => {
@@ -157,7 +157,7 @@ describe('Payments', () => {
 
   it('should detect insufficient ledger balance when balanceAfterCut is negative', () => {
     component.ledgerDetails.set({
-      ledgerBalance: 500,
+      manualWalletBalance: 500,
       finalAmount: 1050,
       balanceAfterCut: -550,
     });

@@ -247,6 +247,7 @@ export class EnquiryService {
     companyPayable: number;
     agentPoints: number;
     adminProfit: number;
+    agentClassCommissionApplicable: boolean;
     idv: number;
     remarks: string;
   }): Observable<ApiResponse<boolean>> {

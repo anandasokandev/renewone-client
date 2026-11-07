@@ -120,7 +120,7 @@ Enquiries proceed through a stepped 4-stage lifecycle:
 ### 4.3 Create Enquiry Wizard
 - **Step 1 - Vehicle & Customer**: Registration number, fuel type, vehicle class, customer contact info.
 - **Step 2 - Insurance & Claim History**:
-  - Policy Type Selection (Comprehensive, Third Party, Own Damage).
+  - Policy Type Selection (Comprehensive, Third Party, OwnDamage).
   - *Conditional Logic*: Selecting **Third Party** instantly hides *Previous Claim* and *No Claim Bonus (NCB)*, automatically resetting them.
 - **Step 3 - Documents**:
   - Primary document slots for RC Front, RC Back, Previous Policy, and Aadhar/PAN.

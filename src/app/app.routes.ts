@@ -48,6 +48,11 @@ export const routes: Routes = [
           import('./components/admin/admin-agents/admin-agents').then(m => m.AdminAgents),
       },
       {
+        path: 'agents/:accountId',
+        loadComponent: () =>
+          import('./components/admin/admin-view-agents/admin-view-agents').then(m => m.AdminViewAgents),
+      },
+      {
         path: 'reports',
         loadComponent: () =>
           import('./components/admin/admin-reports/admin-reports').then(m => m.AdminReports),
@@ -69,6 +74,13 @@ export const routes: Routes = [
               import(
                 './components/admin/accelerators/bank-account-management/bank-account-management'
               ).then(m => m.BankAccountManagement),
+          },
+          {
+            path: 'bank-account-details/:id',
+            loadComponent: () =>
+              import(
+                './components/admin/accelerators/bank-account-details/bank-account-details'
+              ).then(m => m.BankAccountDetails),
           },
           {
             path: 'pricing-master',

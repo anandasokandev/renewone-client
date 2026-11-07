@@ -4,6 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { AccountService } from '../../../services/account/account.service';
+import { Router } from '@angular/router';
 import { AgentListItem, AgentSummary } from '../../../models/account.model';
 
 @Component({
@@ -15,6 +16,11 @@ import { AgentListItem, AgentSummary } from '../../../models/account.model';
 export class AdminAgents implements OnInit {
   private readonly accountService = inject(AccountService);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly router = inject(Router);
+
+  openAgent(agent: AgentListItem): void {
+    void this.router.navigate(['/admin/agents', agent.accountId]);
+  }
 
   // Agents & Summary State
   readonly agents = signal<AgentListItem[]>([]);

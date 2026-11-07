@@ -1,0 +1,86 @@
+:host { display: block; color: #161616; }
+.bank-details-page { max-width: 1500px; margin: 0 auto; padding: 24px 32px 48px; }
+.back-link { display: inline-block; margin-bottom: 22px; color: #0f62fe; font-size: 14px; text-decoration: none; }
+.back-link:hover { text-decoration: underline; }
+.page-header, .section-heading, .filter-actions, .table-toolbar, .pagination { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+.page-header { margin-bottom: 24px; align-items: flex-start; }
+.eyebrow { margin: 0 0 5px; color: #525252; font-size: 12px; letter-spacing: .4px; text-transform: uppercase; }
+h1 { margin: 0; font-size: 30px; font-weight: 400; }
+h2 { margin: 0; font-size: 20px; font-weight: 500; }
+.account-subtitle, .section-heading p { margin: 6px 0 0; color: #525252; font-size: 14px; }
+.primary-badge { padding: 7px 10px; background: #edf5ff; color: #0043ce; font-size: 12px; font-weight: 600; }
+.account-strip { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); border: 1px solid #e0e0e0; margin-bottom: 28px; }
+.account-strip > div { min-width: 0; padding: 14px 16px; border-right: 1px solid #e0e0e0; }
+.account-strip > div:last-child { border-right: 0; }
+.account-strip span, .metric-card > span { display: block; color: #525252; font-size: 12px; }
+.account-strip strong { display: block; overflow: hidden; margin-top: 6px; font-size: 14px; font-weight: 500; text-overflow: ellipsis; white-space: nowrap; }
+.section-block { margin: 0 0 28px; }
+.section-heading { margin-bottom: 14px; }
+.balance-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+.metric-card { min-width: 0; padding: 16px; border: 1px solid #e0e0e0; background: #fff; }
+.metric-card strong { display: block; margin-top: 9px; font-size: 24px; font-variant-numeric: tabular-nums; font-weight: 500; overflow-wrap: anywhere; }
+.metric-card small { display: block; margin-top: 8px; color: #6f6f6f; font-size: 12px; line-height: 1.4; }
+.stored-card { border-top: 3px solid #0f62fe; }
+.variance-card { border-color: #da1e28; background: #fff8f7; }
+.reconciliation-note { display: flex; gap: 10px; margin-top: 12px; padding: 12px 14px; background: #defbe6; color: #0e6027; font-size: 13px; line-height: 1.45; }
+.reconciliation-note strong { flex: 0 0 auto; }
+.note-warning { background: #fff1f1; color: #a2191f; }
+.activity-section { border-top: 1px solid #e0e0e0; padding-top: 24px; }
+.period-summary { display: grid; grid-template-columns: minmax(0, 1fr) 230px; gap: 16px; align-items: center; margin-bottom: 16px; }
+.period-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px; }
+.metric-card.compact { padding: 12px; }
+.metric-card.compact strong { font-size: 17px; }
+.flow-chart-wrap { display: flex; align-items: center; justify-content: center; gap: 14px; min-height: 106px; border: 1px solid #e0e0e0; }
+.flow-chart { width: 78px; height: 78px; flex: 0 0 78px; border-radius: 50%; position: relative; }
+.flow-chart::after { position: absolute; inset: 14px; border-radius: 50%; background: #fff; content: ''; }
+.chart-legend { display: grid; gap: 6px; color: #525252; font-size: 12px; }
+.chart-legend span { display: flex; align-items: center; gap: 6px; }
+.chart-legend small { color: #8d8d8d; }
+.chart-legend i { width: 8px; height: 8px; display: inline-block; }
+.credit-dot { background: #24a148; }.debit-dot { background: #da1e28; }
+.filter-panel { margin-bottom: 16px; padding: 16px; background: #f4f4f4; }
+.preset-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 14px; }
+.preset-row button { padding: 7px 11px; border: 1px solid #c6c6c6; background: #fff; color: #393939; font: inherit; font-size: 12px; cursor: pointer; }
+.preset-row button.selected { border-color: #0f62fe; background: #edf5ff; color: #0043ce; }
+.filter-grid { display: grid; grid-template-columns: repeat(4, minmax(140px, 1fr)); gap: 12px; }
+.filter-grid label { display: grid; gap: 5px; color: #393939; font-size: 12px; }
+.filter-grid input, .filter-grid select, .table-toolbar select { width: 100%; height: 36px; padding: 0 9px; border: 1px solid #8d8d8d; border-radius: 0; background: #fff; color: #161616; font: inherit; font-size: 13px; }
+.search-filter { grid-column: span 2; }
+.advanced-filters { margin-top: 14px; font-size: 13px; }
+.advanced-filters summary { color: #0f62fe; cursor: pointer; }
+.related-grid { margin-top: 12px; grid-template-columns: repeat(3, minmax(160px, 1fr)); }
+.filter-error { margin: 10px 0 0; color: #a2191f; font-size: 13px; }
+.filter-actions { margin-top: 14px; align-items: flex-end; color: #525252; font-size: 12px; }
+.filter-actions > span { max-width: 620px; line-height: 1.5; }
+.filter-actions > div, .pagination > div { display: flex; gap: 8px; }
+.btn-primary, .btn-secondary { min-height: 36px; padding: 0 13px; border: 1px solid #0f62fe; border-radius: 0; cursor: pointer; font: inherit; font-size: 13px; }
+.btn-primary { background: #0f62fe; color: #fff; }.btn-primary:hover { background: #0050e6; }
+.btn-secondary { border-color: #8d8d8d; background: #fff; color: #161616; }.btn-secondary:hover { background: #e8e8e8; }
+button:disabled { cursor: not-allowed; opacity: .55; }
+.table-toolbar { margin: 12px 0; color: #393939; font-size: 13px; }
+.table-toolbar label { display: flex; align-items: center; gap: 8px; }
+.table-toolbar select { width: 72px; }
+.table-scroll { overflow-x: auto; border: 1px solid #e0e0e0; }
+table { width: 100%; min-width: 1050px; border-collapse: collapse; text-align: left; }
+thead { background: #f4f4f4; }
+th { padding: 11px 12px; color: #525252; font-size: 12px; font-weight: 600; white-space: nowrap; }
+td { padding: 12px; border-top: 1px solid #e0e0e0; color: #393939; font-size: 13px; vertical-align: middle; }
+tbody tr:hover { background: #f9f9f9; }
+.amount-col { text-align: right; white-space: nowrap; font-variant-numeric: tabular-nums; }
+.description-cell { max-width: 260px; overflow-wrap: anywhere; }
+.muted { color: #6f6f6f; }
+.type-badge { display: inline-block; padding: 4px 7px; background: #f4f4f4; font-size: 11px; font-weight: 600; }
+.credit-badge { background: #defbe6; color: #0e6027; }.debit-badge { background: #fff1f1; color: #a2191f; }
+.positive-text { color: #198038 !important; }.negative-text { color: #da1e28 !important; }
+.pagination { padding-top: 12px; color: #525252; font-size: 13px; }
+.loading-panel, .empty-panel, .error-panel { display: grid; justify-items: center; gap: 12px; padding: 36px 16px; border: 1px solid #e0e0e0; color: #525252; text-align: center; }
+.compact-loading { padding: 22px; }.empty-panel span { font-size: 13px; }
+.error-panel { border-color: #da1e28; }.error-panel h1 { font-size: 21px; }
+.inline-error { margin: 12px 0; padding: 10px 12px; background: #fff1f1; color: #a2191f; font-size: 13px; }
+.refreshing { display: flex; align-items: center; gap: 8px; margin: -12px 0 14px; color: #525252; font-size: 12px; }
+.spinner { width: 22px; height: 22px; border: 2px solid #c6c6c6; border-top-color: #0f62fe; border-radius: 50%; animation: spin .8s linear infinite; }
+.spinner.small { width: 14px; height: 14px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+@media (max-width: 1050px) { .period-summary { grid-template-columns: 1fr; }.flow-chart-wrap { justify-content: flex-start; padding-left: 18px; }.filter-grid { grid-template-columns: repeat(3, minmax(130px, 1fr)); } }
+@media (max-width: 720px) { .bank-details-page { padding: 18px 14px 32px; }.page-header { flex-direction: column; }.account-strip { grid-template-columns: repeat(2, minmax(0, 1fr)); }.account-strip > div:nth-child(2) { border-right: 0; }.account-strip > div:nth-child(n+3) { border-top: 1px solid #e0e0e0; }.balance-grid { grid-template-columns: 1fr; }.period-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }.filter-grid, .related-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }.filter-actions { align-items: stretch; flex-direction: column; }.filter-actions > div { justify-content: flex-end; }.section-heading { align-items: flex-start; } }
+@media (max-width: 420px) { .filter-grid, .related-grid { grid-template-columns: 1fr; }.search-filter { grid-column: auto; }.period-metrics { grid-template-columns: 1fr 1fr; }.metric-card.compact strong { font-size: 15px; }.reconciliation-note { flex-direction: column; gap: 4px; } }

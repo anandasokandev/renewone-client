@@ -349,7 +349,7 @@ export class Quotes implements OnInit, OnChanges {
     this.enquiryService.updateStatus(enquiryId, 'PaymentVerificationPending');
     this.loadPaymentSummary(enquiryId);
 
-    const methodLabel = result.method === 'Ledger' ? 'Agency Ledger' : 'Bank Transaction';
+    const methodLabel = result.method === 'Ledger' ? 'Manual Wallet' : 'Bank Transaction';
     this.successMessage.set(
       `Payment submitted via ${methodLabel}! Status updated to Payment Verification Pending.`
     );

@@ -257,6 +257,37 @@
   grid-column: 1 / -1;
 }
 
+.quote-add-panel .quote-commission-option {
+  grid-column: 1 / -1;
+  gap: 8px;
+  padding: 12px;
+  border: 1px solid #d0d7de;
+  background: #f8fafc;
+}
+
+.quote-add-panel .quote-commission-option label {
+  display: flex;
+  align-items: center;
+  flex-direction: row;
+  gap: 9px;
+  cursor: pointer;
+}
+
+.quote-add-panel .quote-commission-option input[type="checkbox"] {
+  width: 16px;
+  min-height: 16px;
+  height: 16px;
+  margin: 0;
+  padding: 0;
+  accent-color: #0f62fe;
+}
+
+.quote-add-panel .quote-commission-option small {
+  color: #525f6b;
+  font-size: 12.5px;
+  line-height: 1.45;
+}
+
 .quote-idv-note {
   margin: 0;
   padding: 12px;

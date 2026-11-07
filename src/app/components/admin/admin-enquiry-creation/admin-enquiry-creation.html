@@ -319,8 +319,8 @@
           @if (quoteLoading()) { <p class="quote-empty">Loading quotes…</p> }
           @else if (quotes().length === 0) { <p class="quote-empty">No quotes have been added yet.</p> }
           @else {
-            <div class="quote-table-scroll"><table class="quote-table"><thead><tr><th>Select</th><th>Insurance company</th><th>Vendor</th><th>Premium</th><th>Agent points</th><th>IDV</th><th>Remarks</th></tr></thead>
-              <tbody>@for (quote of quotes(); track quote.id) { <tr [class.quote-selected-row]="selectedQuoteId() === quote.id"><td><input type="radio" name="selectedQuote" [checked]="selectedQuoteId() === quote.id" [disabled]="isSubmittingQuote()" (change)="selectQuote(quote)" [attr.aria-label]="'Select quote from ' + quote.insuranceCompanyName" /></td><td>{{ quote.insuranceCompanyName }}</td><td>{{ quote.vendorName || '—' }}</td><td>{{ quote.premium | currency:'INR':'symbol':'1.0-2' }}</td><td>{{ quote.agentPoints }}</td><td>{{ isThirdPartyQuote ? '—' : (quote.idv | currency:'INR':'symbol':'1.0-0') }}</td><td>{{ quote.remarks || '—' }}</td></tr> }</tbody>
+            <div class="quote-table-scroll"><table class="quote-table"><thead><tr><th>Select</th><th>Insurance company</th><th>Vendor</th><th>Premium</th><th>Agent commission</th><th>Class deduction</th><th>IDV</th><th>Remarks</th></tr></thead>
+              <tbody>@for (quote of quotes(); track quote.id) { <tr [class.quote-selected-row]="selectedQuoteId() === quote.id"><td><input type="radio" name="selectedQuote" [checked]="selectedQuoteId() === quote.id" [disabled]="isSubmittingQuote()" (change)="selectQuote(quote)" [attr.aria-label]="'Select quote from ' + quote.insuranceCompanyName" /></td><td>{{ quote.insuranceCompanyName }}</td><td>{{ quote.vendorName || '—' }}</td><td>{{ quote.premium | currency:'INR':'symbol':'1.0-2' }}</td><td>{{ quote.agentPoints | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ quote.agentClassCommissionDeduction ? (quote.agentClassCommissionDeduction | currency:'INR':'symbol':'1.2-2') + ' (' + quote.agentClassCommissionPercentage + '%)' : '—' }}</td><td>{{ isThirdPartyQuote ? '—' : (quote.idv | currency:'INR':'symbol':'1.0-0') }}</td><td>{{ quote.remarks || '—' }}</td></tr> }</tbody>
             </table></div>
           }
         </section>
@@ -331,8 +331,18 @@
             <div class="field"><label for="quote-vendor">Vendor</label><select id="quote-vendor" name="quoteVendor" [(ngModel)]="quoteForm.vendorId"><option value="">Select vendor (optional)</option>@for (vendor of vendors(); track vendor.id) { <option [value]="vendor.id">{{ vendor.name }}</option> }</select></div>
             <div class="field"><label for="quote-premium">Premium <span class="required">*</span></label><input id="quote-premium" type="number" min="0" step="0.01" name="quotePremium" [(ngModel)]="quoteForm.premium" required /></div>
             <div class="field"><label for="quote-company-payable">Company payable <span class="required">*</span></label><input id="quote-company-payable" type="number" min="0" step="0.01" name="quoteCompanyPayable" [(ngModel)]="quoteForm.companyPayable" required /></div>
-            <div class="field"><label for="quote-agent-points">Agent points <span class="required">*</span></label><input id="quote-agent-points" type="number" min="0" step="0.01" name="quoteAgentPoints" [(ngModel)]="quoteForm.agentPoints" required /></div>
-            <div class="field"><label for="quote-admin-profit">Admin profit <span class="required">*</span></label><input id="quote-admin-profit" type="number" min="0" step="0.01" name="quoteAdminProfit" [(ngModel)]="quoteForm.adminProfit" required /></div>
+            <div class="field"><label for="quote-agent-points">Base agent commission <span class="required">*</span></label><input id="quote-agent-points" type="number" min="0" step="0.01" name="quoteAgentPoints" [(ngModel)]="quoteForm.agentPoints" required /></div>
+            <div class="field"><label for="quote-admin-profit">Base admin profit <span class="required">*</span></label><input id="quote-admin-profit" type="number" min="0" step="0.01" name="quoteAdminProfit" [(ngModel)]="quoteForm.adminProfit" required /></div>
+            <div class="field quote-commission-option">
+              <label for="quote-class-commission"><input id="quote-class-commission" type="checkbox" name="quoteClassCommission" [(ngModel)]="quoteForm.agentClassCommissionApplicable" /> Apply agent-class commission deduction@if (agentClassCommissionRate() !== null) { ({{ agentClassCommissionRate() }}%) }</label>
+              @if (quoteForm.agentClassCommissionApplicable) {
+                @if (agentClassCommissionRate() !== null) {
+                  <small>Estimated deduction: {{ agentClassCommissionDeductionPreview | currency:'INR':'symbol':'1.2-2' }}. Agent commission after deduction: {{ netAgentCommissionPreview | currency:'INR':'symbol':'1.2-2' }}. Admin profit after deduction: {{ adjustedAdminProfitPreview | currency:'INR':'symbol':'1.2-2' }}. The API applies the saved class rate.</small>
+                } @else {
+                  <small>The agent’s class rate will be loaded and applied by the API when this quote is saved.</small>
+                }
+              }
+            </div>
             @if (!isThirdPartyQuote) { <div class="field"><label for="quote-idv">IDV <span class="required">*</span></label><input id="quote-idv" type="number" min="0" step="0.01" name="quoteIdv" [(ngModel)]="quoteForm.idv" required /></div> }
             @else { <p class="quote-idv-note">IDV is hidden for Third Party; the API receives 0.</p> }
             <div class="field quote-remarks"><label for="quote-remarks">Remarks</label><textarea id="quote-remarks" name="quoteRemarks" rows="3" [(ngModel)]="quoteForm.remarks"></textarea></div>
@@ -351,7 +361,7 @@
       <section class="payable-amount" aria-label="Exact amount payable"><span>Agent payable</span>@if (agentPayable() !== null) { <strong>{{ agentPayable() | currency:'INR':'symbol':'1.2-2' }}</strong> } @else { <strong>Loading…</strong> }<small>Amount from the selected quote summary</small></section>
       <div class="payment-mode-selector" role="group" aria-label="Payment mode">
         <button type="button" [class.active]="paymentMode() === 'bank'" [attr.aria-pressed]="paymentMode() === 'bank'" (click)="setPaymentMode('bank')">Bank Transfer</button>
-        <button type="button" [class.active]="paymentMode() === 'ledger'" [attr.aria-pressed]="paymentMode() === 'ledger'" (click)="setPaymentMode('ledger')">Ledger</button>
+        <button type="button" [class.active]="paymentMode() === 'ledger'" [attr.aria-pressed]="paymentMode() === 'ledger'" (click)="setPaymentMode('ledger')">Manual Wallet</button>
       </div>
       @if (paymentMode() === 'bank') {
         <section class="payment-detail-panel">
@@ -374,15 +384,15 @@
         </section>
       } @else {
         <section class="payment-detail-panel">
-          <h3>Ledger summary</h3>
-          @if (ledgerLoading()) { <p class="quote-empty">Loading ledger details…</p> }
+          <h3>Manual Wallet summary</h3>
+          @if (ledgerLoading()) { <p class="quote-empty">Loading Manual Wallet details…</p> }
           @else if (ledgerDetails(); as ledger) {
             <div class="ledger-summary" [class.ledger-insufficient]="ledger.balanceAfterCut < 0">
-              <div><span>Current ledger balance</span><strong>{{ ledger.ledgerBalance | currency:'INR':'symbol':'1.2-2' }}</strong></div>
+              <div><span>Current Manual Wallet balance</span><strong>{{ ledger.manualWalletBalance | currency:'INR':'symbol':'1.2-2' }}</strong></div>
               <div><span>Amount to deduct</span><strong>{{ ledger.finalAmount | currency:'INR':'symbol':'1.2-2' }}</strong></div>
               <div><span>Balance after deduction</span><strong>{{ ledger.balanceAfterCut | currency:'INR':'symbol':'1.2-2' }}</strong></div>
             </div>
-            @if (ledger.balanceAfterCut < 0) { <p class="ledger-warning" role="alert">Insufficient ledger balance. Add funds or choose Bank Transfer to continue.</p> }
+            @if (ledger.balanceAfterCut < 0) { <p class="ledger-warning" role="alert">Insufficient Manual Wallet balance. Request a Manual Wallet top-up or choose Bank Transfer to continue.</p> }
             <div class="field payment-remarks-field"><label for="ledger-payment-remarks">Remarks</label><textarea id="ledger-payment-remarks" rows="3" [ngModel]="paymentRemarks()" (ngModelChange)="paymentRemarks.set($event)" name="ledgerPaymentRemarks"></textarea></div>
           }
         </section>

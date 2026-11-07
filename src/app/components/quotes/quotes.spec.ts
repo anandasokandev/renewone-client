@@ -242,7 +242,7 @@ describe('Quotes', () => {
       amount: 1195,
       remarks: 'Paid via Ledger',
       agentLedgerName: 'Anand Asokan',
-      agentTotalLimit: 10100,
+      manualWalletBalance: 10100,
       currentBalance: 213,
       referenceNumber: 'PP33',
       transactionId: null,

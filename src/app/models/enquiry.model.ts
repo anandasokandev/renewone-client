@@ -276,6 +276,9 @@ export interface QuoteItem {
   idv: number | null;
   premium: number;
   agentPoints: number;
+  agentClassCommissionApplied?: boolean;
+  agentClassCommissionPercentage?: number;
+  agentClassCommissionDeduction?: number;
   remarks: string | null;
   quoteDate: string;
   isSelected: boolean;
@@ -354,7 +357,7 @@ export interface SubmitPolicyRequestPayload {
 }
 
 export interface LedgerPaymentDetailsData {
-  ledgerBalance: number;
+  manualWalletBalance: number;
   finalAmount: number;
   balanceAfterCut: number;
 }
@@ -376,11 +379,11 @@ export interface PolicyQrDetailsData {
 
 export interface QuotePaymentSummaryData {
   enquiryId: string;
-  paymentMode: 'Ledger' | 'Bank' | 'BankTransaction' | string;
+  paymentMode: 'ManualWallet' | 'Ledger' | 'Bank' | 'BankTransaction' | string;
   amount: number;
   remarks?: string | null;
   agentLedgerName?: string | null;
-  agentTotalLimit?: number | null;
+  manualWalletBalance?: number | null;
   currentBalance?: number | null;
   referenceNumber?: string | null;
   transactionId?: string | null;
