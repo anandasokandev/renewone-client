@@ -96,7 +96,7 @@ export class EnquiryService {
 
   assignEnquiry(enquiryId: string, employeeId: string, remarks = ''): Observable<ApiResponse<unknown>> {
     const params = new HttpParams().set('employeeId', employeeId).set('remarks', remarks);
-    return this.http.put<ApiResponse<unknown>>(
+    return this.http.post<ApiResponse<unknown>>(
       `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}/assign`,
       null,
       { headers: this.getAuthHeaders(), params }

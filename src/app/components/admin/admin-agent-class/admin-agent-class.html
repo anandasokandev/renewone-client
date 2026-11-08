@@ -1,0 +1,63 @@
+<div class="carbon-agent-class-page">
+  @if (notice()) {
+    <div class="carbon-toast" role="status"><div class="toast-content"><span class="toast-icon">✓</span><span>{{ notice() }}</span></div><button type="button" class="toast-close" (click)="notice.set(null)" aria-label="Close notification">×</button></div>
+  }
+  @if (pageError()) { <div class="carbon-toast toast-error" role="alert"><div class="toast-content">{{ pageError() }}</div><button type="button" class="toast-close" (click)="pageError.set(null)" aria-label="Close notification">×</button></div> }
+  <section class="carbon-card-section" aria-labelledby="agent-class-heading">
+    <div class="section-toolbar">
+      <div class="section-title-group"><div class="title-with-badge"><h2 id="agent-class-heading" class="section-title">Agent Classes</h2><span class="carbon-count-tag">{{ classes().length }} configured</span></div><p class="section-subtitle">Select a class to view its agents, or use the row actions to manage it.</p></div>
+      <div class="section-actions-group">
+        <button type="button" class="carbon-btn-secondary" (click)="loadClasses()" [disabled]="loading()"><span [class.spinning]="loading()">↻</span> Refresh</button>
+        <button type="button" class="carbon-btn-primary" (click)="openCreate()"><span aria-hidden="true">＋</span> Add Agent Class</button>
+      </div>
+    </div>
+
+    <div class="carbon-table-container">
+      @if (loading()) { <div class="table-loading-state"><div class="carbon-spinner"></div><span class="loading-label">Fetching agent classes…</span></div> }
+      @else if (classes().length === 0) { <div class="table-empty-state"><div class="empty-icon-wrap"><span>AC</span></div><h3 class="empty-title">No agent classes found</h3><p class="empty-desc">There are currently no classes configured. Add an agent class to get started.</p><button type="button" class="carbon-btn-primary" (click)="openCreate()">＋ Add Agent Class</button></div> }
+      @else {
+        <div class="table-scroll-wrapper"><table class="carbon-table">
+          <thead><tr><th scope="col">Agent Class</th><th scope="col">Commission Share</th><th scope="col">Agents</th><th scope="col">Status</th><th scope="col">Enable</th><th scope="col" class="th-actions">Actions</th></tr></thead>
+          <tbody>@for (item of classes(); track item.id) {
+            <tr class="carbon-table-row">
+              <td><button type="button" class="class-link" (click)="openQuickView(item.id)">{{ item.className }}</button></td>
+              <td><span class="percentage-value">{{ item.commSharePercentage }}%</span></td>
+              <td><button type="button" class="agent-count-link" (click)="openQuickView(item.id)">{{ item.agentCount }} agents</button></td>
+              <td><span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">{{ item.isActive ? 'Active' : 'Inactive' }}</span></td>
+              <td><div class="switch-action-cell"><button type="button" class="carbon-toggle-switch" [class.checked]="item.isActive" [disabled]="togglingId() === item.id" (click)="toggleStatus(item, $event)" role="switch" [attr.aria-checked]="item.isActive" [attr.aria-label]="item.isActive ? 'Deactivate ' + item.className : 'Activate ' + item.className"><span class="toggle-slider"></span></button><span class="switch-status-label" [class.active]="item.isActive">{{ item.isActive ? 'Enabled' : 'Disabled' }}</span></div></td>
+              <td class="td-actions"><button type="button" class="carbon-btn-secondary row-edit" (click)="openEdit(item, $event)">Edit</button></td>
+            </tr>
+          }</tbody>
+        </table></div>
+        <div class="carbon-pagination-bar"><span class="pagination-info">Showing <strong>{{ classes().length }}</strong> agent classes</span></div>
+      }
+    </div>
+  </section>
+
+  @if (quickViewLoading()) { <div class="quick-view-loading" role="status"><div class="carbon-spinner"></div><span>Loading agents…</span></div> }
+  @if (selectedClass(); as selected) {
+    <div class="carbon-modal-overlay drawer-overlay" (click)="closeQuickView()">
+      <aside class="agent-drawer" aria-labelledby="quick-view-title" (click)="$event.stopPropagation()">
+        <header class="modal-header"><div class="header-titles"><span class="carbon-eyebrow">Agent Class Quick View</span><h2 id="quick-view-title" class="modal-headline">{{ selected.className }}</h2><p class="modal-subhead">{{ selected.commSharePercentage }}% commission share · {{ selected.agents.length }} agents</p></div><button type="button" class="modal-close-btn" (click)="closeQuickView()" aria-label="Close agent list">×</button></header>
+        @if (selected.agents.length === 0) { <div class="table-empty-state"><h3 class="empty-title">No agents in this class</h3><p class="empty-desc">Agents assigned to this class will appear here.</p></div> }
+        @else { <div class="drawer-agent-list">@for (agent of selected.agents; track agent.id) {
+          <article class="drawer-agent-row"><div class="agent-identity"><strong>{{ agent.agentName }}</strong><span>{{ agent.agentCode || 'No agent code' }}</span></div><div class="agent-contact"><span>{{ agent.email }}</span><span>{{ agent.contactNumber }}</span></div><span class="carbon-tag" [class.tag-active]="agent.isActive" [class.tag-inactive]="!agent.isActive">{{ agent.isActive ? 'Active' : 'Inactive' }}</span></article>
+        }</div> }
+      </aside>
+    </div>
+  }
+
+  @if (modalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeModal()">
+      <section class="carbon-modal-dialog class-modal" role="dialog" aria-modal="true" aria-labelledby="class-modal-title" (click)="$event.stopPropagation()">
+        <header class="modal-header"><div class="header-titles"><span class="carbon-eyebrow">Agent Class Configuration</span><h2 id="class-modal-title" class="modal-headline">{{ editingId() ? 'Edit Agent Class' : 'Add Agent Class' }}</h2></div><button type="button" class="modal-close-btn" (click)="closeModal()" [disabled]="saving()" aria-label="Close">×</button></header>
+        @if (modalError()) { <div class="inline-form-error" role="alert">{{ modalError() }}</div> }
+        <form [formGroup]="form" (ngSubmit)="save()" class="class-form">
+          <label class="carbon-field"><span>Class Name <b>*</b></span><input type="text" formControlName="className" maxlength="100" placeholder="e.g. Gold Partner" />@if (form.controls.className.touched && form.controls.className.invalid) { <small class="field-error">Enter a class name up to 100 characters.</small> }</label>
+          <label class="carbon-field"><span>Commission Share (%) <b>*</b></span><input type="number" formControlName="commSharePercentage" min="0" max="100" step="0.01" />@if (form.controls.commSharePercentage.touched && form.controls.commSharePercentage.invalid) { <small class="field-error">Enter a value from 0 to 100.</small> }</label>
+          <footer class="modal-actions"><button type="button" class="carbon-btn-secondary" (click)="closeModal()" [disabled]="saving()">Cancel</button><button type="submit" class="carbon-btn-primary" [disabled]="saving()">{{ saving() ? 'Saving…' : (editingId() ? 'Save Changes' : 'Create Agent Class') }}</button></footer>
+        </form>
+      </section>
+    </div>
+  }
+</div>

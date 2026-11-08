@@ -90,6 +90,13 @@ export const routes: Routes = [
               ),
           },
           {
+            path: 'agent-class-management',
+            loadComponent: () =>
+              import('./components/admin/admin-agent-class/admin-agent-class').then(
+                m => m.AdminAgentClass
+              ),
+          },
+          {
             path: 'insurance-management',
             loadComponent: () =>
               import(
@@ -109,6 +116,7 @@ export const routes: Routes = [
       { path: 'qr-management', redirectTo: 'accelerators/qr-management', pathMatch: 'full' },
       { path: 'bank-account-management', redirectTo: 'accelerators/bank-account-management', pathMatch: 'full' },
       { path: 'pricing-master', redirectTo: 'accelerators/pricing-master', pathMatch: 'full' },
+      { path: 'agent-class-management', redirectTo: 'accelerators/agent-class-management', pathMatch: 'full' },
       { path: 'insurance-management', redirectTo: 'accelerators/insurance-management', pathMatch: 'full' },
       { path: 'vendor-management', redirectTo: 'accelerators/vendor-management', pathMatch: 'full' }
     ],

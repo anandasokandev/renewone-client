@@ -5,6 +5,17 @@ import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { finalize } from 'rxjs';
 import { environment } from '../../../../environments/environment';
+import { EmployeeService } from '../../../services/employee/employee.service';
+import { AccountService } from '../../../services/account/account.service';
+import { EnquiryService } from '../../../services/enquiry/enquiry.service';
+import { AdminEmployeeItem } from '../../../models/employee.model';
+import { AgentListItem } from '../../../models/account.model';
+import {
+  InsuranceTypeItem,
+  STATUS_OPTIONS,
+  StatusOption,
+  VehicleTypeItem,
+} from '../../../models/enquiry.model';
 
 interface ReportDefinition {
   type: number;
@@ -30,6 +41,9 @@ interface ReportResult {
 export class AdminReports implements OnInit {
   private readonly http = inject(HttpClient);
   private readonly destroyRef = inject(DestroyRef);
+  private readonly employeeService = inject(EmployeeService);
+  private readonly accountService = inject(AccountService);
+  private readonly enquiryService = inject(EnquiryService);
   private readonly apiUrl = `${environment.apiUrl}/EnquiryReports`;
 
   readonly definitions = signal<ReportDefinition[]>([]);
@@ -42,12 +56,94 @@ export class AdminReports implements OnInit {
   readonly result = signal<ReportResult | null>(null);
   readonly loadingDefinitions = signal(false);
   readonly loadingReport = signal(false);
+  readonly loadingLookups = signal(false);
   readonly exporting = signal<number | null>(null);
   readonly error = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
   readonly selectedDefinition = computed(() => this.definitions().find((item) => item.type === this.selectedType()) ?? null);
 
-  ngOnInit(): void { this.loadDefinitions(); }
+  readonly employees = signal<AdminEmployeeItem[]>([]);
+  readonly agencies = signal<AgentListItem[]>([]);
+  readonly insuranceTypes = signal<InsuranceTypeItem[]>([]);
+  readonly insuranceCompanies = signal<Array<{ id: string; companyName: string }>>([]);
+  readonly vehicleTypes = signal<VehicleTypeItem[]>([]);
+  readonly statusOptions: StatusOption[] = STATUS_OPTIONS;
+
+  readonly hasActiveFilters = computed<boolean>(() => {
+    if (this.fromDate() || this.toDate()) return true;
+    const values = this.filterValues();
+    return Object.values(values).some((v) => v !== undefined && v !== null && v !== '');
+  });
+
+  ngOnInit(): void {
+    this.loadDefinitions();
+    this.loadLookups();
+  }
+
+  loadLookups(): void {
+    this.loadingLookups.set(true);
+
+    this.employeeService.getAllEmployees({ Search: '', PageNumber: 1, PageSize: 100 })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data?.items) {
+            this.employees.set(res.data.items);
+          }
+        },
+        error: () => {},
+      });
+
+    this.accountService.getAgents({ pageNumber: 1, pageSize: 100, userType: 'Agent' })
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data?.agents?.items) {
+            this.agencies.set(res.data.agents.items);
+          }
+        },
+        error: () => {},
+      });
+
+    this.enquiryService.getInsuranceTypes()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data) {
+            this.insuranceTypes.set(res.data);
+          }
+        },
+        error: () => {},
+      });
+
+    this.enquiryService.getInsuranceCompanies()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data) {
+            this.insuranceCompanies.set(res.data);
+          }
+        },
+        error: () => {},
+      });
+
+    this.enquiryService.getVehicleTypes()
+      .pipe(takeUntilDestroyed(this.destroyRef))
+      .subscribe({
+        next: (res) => {
+          if (res?.data) {
+            this.vehicleTypes.set(res.data);
+          }
+        },
+        error: () => {},
+      });
+  }
+
+  resetFilters(): void {
+    this.fromDate.set('');
+    this.toDate.set('');
+    this.filterValues.set({});
+  }
 
   loadDefinitions(): void {
     this.loadingDefinitions.set(true);

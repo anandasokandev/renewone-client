@@ -105,6 +105,15 @@
                 Pricing Master
               </a>
               <a
+                [routerLink]="['/admin/accelerators/agent-class-management']"
+                routerLinkActive="active"
+                class="nav-dropdown-item"
+                (click)="closeMenus()"
+                role="menuitem"
+              >
+                Agent Class Mgmt
+              </a>
+              <a
                 [routerLink]="['/admin/accelerators/insurance-management']"
                 routerLinkActive="active"
                 class="nav-dropdown-item"
@@ -401,6 +410,14 @@
                 (click)="closeMenus()"
               >
                 Pricing Master
+              </a>
+              <a
+                [routerLink]="['/admin/accelerators/agent-class-management']"
+                routerLinkActive="active"
+                class="drawer-submenu-link"
+                (click)="closeMenus()"
+              >
+                Agent Class Mgmt
               </a>
               <a
                 [routerLink]="['/admin/accelerators/insurance-management']"

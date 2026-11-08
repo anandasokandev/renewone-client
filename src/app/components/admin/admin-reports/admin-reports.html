@@ -1,102 +1,488 @@
 <main class="reports-page">
-  @if (error()) { <div class="message error" role="alert">{{ error() }} <button type="button" (click)="loadDefinitions()">Retry</button></div> }
-  @if (notice()) { <div class="message success" role="status">{{ notice() }}</div> }
+  <!-- Notifications & Alerts -->
+  @if (error()) {
+    <div class="message error" role="alert">
+      <div class="message-content">
+        <svg class="message-icon" viewBox="0 0 16 16" fill="currentColor">
+          <path d="M8 1a7 7 0 1 0 7 7A7.008 7.008 0 0 0 8 1zm0 13a6 6 0 1 1 6-6 6.007 6.007 0 0 1-6 6z"/>
+          <path d="M7 4h2v5H7zm0 6h2v2H7z"/>
+        </svg>
+        <span>{{ error() }}</span>
+      </div>
+      <button type="button" class="retry-link" (click)="loadDefinitions()">Retry</button>
+    </div>
+  }
+  @if (notice()) {
+    <div class="message success" role="status">
+      <svg class="message-icon" viewBox="0 0 16 16" fill="currentColor">
+        <path d="M8 1a7 7 0 1 0 7 7A7 7 0 0 0 8 1zm0 13a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"/>
+        <path d="m6.5 10.8-2.8-2.8 1.4-1.4 1.4 1.4 4.5-4.5 1.4 1.4z"/>
+      </svg>
+      <span>{{ notice() }}</span>
+    </div>
+  }
 
+  <!-- Report Workspace Card -->
   <section class="report-workspace" aria-label="Report builder">
+    <!-- Header / Title & Export Bar -->
     <div class="builder-header">
-      <div>
-        <h2>Build a report</h2>
+      <div class="header-left">
+        <span class="carbon-breadcrumb-tag">Admin Reports</span>
+        <h2 class="workspace-title">Report Generator</h2>
       </div>
       <div class="export-actions">
-        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(1)">{{ exporting() === 1 ? 'Exporting…' : 'CSV' }}</button>
-        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(2)">{{ exporting() === 2 ? 'Exporting…' : 'Excel' }}</button>
-        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(3)">{{ exporting() === 3 ? 'Exporting…' : 'PDF' }}</button>
+        <span class="export-label">Export:</span>
+        <button
+          type="button"
+          class="carbon-btn-export"
+          [disabled]="!result() || exporting() !== null"
+          (click)="exportReport(1)"
+          title="Export as CSV"
+        >
+          {{ exporting() === 1 ? 'Exporting…' : 'CSV' }}
+        </button>
+        <button
+          type="button"
+          class="carbon-btn-export"
+          [disabled]="!result() || exporting() !== null"
+          (click)="exportReport(2)"
+          title="Export as Excel"
+        >
+          {{ exporting() === 2 ? 'Exporting…' : 'Excel' }}
+        </button>
+        <button
+          type="button"
+          class="carbon-btn-export"
+          [disabled]="!result() || exporting() !== null"
+          (click)="exportReport(3)"
+          title="Export as PDF"
+        >
+          {{ exporting() === 3 ? 'Exporting…' : 'PDF' }}
+        </button>
       </div>
     </div>
 
-    <div class="filters">
-      <label class="field report-field">
-        <span>Report</span>
-        <select [ngModel]="selectedType()" (ngModelChange)="changeReport($event)" [disabled]="loadingDefinitions() || definitions().length === 0">
-          @for (definition of definitions(); track definition.type) { <option [ngValue]="definition.type">{{ definition.name }}</option> }
-        </select>
-      </label>
-      <button type="button" class="button-primary generate-button" [disabled]="!selectedType() || loadingReport() || loadingDefinitions()" (click)="generateReport(1)">{{ loadingReport() ? 'Generating…' : 'Generate report' }}</button>
+    <!-- Tier 1: Primary Report Selector & Generate Action -->
+    <div class="toolbar-primary-tier">
+      <div class="primary-controls">
+        <label class="carbon-field report-selector-field">
+          <span class="carbon-field-label">Select Report</span>
+          <div class="carbon-select-wrapper">
+            <select
+              class="carbon-select"
+              [ngModel]="selectedType()"
+              (ngModelChange)="changeReport($event)"
+              [disabled]="loadingDefinitions() || definitions().length === 0"
+            >
+              @for (definition of definitions(); track definition.type) {
+                <option [ngValue]="definition.type">{{ definition.name }}</option>
+              }
+            </select>
+          </div>
+        </label>
+
+        <button
+          type="button"
+          class="carbon-btn-primary generate-button"
+          [disabled]="!selectedType() || loadingReport() || loadingDefinitions()"
+          (click)="generateReport(1)"
+        >
+          @if (loadingReport()) {
+            <span class="btn-spinner"></span>
+            <span>Generating…</span>
+          } @else {
+            <svg class="btn-icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M3 2v12l10-6z"/>
+            </svg>
+            <span>Generate Report</span>
+          }
+        </button>
+
+        @if (hasActiveFilters()) {
+          <button
+            type="button"
+            class="carbon-filter-reset-btn"
+            (click)="resetFilters()"
+            title="Clear all active filters"
+          >
+            <svg class="reset-icon" viewBox="0 0 16 16" fill="currentColor">
+              <path d="M8 3a5 5 0 1 0 4.546 2.914.5.5 0 0 1 .908-.418A6 6 0 1 1 8 2v1z"/>
+              <path d="M8 0v4l3-2z"/>
+            </svg>
+            <span>Reset Filters</span>
+          </button>
+        }
+      </div>
     </div>
 
     @if (loadingDefinitions()) {
-      <div class="state">Loading available reports…</div>
-    } @else if (!selectedDefinition()) {
-      <div class="state">No report definitions are available.</div>
-    } @else {
-      <div class="report-description">{{ selectedDefinition()?.description }}</div>
-      <div class="filters advanced-filters">
-        @for (filter of selectedDefinition()?.filters ?? []; track filter.key) {
-          @if (filter.type.toLowerCase().includes('daterange')) {
-            <fieldset class="range-field field">
-              <legend>{{ filter.label }}</legend>
-              @if (filter.key === 'dateRange' || filter.key === 'enquiryDateRange') {
-                <label><span>From</span><input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" /></label>
-                <label><span>To</span><input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" [min]="fromDate() || null" /></label>
-              } @else {
-                <label><span>From</span><input type="date" [ngModel]="filterValue(filter.key + '_from')" (ngModelChange)="setFilterValue(filter.key + '_from', $event)" /></label>
-                <label><span>To</span><input type="date" [ngModel]="filterValue(filter.key + '_to')" (ngModelChange)="setFilterValue(filter.key + '_to', $event)" [min]="filterValue(filter.key + '_from') || null" /></label>
-              }
-            </fieldset>
-          } @else if (filter.type.toLowerCase() === 'numberrange' || filter.type.toLowerCase() === 'percentagerange') {
-            <fieldset class="range-field field">
-              <legend>{{ filter.label }}</legend>
-              <label><span>Minimum</span><input type="number" [ngModel]="filterValue(filter.key + '_min')" (ngModelChange)="setFilterValue(filter.key + '_min', $event)" /></label>
-              <label><span>Maximum</span><input type="number" [ngModel]="filterValue(filter.key + '_max')" (ngModelChange)="setFilterValue(filter.key + '_max', $event)" /></label>
-            </fieldset>
-          } @else if (filter.key === 'groupBy') {
-            <label class="field"><span>{{ filter.label }}</span><select [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)"><option value="day">Daily</option><option value="month">Monthly</option></select></label>
-          } @else if (filter.type.toLowerCase() === 'multiselect') {
-            <label class="field"><span>{{ filter.label }}</span><input type="text" [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)" [placeholder]="filter.key === 'status' ? 'e.g. Submitted, Quoted' : 'Enter comma-separated IDs or values'" /></label>
-          } @else {
-            <label class="field"><span>{{ filter.label }}</span><input type="text" [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)" /></label>
-          }
-        }
+      <div class="state-loading">
+        <span class="spinner"></span>
+        <span>Loading available report definitions…</span>
       </div>
+    } @else if (!selectedDefinition()) {
+      <div class="state-empty">No report definitions are available.</div>
+    } @else {
+      <!-- Description Banner -->
+      @if (selectedDefinition()?.description) {
+        <div class="report-meta-banner">
+          <svg class="info-svg" viewBox="0 0 16 16" fill="currentColor">
+            <path d="M8 1a7 7 0 1 0 7 7A7 7 0 0 0 8 1zm0 13a6 6 0 1 1 6-6 6 6 0 0 1-6 6z"/>
+            <path d="M7 7h2v5H7zm0-3h2v2H7z"/>
+          </svg>
+          <span class="meta-desc">{{ selectedDefinition()?.description }}</span>
+        </div>
+      }
+
+      <!-- Tier 2: Dynamic Filters Grid -->
+      @if ((selectedDefinition()?.filters?.length ?? 0) > 0) {
+        <div class="filters-grid-section">
+          <div class="filters-grid-header">
+            <span class="filters-grid-title">Filter Parameters</span>
+            <span class="filters-grid-count">{{ selectedDefinition()?.filters?.length }} criteria available</span>
+          </div>
+
+          <div class="filters-grid">
+            @for (filter of selectedDefinition()?.filters ?? []; track filter.key) {
+              <!-- Date Range Filters -->
+              @if (filter.type.toLowerCase().includes('daterange')) {
+                <div class="filter-cell filter-cell-wide">
+                  <span class="carbon-field-label">{{ filter.label }}</span>
+                  <div class="carbon-range-group">
+                    @if (filter.key === 'dateRange' || filter.key === 'enquiryDateRange') {
+                      <div class="range-subfield">
+                        <span class="range-sublabel">From</span>
+                        <input
+                          type="date"
+                          class="carbon-input carbon-date-input"
+                          [ngModel]="fromDate()"
+                          (ngModelChange)="fromDate.set($event)"
+                        />
+                      </div>
+                      <span class="range-separator">—</span>
+                      <div class="range-subfield">
+                        <span class="range-sublabel">To</span>
+                        <input
+                          type="date"
+                          class="carbon-input carbon-date-input"
+                          [ngModel]="toDate()"
+                          (ngModelChange)="toDate.set($event)"
+                          [min]="fromDate() || null"
+                        />
+                      </div>
+                    } @else {
+                      <div class="range-subfield">
+                        <span class="range-sublabel">From</span>
+                        <input
+                          type="date"
+                          class="carbon-input carbon-date-input"
+                          [ngModel]="filterValue(filter.key + '_from')"
+                          (ngModelChange)="setFilterValue(filter.key + '_from', $event)"
+                        />
+                      </div>
+                      <span class="range-separator">—</span>
+                      <div class="range-subfield">
+                        <span class="range-sublabel">To</span>
+                        <input
+                          type="date"
+                          class="carbon-input carbon-date-input"
+                          [ngModel]="filterValue(filter.key + '_to')"
+                          (ngModelChange)="setFilterValue(filter.key + '_to', $event)"
+                          [min]="filterValue(filter.key + '_from') || null"
+                        />
+                      </div>
+                    }
+                  </div>
+                </div>
+              }
+
+              <!-- Number / Percentage Range Filters -->
+              @else if (filter.type.toLowerCase() === 'numberrange' || filter.type.toLowerCase() === 'percentagerange') {
+                <div class="filter-cell filter-cell-wide">
+                  <span class="carbon-field-label">{{ filter.label }}</span>
+                  <div class="carbon-range-group">
+                    <div class="range-subfield">
+                      <span class="range-sublabel">Min</span>
+                      <input
+                        type="number"
+                        class="carbon-input"
+                        placeholder="0"
+                        [ngModel]="filterValue(filter.key + '_min')"
+                        (ngModelChange)="setFilterValue(filter.key + '_min', $event)"
+                      />
+                    </div>
+                    <span class="range-separator">—</span>
+                    <div class="range-subfield">
+                      <span class="range-sublabel">Max</span>
+                      <input
+                        type="number"
+                        class="carbon-input"
+                        placeholder="100"
+                        [ngModel]="filterValue(filter.key + '_max')"
+                        (ngModelChange)="setFilterValue(filter.key + '_max', $event)"
+                      />
+                    </div>
+                  </div>
+                </div>
+              }
+
+              <!-- Employee Dropdown Filter -->
+              @else if (filter.key === 'employee') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('employee')"
+                        (ngModelChange)="setFilterValue('employee', $event)"
+                      >
+                        <option value="">All Employees</option>
+                        @for (emp of employees(); track emp.id) {
+                          <option [value]="emp.id">
+                            {{ emp.employeeName }} {{ emp.role ? '(' + emp.role + ')' : '' }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Agency Dropdown Filter -->
+              @else if (filter.key === 'agency') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('agency')"
+                        (ngModelChange)="setFilterValue('agency', $event)"
+                      >
+                        <option value="">All Agencies</option>
+                        @for (ag of agencies(); track ag.accountId) {
+                          <option [value]="ag.accountId">
+                            {{ ag.agencyName || ag.agentName }}
+                          </option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Insurance Type Dropdown Filter -->
+              @else if (filter.key === 'insuranceType') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('insuranceType')"
+                        (ngModelChange)="setFilterValue('insuranceType', $event)"
+                      >
+                        <option value="">All Insurance Types</option>
+                        @for (it of insuranceTypes(); track it.id) {
+                          <option [value]="it.id">{{ it.name }}</option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Insurance Company Dropdown Filter -->
+              @else if (filter.key === 'insuranceCompany') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('insuranceCompany')"
+                        (ngModelChange)="setFilterValue('insuranceCompany', $event)"
+                      >
+                        <option value="">All Insurance Companies</option>
+                        @for (ic of insuranceCompanies(); track ic.id) {
+                          <option [value]="ic.id">{{ ic.companyName }}</option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Vehicle Type / Category Dropdown Filter -->
+              @else if (filter.key === 'vehicleType') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('vehicleType')"
+                        (ngModelChange)="setFilterValue('vehicleType', $event)"
+                      >
+                        <option value="">All Vehicle Categories</option>
+                        @for (vt of vehicleTypes(); track vt.id) {
+                          <option [value]="vt.id">{{ vt.typeName }}</option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Status Enum Dropdown Filter -->
+              @else if (filter.key === 'status') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue('status')"
+                        (ngModelChange)="setFilterValue('status', $event)"
+                      >
+                        <option value="">All Statuses</option>
+                        @for (st of statusOptions; track st.id) {
+                          <option [value]="st.key">{{ st.label }}</option>
+                        }
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- GroupBy Dropdown Filter -->
+              @else if (filter.key === 'groupBy') {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <div class="carbon-select-wrapper">
+                      <select
+                        class="carbon-select"
+                        [ngModel]="filterValue(filter.key)"
+                        (ngModelChange)="setFilterValue(filter.key, $event)"
+                      >
+                        <option value="day">Daily</option>
+                        <option value="month">Monthly</option>
+                      </select>
+                    </div>
+                  </label>
+                </div>
+              }
+
+              <!-- Fallback Text Input Filter -->
+              @else {
+                <div class="filter-cell">
+                  <label class="carbon-field">
+                    <span class="carbon-field-label">{{ filter.label }}</span>
+                    <input
+                      type="text"
+                      class="carbon-input"
+                      [placeholder]="'Enter ' + filter.label"
+                      [ngModel]="filterValue(filter.key)"
+                      (ngModelChange)="setFilterValue(filter.key, $event)"
+                    />
+                  </label>
+                </div>
+              }
+            }
+          </div>
+        </div>
+      }
     }
   </section>
 
+  <!-- Loading Report State -->
   @if (loadingReport()) {
-    <section class="result-state" role="status"><span class="spinner"></span>Generating report…</section>
+    <section class="result-state" role="status">
+      <span class="spinner"></span>
+      <span>Generating {{ selectedDefinition()?.name }}…</span>
+    </section>
   } @else if (result(); as report) {
+    <!-- Metric KPI Cards -->
     @if (report.metrics.length > 0) {
-      <section class="metrics" aria-label="Report summary">
+      <section class="metrics-grid" aria-label="Report summary metrics">
         @for (metric of report.metrics; track metric.key) {
-          <article class="metric-card">
-            <span>{{ metric.label }}</span>
-            <strong>{{ formatMetric(metric.value, metric.format) }}</strong>
+          <article class="metric-tile">
+            <span class="metric-label">{{ metric.label }}</span>
+            <strong class="metric-value">{{ formatMetric(metric.value, metric.format) }}</strong>
           </article>
         }
       </section>
     }
+
+    <!-- Results Data Grid -->
     <section class="results-panel">
       <div class="results-heading">
-        <div><h2>{{ selectedDefinition()?.name }}</h2><p>{{ report.data.totalRecords }} records</p></div>
-        <label class="page-size"><span>Rows per page</span><select [ngModel]="pageSize()" (ngModelChange)="pageSize.set(+$event); generateReport(1)"><option [ngValue]="10">10</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select></label>
+        <div class="results-title-group">
+          <h3 class="results-title">{{ selectedDefinition()?.name }}</h3>
+          <span class="carbon-count-tag">{{ report.data.totalRecords }} records</span>
+        </div>
+        <div class="page-size-selector">
+          <span class="page-size-label">Rows per page:</span>
+          <select
+            class="carbon-select-sm"
+            [ngModel]="pageSize()"
+            (ngModelChange)="pageSize.set(+$event); generateReport(1)"
+          >
+            <option [ngValue]="10">10</option>
+            <option [ngValue]="25">25</option>
+            <option [ngValue]="50">50</option>
+            <option [ngValue]="100">100</option>
+          </select>
+        </div>
       </div>
+
       @if (report.data.items.length === 0) {
-        <div class="state">No records match this report and date range.</div>
+        <div class="state-empty">No records match this report and date range.</div>
       } @else {
         <div class="table-scroll">
-          <table>
-            <thead><tr>@for (column of report.columns; track column.key) { <th scope="col">{{ column.label }}</th> }</tr></thead>
+          <table class="carbon-data-table">
+            <thead>
+              <tr>
+                @for (column of report.columns; track column.key) {
+                  <th scope="col">{{ column.label }}</th>
+                }
+              </tr>
+            </thead>
             <tbody>
               @for (row of report.data.items; track $index) {
-                <tr>@for (column of report.columns; track column.key) { <td>{{ cellValue(row, column.key) }}</td> }</tr>
+                <tr>
+                  @for (column of report.columns; track column.key) {
+                    <td>{{ cellValue(row, column.key) }}</td>
+                  }
+                </tr>
               }
             </tbody>
           </table>
         </div>
-        <footer class="pagination">
-          <span>Page {{ report.data.pageNumber }} of {{ report.data.totalPages }} · {{ report.data.totalRecords }} total</span>
-          <div>
-            <button type="button" class="page-button" [disabled]="report.data.pageNumber <= 1 || loadingReport()" (click)="generateReport(report.data.pageNumber - 1)">Previous</button>
-            <button type="button" class="page-button" [disabled]="report.data.pageNumber >= report.data.totalPages || loadingReport()" (click)="generateReport(report.data.pageNumber + 1)">Next</button>
+
+        <footer class="pagination-bar">
+          <span class="pagination-meta">
+            Page {{ report.data.pageNumber }} of {{ report.data.totalPages }} ({{ report.data.totalRecords }} total)
+          </span>
+          <div class="pagination-nav">
+            <button
+              type="button"
+              class="carbon-btn-page"
+              [disabled]="report.data.pageNumber <= 1 || loadingReport()"
+              (click)="generateReport(report.data.pageNumber - 1)"
+            >
+              Previous
+            </button>
+            <button
+              type="button"
+              class="carbon-btn-page"
+              [disabled]="report.data.pageNumber >= report.data.totalPages || loadingReport()"
+              (click)="generateReport(report.data.pageNumber + 1)"
+            >
+              Next
+            </button>
           </div>
         </footer>
       }
