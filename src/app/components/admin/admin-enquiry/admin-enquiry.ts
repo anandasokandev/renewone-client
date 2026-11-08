@@ -1357,24 +1357,7 @@ export class AdminEnquiry implements OnInit {
 
   openAllEnquiryDetails(item: AdminAllEnquiryItem, event?: Event): void {
     if (event) event.stopPropagation();
-    const mappedEnquiry: EnquiryItem = {
-      id: item.id,
-      enquiryId: item.enquiryId,
-      customerName: item.customerName,
-      phoneNumber: item.customerNumber,
-      customerPhone: item.customerNumber,
-      vehicleNumber: item.vehicleNumber,
-      insuranceType: item.insuranceType || 'Vehicle Insurance',
-      policyType: item.policyType || 'Comprehensive',
-      vehicleType: item.vehicleType || 'Vehicle',
-      status: (this.getEnquiryStatusLabel(item.status) as any) || 'Submitted',
-      createdAt: item.submittedOn || item.createdAt || '',
-      agentName: item.createdBy,
-      agencyName: item.agencyName,
-      assignedAgentName: item.assignedEmployee || item.assignedEmployeeName || item.createdBy,
-      assignedStaff: item.assignedEmployee || item.assignedEmployeeName || undefined,
-    };
-    this.selectedEnquiry.set(mappedEnquiry);
+    this.router.navigate(['/admin/enquiries', item.id || item.enquiryId]);
   }
 
   onAssignToMeAllEnquiry(item: AdminAllEnquiryItem, event?: Event): void {
@@ -1384,24 +1367,7 @@ export class AdminEnquiry implements OnInit {
 
   openMyTaskDetails(item: AdminMyTaskItem, event?: Event): void {
     if (event) event.stopPropagation();
-    const mappedEnquiry: EnquiryItem = {
-      id: item.id,
-      enquiryId: item.enquiryId,
-      customerName: item.customerName,
-      phoneNumber: item.customerNumber,
-      customerPhone: item.customerNumber,
-      vehicleNumber: item.vehicleNumber,
-      insuranceType: item.insuranceType || 'Vehicle Insurance',
-      policyType: this.getPolicyTypeLabel(item.policyType),
-      vehicleType: item.vehicleType || 'Vehicle',
-      status: (this.getEnquiryStatusLabel(item.enquiryStatus ?? item.status) as any) || 'Submitted',
-      createdAt: item.submittedOn || item.createdAt || '',
-      agentName: item.createdBy,
-      agencyName: item.agencyName,
-      assignedAgentName: item.createdBy,
-      assignedStaff: 'Admin',
-    };
-    this.selectedEnquiry.set(mappedEnquiry);
+    this.router.navigate(['/admin/enquiries', item.id || item.enquiryId]);
   }
 
   exportMyTasksCsv(): void {
@@ -1463,24 +1429,7 @@ export class AdminEnquiry implements OnInit {
 
   openQuoteQueueDetails(item: AdminQuoteQueueItem, event?: Event): void {
     if (event) event.stopPropagation();
-    const mappedEnquiry: EnquiryItem = {
-      id: item.id,
-      enquiryId: item.enquiryId,
-      customerName: item.customerName,
-      phoneNumber: item.customerNumber,
-      customerPhone: item.customerNumber,
-      vehicleNumber: item.vehicleNumber,
-      insuranceType: item.insuranceType || 'Vehicle Insurance',
-      policyType: this.getPolicyTypeLabel(item.policyType),
-      vehicleType: item.vehicleType || 'Vehicle',
-      status: (this.getEnquiryStatusLabel(item.status) as any) || (this.activeStage() === 4 ? 'QuoteInProgress' : 'Quoted'),
-      createdAt: item.submittedOn || item.createdAt || '',
-      agentName: item.createdBy,
-      agencyName: item.agencyName,
-      assignedAgentName: item.assignedEmployee || item.createdBy,
-      assignedStaff: item.assignedEmployee || undefined,
-    };
-    this.selectedEnquiry.set(mappedEnquiry);
+    this.router.navigate(['/admin/enquiries', item.id || item.enquiryId]);
   }
 
   onProcessQuote(item: AdminQuoteQueueItem, event?: Event): void {
@@ -1556,24 +1505,7 @@ export class AdminEnquiry implements OnInit {
 
   openPolicyQueueDetails(item: AdminPolicyQueueItem, event?: Event): void {
     if (event) event.stopPropagation();
-    const mappedEnquiry: EnquiryItem = {
-      id: item.id,
-      enquiryId: item.enquiryId,
-      customerName: item.customerName,
-      phoneNumber: item.customerNumber,
-      customerPhone: item.customerNumber,
-      vehicleNumber: item.vehicleNumber,
-      insuranceType: item.insuranceType || 'Vehicle Insurance',
-      policyType: this.getPolicyTypeLabel(item.policyType),
-      vehicleType: item.vehicleType || 'Vehicle',
-      status: (this.getEnquiryStatusLabel(item.status) as any) || (this.activeStage() === 6 ? 'PolicyInProgress' : 'PolicyIssued'),
-      createdAt: item.submittedOn || item.createdAt || '',
-      agentName: item.createdBy,
-      agencyName: item.agencyName,
-      assignedAgentName: item.assignedEmployee || item.createdBy,
-      assignedStaff: item.assignedEmployee || undefined,
-    };
-    this.selectedEnquiry.set(mappedEnquiry);
+    this.router.navigate(['/admin/enquiries', item.id || item.enquiryId]);
   }
 
   onProcessPolicy(item: AdminPolicyQueueItem, event?: Event): void {
@@ -1713,26 +1645,10 @@ export class AdminEnquiry implements OnInit {
     }
   }
 
-  // Row selection and drawer
+  // Row selection - navigate to admin detail view
   openEnquiryDetails(item: AdminCommonQueueItem, event?: Event): void {
     if (event) event.stopPropagation();
-    const mappedEnquiry: EnquiryItem = {
-      id: item.id,
-      enquiryId: item.enquiryId,
-      customerName: item.customerName,
-      phoneNumber: item.customerNumber,
-      customerPhone: item.customerNumber,
-      vehicleNumber: item.vehicleNumber,
-      insuranceType: item.insuranceType,
-      policyType: item.policyType,
-      vehicleType: item.vehicleType,
-      status: (item.status as any) || 'Submitted',
-      createdAt: item.submittedOn,
-      agentName: item.createdBy,
-      agencyName: item.agencyName,
-      assignedAgentName: item.createdBy,
-    };
-    this.selectedEnquiry.set(mappedEnquiry);
+    this.router.navigate(['/admin/enquiries', item.id || item.enquiryId]);
   }
 
   closeDetailDrawer(): void {

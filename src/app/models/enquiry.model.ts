@@ -8,6 +8,168 @@ export type EnquiryStatus =
   | 'PolicyIssued'
   | 'Cancelled';
 
+export interface AdminEnquiryDocument {
+  id: string;
+  docName?: string | null;
+  docType: string;
+  docSide: string;
+  uploadedAt?: string | null;
+  url: string;
+}
+
+export interface AdminEnquiryQuote {
+  id: string;
+  vendorId?: string | null;
+  vendorName?: string | null;
+  insuranceCompanyName: string;
+  idv?: number | null;
+  premium: number;
+  agentPoints: number;
+  agentClassCommissionApplied: boolean;
+  agentClassCommissionPercentage: number;
+  agentClassCommissionDeduction: number;
+  remarks?: string | null;
+  quoteDate?: string | null;
+  isSelected?: boolean | null;
+}
+
+export interface AdminEnquiryRcDetails {
+  vehicleNumber?: string | null;
+  vehicleClass?: string | null;
+  chassisNumber?: string | null;
+  engineNumber?: string | null;
+  manufacturerName?: string | null;
+  model?: string | null;
+  vehicleColor?: string | null;
+  fuelType?: string | null;
+  normsType?: string | null;
+  bodyType?: string | null;
+  cubicCapacity?: string | null;
+  vehicleCategory?: string | null;
+  grossVehicleWeight?: string | null;
+  unladenWeight?: string | null;
+  wheelbase?: string | null;
+  seatCapacity?: string | null;
+  cylinderCount?: string | null;
+  isFinanced?: boolean | null;
+  ownerName?: string | null;
+  ownerFatherName?: string | null;
+  mobileNumber?: string | null;
+  ownerCount?: string | null;
+  registrationAuthority?: string | null;
+  registrationDate?: string | null;
+  rcExpiryDate?: string | null;
+  manufacturingMonthYear?: string | null;
+  vehicleTaxUpto?: string | null;
+  rtoCode?: string | null;
+  insuranceCompanyName?: string | null;
+  insurancePolicyNumber?: string | null;
+  insuranceValidUpto?: string | null;
+  financerName?: string | null;
+  puccNumber?: string | null;
+  puccUpto?: string | null;
+  presentAddress?: string | null;
+  presentDistrict?: string | null;
+  presentState?: string | null;
+  presentCity?: string | null;
+  presentPincode?: string | null;
+  permanentAddress?: string | null;
+  permanentDistrict?: string | null;
+  permanentState?: string | null;
+  permanentCity?: string | null;
+  permanentPincode?: string | null;
+  rawApiResponse?: string | null;
+}
+
+export interface AdminEnquiryDetails {
+  id: string;
+  customerName: string;
+  customerMobile: string;
+  status: string;
+  policyType: string;
+  vehicleNumber: string;
+  manufacturerName: string;
+  model: string;
+  fuelType: string;
+  cubicCapacity: string;
+  createdBy: string;
+  agencyName: string;
+  agencyNumber: string;
+  assignedAgent: string;
+  createdAt: string;
+  updatedAt?: string | null;
+  documentsCount: number;
+  quotesCount: number;
+  documents: AdminEnquiryDocument[];
+  quotes: AdminEnquiryQuote[];
+  rcDetails?: AdminEnquiryRcDetails | null;
+}
+
+export interface AdminPolicyDetails {
+  id: string;
+  enquiryId: string;
+  policyNumber: string;
+  policyStartDate: string;
+  policyEndDate: string;
+  remarks?: string | null;
+  createdBy?: string | null;
+  createdAt: string;
+}
+
+export interface CreateAdminPolicyDetailsRequest {
+  policyNumber: string;
+  policyStartDate: string;
+  policyEndDate: string;
+  remarks?: string | null;
+}
+
+export interface ChangeAdminEnquiryStatusRequest {
+  enquiryId: string;
+  currentStatus: string;
+  newStatus: string;
+}
+
+export interface PaymentVerificationDetails {
+  policyPaymentId: string;
+  enquiryId: string;
+  customerName: string;
+  customerNumber: string;
+  vehicleNumber: string;
+  premium: number;
+  paymentMode: string;
+  transactionId?: string | null;
+  paymentStatus: string;
+  submittedAt: string;
+  submittedBy: string;
+  remarks?: string | null;
+}
+
+export interface AdminPolicyPaymentDetails {
+  policyPaymentId: string;
+  paymentStatus: string;
+  enquiryId: string;
+  fullName: string;
+  vehicleNumber: string;
+  insuranceCompanyName: string;
+  premiumAmount: number;
+  finalPayableAmount: number;
+  paymentAmount: number;
+  paymentMode: string;
+  referenceNumber?: string | null;
+  manualWalletBalance: string;
+  transactionId?: string | null;
+  remarks?: string | null;
+  submittedBy: string;
+  submittedOn: string;
+  bankAccountId?: string | null;
+  bankAccountName?: string | null;
+  bankName?: string | null;
+  bankAccountNumber?: string | null;
+  bankBranch?: string | null;
+  bankIfscCode?: string | null;
+  accountHolderName?: string | null;
+}
+
 export enum EnquiryStatusEnum {
   Created = 1,
   Submitted = 2,

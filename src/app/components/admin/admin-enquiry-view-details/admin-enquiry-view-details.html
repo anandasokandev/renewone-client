@@ -1,0 +1,459 @@
+<main class="page-shell">
+  <header class="topbar">
+    <button type="button" class="back-button" (click)="goBack()" aria-label="Back to enquiries">← <span>Enquiries</span></button>
+    <div class="topbar-actions">
+      @if (copied()) { <span class="copy-feedback" role="status">{{ copied() }} copied</span> }
+      @if (quoteSuccess()) { <span class="success-feedback" role="status">{{ quoteSuccess() }}</span> }
+      @if (statusSuccess()) { <span class="success-feedback" role="status">{{ statusSuccess() }}</span> }
+      @if (nextEnquiryStatus()) {
+        <button type="button" class="button button-secondary" (click)="openStatusModal()" [disabled]="!canUpdateStatus()" [attr.title]="canUpdateStatus() ? null : 'Upload the final Policy document before changing the status to Policy Issued.'">Update Status</button>
+      }
+      <button type="button" class="button button-primary" (click)="openQuoteModal()">+ Add quote</button>
+      <button type="button" class="button button-secondary" (click)="load()" [disabled]="loading()">Refresh</button>
+    </div>
+  </header>
+
+  @if (paymentNotice()) { <div class="payment-notice" role="status">{{ paymentNotice() }}</div> }
+
+  @if (loading()) {
+    <div class="state-panel" role="status"><span class="spinner"></span> Loading enquiry details…</div>
+  } @else if (error()) {
+    <section class="state-panel state-error" role="alert">
+      <div><h1>Unable to load enquiry</h1><p>{{ error() }}</p></div>
+      <button type="button" class="button button-primary" (click)="load()">Try again</button>
+    </section>
+  } @else if (enquiry(); as item) {
+    <section class="page-heading">
+      <div>
+        <p class="eyebrow">ADMIN · ENQUIRY DETAILS</p>
+        <h1>{{ item.customerName || 'Enquiry' }}</h1>
+        <p class="subtitle">{{ item.customerMobile || 'No customer phone' }} <span class="separator">·</span> {{ item.agencyName || 'Agency unavailable' }} <span class="separator">·</span> {{ item.vehicleNumber || item.policyType || 'Enquiry record' }}</p>
+        <p class="header-enquiry-id">Created {{ formatDate(item.createdAt) }}</p>
+      </div>
+      <span class="status-pill">{{ statusLabel(item.status) }}</span>
+    </section>
+
+    <section class="overview-grid" aria-label="Enquiry overview">
+      <article class="summary-card"><span>Enquiry ID</span><strong class="mono">{{ item.id }}</strong></article>
+      <article class="summary-card"><span>Documents</span><strong>{{ item.documentsCount }}</strong></article>
+      <article class="summary-card"><span>Quotes</span><strong>{{ item.quotesCount }}</strong></article>
+      <article class="summary-card"><span>Last updated</span><strong>{{ formatDate(item.updatedAt) }}</strong></article>
+    </section>
+
+    <nav class="details-tabs" role="tablist" aria-label="Enquiry details">
+      <button type="button" role="tab" id="tab-vehicle" aria-controls="panel-vehicle" [attr.aria-selected]="activeTab() === 'vehicle'" [class.active]="activeTab() === 'vehicle'" (click)="selectTab('vehicle')">Vehicle info</button>
+      <button type="button" role="tab" id="tab-documents" aria-controls="panel-documents" [attr.aria-selected]="activeTab() === 'documents'" [class.active]="activeTab() === 'documents'" (click)="selectTab('documents')">Uploaded docs <span>{{ item.documents.length }}</span></button>
+      <button type="button" role="tab" id="tab-quotes" aria-controls="panel-quotes" [attr.aria-selected]="activeTab() === 'quotes'" [class.active]="activeTab() === 'quotes'" (click)="selectTab('quotes')">Quoted <span>{{ item.quotes.length }}</span></button>
+      @if (isPolicyStage(item.status)) { <button type="button" role="tab" id="tab-payment" aria-controls="panel-payment" [attr.aria-selected]="activeTab() === 'payment'" [class.active]="activeTab() === 'payment'" (click)="selectTab('payment')">Payment info</button> }
+      @if (isPolicyStage(item.status)) { <button type="button" role="tab" id="tab-vendor" aria-controls="panel-vendor" [attr.aria-selected]="activeTab() === 'vendor'" [class.active]="activeTab() === 'vendor'" (click)="selectTab('vendor')">Vendor info</button> }
+      @if (isPolicyStage(item.status)) { <button type="button" role="tab" id="tab-policy" aria-controls="panel-policy" [attr.aria-selected]="activeTab() === 'policy'" [class.active]="activeTab() === 'policy'" (click)="selectTab('policy')">Policy info</button> }
+    </nav>
+
+    @if (activeTab() === 'payment') {
+      <div id="panel-payment" class="tab-panel" role="tabpanel" aria-labelledby="tab-payment">
+      @if (isPaymentDetailsVisible(item.status)) {
+      <section class="panel payment-overview-section" aria-labelledby="payment-details-heading">
+        <header class="panel-heading payment-overview-heading">
+          <button type="button" class="payment-section-toggle" (click)="togglePaymentSection()" [attr.aria-expanded]="paymentSectionExpanded()" aria-controls="payment-details-content">
+            <span class="payment-title-group"><span class="eyebrow">PAYMENT</span><span id="payment-details-heading" class="payment-title">Payment details</span></span>
+            <span class="payment-header-status" [class.payment-header-pending]="isPaymentVerificationPending(item.status)">{{ paymentDetails()?.paymentStatus || statusLabel(item.status) }}</span>
+            <svg class="payment-expand-icon" [class.expanded]="paymentSectionExpanded()" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          @if (paymentReviewAvailable()) { <button type="button" class="button button-primary button-compact payment-review-button" (click)="openPaymentReview()">Review payment</button> }
+        </header>
+        <div id="payment-details-content" class="payment-overview-content" [hidden]="!paymentSectionExpanded()">
+            @if (paymentVerificationError()) {
+              <div class="payment-inline-warning" role="alert"><span>{{ paymentVerificationError() }}</span><button type="button" class="text-button" (click)="retryPaymentReview()">Retry status check</button></div>
+            }
+            @if (paymentSectionLoading()) {
+              <div class="payment-section-state" role="status"><span class="spinner"></span> Loading payment details…</div>
+            } @else if (paymentSectionError()) {
+              <div class="payment-inline-error" role="alert"><span>{{ paymentSectionError() }}</span><button type="button" class="text-button" (click)="retryPaymentDetails()">Retry</button></div>
+            } @else if (paymentDetails(); as payment) {
+              <div class="payment-status-line"><span>Payment status</span><strong class="pending-status" [class.processed-status]="payment.paymentStatus.toLowerCase() !== 'pending'">{{ payment.paymentStatus }}</strong></div>
+              <section class="payment-section">
+                <div class="quote-section-heading"><h3>Payment record</h3></div>
+                <dl class="payment-details-grid">
+                  <div><dt>Customer</dt><dd>{{ payment.fullName || '—' }}</dd></div>
+                  <div><dt>Enquiry</dt><dd class="mono">{{ payment.enquiryId || item.id }}</dd></div>
+                  <div><dt>Vehicle</dt><dd>{{ payment.vehicleNumber || '—' }}</dd></div>
+                  <div><dt>Insurance company</dt><dd>{{ payment.insuranceCompanyName || '—' }}</dd></div>
+                  <div><dt>Payment mode</dt><dd>{{ payment.paymentMode || '—' }}</dd></div>
+                  <div><dt>Payment reference</dt><dd>{{ payment.referenceNumber || payment.transactionId || '—' }}</dd></div>
+                  <div><dt>Amount submitted</dt><dd class="amount-value">{{ payment.paymentAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                  <div><dt>Premium</dt><dd>{{ payment.premiumAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                  <div><dt>Final payable</dt><dd>{{ payment.finalPayableAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                  <div><dt>Transaction ID</dt><dd>{{ payment.transactionId || '—' }}</dd></div>
+                  <div><dt>Wallet balance</dt><dd>{{ payment.manualWalletBalance || '—' }}</dd></div>
+                  <div><dt>Submitted by</dt><dd>{{ payment.submittedBy || '—' }}</dd></div>
+                  <div><dt>Submitted on</dt><dd>{{ payment.submittedOn || '—' }}</dd></div>
+                  <div><dt>Remarks</dt><dd>{{ payment.remarks || '—' }}</dd></div>
+                </dl>
+              </section>
+              <section class="payment-section bank-destination">
+                <div class="quote-section-heading"><h3>Credited bank account</h3><p>Destination recorded against this payment.</p></div>
+                @if (payment.bankAccountId) {
+                  <dl class="payment-details-grid">
+                    <div><dt>Account name</dt><dd>{{ payment.bankAccountName || '—' }}</dd></div>
+                    <div><dt>Bank</dt><dd>{{ payment.bankName || '—' }}</dd></div>
+                    <div><dt>Account holder</dt><dd>{{ payment.accountHolderName || '—' }}</dd></div>
+                    <div><dt>Account number</dt><dd class="mono">{{ payment.bankAccountNumber || '—' }}</dd></div>
+                    <div><dt>Branch</dt><dd>{{ payment.bankBranch || '—' }}</dd></div>
+                    <div><dt>IFSC</dt><dd class="mono">{{ payment.bankIfscCode || '—' }}</dd></div>
+                  </dl>
+                } @else { <p class="no-bank-account">No bank account is linked to this payment record.</p> }
+              </section>
+            }
+        </div>
+      </section>
+      } @else {
+        <section class="panel"><header class="panel-heading"><div><p class="eyebrow">PAYMENT</p><h2>Payment information</h2></div></header><p class="empty-state">Payment details become available when this enquiry reaches payment verification.</p></section>
+      }
+      </div>
+    }
+
+    @if (activeTab() === 'vehicle') {
+    <div id="panel-vehicle" class="tab-panel" role="tabpanel" aria-labelledby="tab-vehicle">
+    <div class="content-grid">
+      <section class="panel">
+        <header class="panel-heading"><div><p class="eyebrow">CONTACT</p><h2>Customer & agency</h2></div></header>
+        <dl class="details-grid">
+          <div class="detail"><dt>Customer name</dt><dd>{{ item.customerName || '—' }}</dd></div>
+          <div class="detail"><dt>Mobile number</dt><dd class="copyable"><span>{{ item.customerMobile || '—' }}</span>@if (item.customerMobile) { <button class="copy-button" type="button" (click)="copy(item.customerMobile, 'Mobile number')" aria-label="Copy mobile number">Copy</button> }</dd></div>
+          <div class="detail"><dt>Agency</dt><dd>{{ item.agencyName || '—' }}</dd></div>
+          <div class="detail"><dt>Agency number</dt><dd class="copyable"><span>{{ item.agencyNumber || '—' }}</span>@if (item.agencyNumber) { <button class="copy-button" type="button" (click)="copy(item.agencyNumber, 'Agency number')" aria-label="Copy agency number">Copy</button> }</dd></div>
+          <div class="detail"><dt>Created by</dt><dd>{{ item.createdBy || '—' }}</dd></div>
+          <div class="detail"><dt>Assigned agent</dt><dd>{{ item.assignedAgent || '—' }}</dd></div>
+        </dl>
+      </section>
+
+      <section class="panel">
+        <header class="panel-heading"><div><p class="eyebrow">COVER</p><h2>Enquiry information</h2></div></header>
+        <dl class="details-grid">
+          <div class="detail"><dt>Status</dt><dd>{{ statusLabel(item.status) }}</dd></div>
+          <div class="detail"><dt>Policy type</dt><dd>{{ item.policyType || '—' }}</dd></div>
+          <div class="detail"><dt>Vehicle number</dt><dd class="copyable"><span>{{ item.vehicleNumber || '—' }}</span>@if (item.vehicleNumber) { <button class="copy-button" type="button" (click)="copy(item.vehicleNumber, 'Vehicle number')" aria-label="Copy vehicle number">Copy</button> }</dd></div>
+          <div class="detail"><dt>Manufacturer</dt><dd>{{ item.manufacturerName || '—' }}</dd></div>
+          <div class="detail"><dt>Model</dt><dd>{{ item.model || '—' }}</dd></div>
+          <div class="detail"><dt>Fuel type</dt><dd>{{ item.fuelType || '—' }}</dd></div>
+          <div class="detail"><dt>Cubic capacity</dt><dd>{{ item.cubicCapacity || '—' }}</dd></div>
+          <div class="detail"><dt>Created</dt><dd>{{ formatDate(item.createdAt) }}</dd></div>
+        </dl>
+      </section>
+    </div>
+
+    @if (item.rcDetails) {
+      <details class="panel section-panel rc-panel">
+        <summary class="panel-heading rc-panel-heading">
+          <div><p class="eyebrow">VEHICLE RECORD</p><h2>Registration certificate details</h2></div>
+          <svg class="expand-icon" viewBox="0 0 16 16" aria-hidden="true"><path d="m4 6 4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </summary>
+        <div class="rc-sections">
+          @for (section of rcSections; track section.title) {
+            @if (fieldsFor(section, item.rcDetails).length) {
+              <section class="rc-section"><h3>{{ section.title }}</h3><dl class="details-grid">
+                @for (field of fieldsFor(section, item.rcDetails); track field.label) {
+                  <div class="detail"><dt>{{ field.label }}</dt><dd class="copyable"><span>{{ field.value }}</span>@if (field.value !== '—') { <button class="copy-button" type="button" (click)="copy(field.value, field.label)" [attr.aria-label]="'Copy ' + field.label">Copy</button> }</dd></div>
+                }
+              </dl></section>
+            }
+          }
+        </div>
+        @if (item.rcDetails.rawApiResponse) {
+          <details class="raw-details"><summary>Original vehicle lookup response</summary><pre>{{ item.rcDetails.rawApiResponse }}</pre></details>
+        }
+      </details>
+    }
+    </div>
+    }
+
+    @if (activeTab() === 'documents') {
+    <div id="panel-documents" class="tab-panel" role="tabpanel" aria-labelledby="tab-documents">
+      <section class="panel">
+        <header class="panel-heading"><div><p class="eyebrow">FILES</p><h2>Uploaded documents</h2></div><span class="count">{{ item.documents.length }}</span></header>
+        @if (item.documents.length) {
+          <ul class="list">
+            @for (doc of item.documents; track trackById($index, doc)) {
+              <li class="list-row"><div class="list-copy"><strong>{{ doc.docName || doc.docType || 'Document' }}</strong><span>{{ doc.docType }}@if (doc.docSide) { · {{ doc.docSide }} } · {{ formatDate(doc.uploadedAt) }}</span></div>
+                @if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View / download</a> }
+              </li>
+            }
+          </ul>
+        } @else { <p class="empty-state">No documents are attached to this enquiry.</p> }
+      </section>
+
+    </div>
+    }
+
+    @if (activeTab() === 'quotes') {
+    <div id="panel-quotes" class="tab-panel" role="tabpanel" aria-labelledby="tab-quotes">
+      <section class="panel">
+        <header class="panel-heading">
+          <div><p class="eyebrow">PRICING</p><h2>Generated quotes</h2></div>
+          <div class="quote-heading-actions"><span class="count">{{ item.quotes.length }}</span><button type="button" class="button button-primary button-compact" (click)="openQuoteModal()">+ Add quote</button></div>
+        </header>
+        @if (item.quotes.length) {
+          <div class="table-wrap"><table><thead><tr><th>INSURER</th><th>IDV</th><th>PREMIUM</th><th>AGENT POINTS</th><th>DATE</th><th>SELECTION</th></tr></thead><tbody>
+            @for (quote of item.quotes; track trackById($index, quote)) {
+              <tr><td>{{ quote.insuranceCompanyName || quote.vendorName || '—' }}</td><td>{{ quote.idv == null ? '—' : (quote.idv | number:'1.0-2') }}</td><td>{{ quote.premium | number:'1.0-2' }}</td><td>{{ quote.agentPoints | number:'1.0-2' }}</td><td>{{ formatDate(quote.quoteDate) }}</td><td>{{ quote.isSelected ? 'Selected' : '—' }}</td></tr>
+              @if (quote.remarks) { <tr class="remarks-row"><td colspan="6">{{ quote.remarks }}</td></tr> }
+            }
+          </tbody></table></div>
+        } @else { <p class="empty-state">No quotes have been generated for this enquiry.</p> }
+      </section>
+    </div>
+    }
+
+    @if (activeTab() === 'vendor') {
+    <div id="panel-vendor" class="tab-panel" role="tabpanel" aria-labelledby="tab-vendor">
+      <section class="panel">
+        <header class="panel-heading"><div><p class="eyebrow">VENDOR</p><h2>Vendor information</h2></div><span class="count">{{ item.quotes.length }}</span></header>
+        @if (item.quotes.length) {
+          <div class="table-wrap"><table><thead><tr><th>VENDOR</th><th>INSURANCE COMPANY</th><th>PREMIUM</th><th>QUOTE DATE</th></tr></thead><tbody>
+            @for (quote of item.quotes; track trackById($index, quote)) {
+              <tr><td>{{ quote.vendorName || 'Not specified' }}</td><td>{{ quote.insuranceCompanyName || '—' }}</td><td>{{ quote.premium | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ formatDate(quote.quoteDate) }}</td></tr>
+            }
+          </tbody></table></div>
+        } @else { <p class="empty-state">No vendor is associated with a quote yet.</p> }
+      </section>
+    </div>
+    }
+
+    @if (activeTab() === 'policy') {
+    <div id="panel-policy" class="tab-panel" role="tabpanel" aria-labelledby="tab-policy">
+      <section class="panel">
+        <header class="panel-heading"><div><p class="eyebrow">POLICY</p><h2>Policy information</h2></div><span class="status-pill">{{ statusLabel(item.status) }}</span></header>
+        @if (policyLoading()) {
+          <div class="policy-state" role="status"><span class="spinner"></span> Loading policy details…</div>
+        } @else if (policyLoadError()) {
+          <div class="policy-feedback policy-error" role="alert">{{ policyLoadError() }} <button type="button" class="text-button" (click)="loadPolicyDetails()">Retry</button></div>
+        }
+        @if (policyDetails(); as policy) {
+          <dl class="details-grid policy-details-grid">
+            <div class="detail"><dt>Policy number</dt><dd class="copyable"><span>{{ policy.policyNumber }}</span><button type="button" class="copy-button" (click)="copy(policy.policyNumber, 'Policy number')">Copy</button></dd></div>
+            <div class="detail"><dt>Policy type</dt><dd>{{ item.policyType || '—' }}</dd></div>
+            <div class="detail"><dt>Insurer</dt><dd>{{ selectedQuote(item.quotes)?.insuranceCompanyName || '—' }}</dd></div>
+            <div class="detail"><dt>Policy start date</dt><dd>{{ formatDate(policy.policyStartDate) }}</dd></div>
+            <div class="detail"><dt>Policy end date</dt><dd>{{ formatDate(policy.policyEndDate) }}</dd></div>
+            <div class="detail"><dt>Recorded by</dt><dd>{{ policy.createdBy || '—' }}</dd></div>
+            <div class="detail"><dt>Recorded on</dt><dd>{{ formatDate(policy.createdAt) }}</dd></div>
+            <div class="detail"><dt>Remarks</dt><dd>{{ policy.remarks || '—' }}</dd></div>
+          </dl>
+        } @else if (!policyLoading() && !policyLoadError()) {
+          <form class="policy-form" [formGroup]="policyForm" (ngSubmit)="savePolicyDetails()" novalidate>
+            @if (policyError()) { <div class="policy-feedback policy-error" role="alert">{{ policyError() }}</div> }
+            @if (policySuccess()) { <div class="policy-feedback policy-success" role="status">{{ policySuccess() }}</div> }
+            <p class="policy-form-intro">Upload the final Policy document first, then record the policy number and coverage dates.</p>
+            @if (!policyDocuments(item).length) { <p class="policy-requirement" role="status">Save is enabled after the Policy document upload succeeds.</p> }
+            <div class="policy-form-grid">
+              <label class="policy-field">Policy number <span class="required">*</span><input type="text" formControlName="policyNumber" maxlength="100" autocomplete="off">@if (policyForm.controls.policyNumber.touched && policyForm.controls.policyNumber.invalid) { <small>Enter a policy number.</small> }</label>
+              <label class="policy-field">Policy start date <span class="required">*</span><input type="date" formControlName="policyStartDate">@if (policyForm.controls.policyStartDate.touched && policyForm.controls.policyStartDate.invalid) { <small>Choose a start date.</small> }</label>
+              <label class="policy-field">Policy end date <span class="required">*</span><input type="date" formControlName="policyEndDate">@if (policyForm.controls.policyEndDate.touched && policyForm.controls.policyEndDate.invalid) { <small>Choose an end date.</small> }</label>
+              <label class="policy-field policy-field-wide">Remarks <span class="optional">Optional</span><textarea rows="2" formControlName="remarks" maxlength="1000"></textarea></label>
+            </div>
+            <div class="policy-form-actions"><button type="submit" class="button button-primary" [disabled]="policySaving() || !policyDocuments(item).length">{{ policySaving() ? 'Saving policy…' : 'Save policy details' }}</button></div>
+          </form>
+        }
+      </section>
+
+      <section class="panel policy-upload-panel">
+        <header class="panel-heading"><div><p class="eyebrow">FINAL DOCUMENT</p><h2>Upload policy document</h2></div></header>
+        <div class="policy-upload-body">
+          <p class="policy-form-intro">The file is uploaded as <strong>Policy</strong> / <strong>Front</strong> against this enquiry.</p>
+          @if (policyUploadError()) { <div class="policy-feedback policy-error" role="alert">{{ policyUploadError() }}</div> }
+          @if (policyUploadSuccess()) { <div class="policy-feedback policy-success" role="status">{{ policyUploadSuccess() }}</div> }
+          <div class="policy-upload-controls">
+            <label class="policy-field">Policy file <span class="required">*</span><input type="file" accept=".pdf,.jpg,.jpeg,.png" (change)="onPolicyFileSelected($event)"></label>
+            <button type="button" class="button button-primary" (click)="uploadFinalPolicy()" [disabled]="policyUploading() || !policyFile()">{{ policyUploading() ? 'Uploading…' : 'Upload policy' }}</button>
+          </div>
+          @if (policyFile(); as file) { <p class="selected-file">Selected: {{ file.name }}</p> }
+        </div>
+        @if (policyDocuments(item).length) {
+          <ul class="list">@for (doc of policyDocuments(item); track trackById($index, doc)) { <li class="list-row"><div class="list-copy"><strong>{{ doc.docName || doc.docType }}</strong><span>{{ formatDate(doc.uploadedAt) }}</span></div>@if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View / download</a> }</li> }</ul>
+        } @else {
+          <p class="empty-state">No policy document has been uploaded to this enquiry.</p>
+        }
+      </section>
+    </div>
+    }
+  }
+
+  @if (statusModalOpen()) {
+    <div class="carbon-modal-overlay status-modal-overlay" (click)="closeStatusModal()" role="presentation">
+      <section class="carbon-modal-dialog status-modal" role="dialog" aria-modal="true" aria-labelledby="status-modal-title" (click)="$event.stopPropagation()" (keydown.escape)="closeStatusModal()" tabindex="-1">
+        <header class="modal-header status-modal-header">
+          <div class="header-titles">
+            <span class="carbon-eyebrow">Enquiry workflow</span>
+            <h2 id="status-modal-title" class="modal-headline">Update Status</h2>
+            <p class="modal-subhead">Advance this enquiry to the next stage.</p>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeStatusModal()" [disabled]="statusSubmitting()" aria-label="Close status update">×</button>
+        </header>
+        <div class="status-modal-body">
+          @if (statusError()) { <div class="form-error" role="alert">{{ statusError() }}</div> }
+          <div class="status-transition" aria-label="Status transition">
+            <div class="status-transition-item"><span>Current status</span><strong>{{ statusLabel(enquiry()?.status) }}</strong></div>
+            <span class="status-transition-arrow" aria-hidden="true">→</span>
+            <div class="status-transition-item status-transition-next"><span>Next status</span><strong>{{ statusLabel(nextEnquiryStatus()) }}</strong></div>
+          </div>
+          <p class="status-update-note">The update will be checked by the server against the enquiry’s current status and stage requirements.</p>
+        </div>
+        <footer class="modal-footer status-modal-footer">
+          <button type="button" class="carbon-btn-secondary" (click)="closeStatusModal()" [disabled]="statusSubmitting()">Cancel</button>
+          <button type="button" class="carbon-btn-primary" (click)="confirmStatusUpdate()" [disabled]="statusSubmitting()">{{ statusSubmitting() ? 'Updating…' : 'Confirm update' }}</button>
+        </footer>
+      </section>
+    </div>
+  }
+
+  @if (quoteModalOpen()) {
+    <div class="carbon-modal-overlay quote-modal-overlay" (click)="closeQuoteModal()" (keydown.escape)="closeQuoteModal()" role="presentation">
+      <section class="carbon-modal-dialog quote-modal" role="dialog" aria-modal="true" aria-labelledby="quote-modal-title" (click)="$event.stopPropagation()" tabindex="-1">
+        <header class="modal-header quote-modal-header">
+          <div class="header-titles">
+            <span class="carbon-eyebrow">Enquiry quote</span>
+            <h2 id="quote-modal-title" class="modal-headline">Add quote</h2>
+          </div>
+          <button type="button" class="modal-close-btn" aria-label="Close" (click)="closeQuoteModal()" [disabled]="quoteSubmitting()">×</button>
+        </header>
+        <form class="quote-modal-form" [formGroup]="quoteForm" (ngSubmit)="submitQuote()" novalidate>
+          <div class="modal-body quote-modal-body">
+            @if (quoteError()) { <div class="form-error" role="alert">{{ quoteError() }}</div> }
+            <section class="quote-form-section" aria-labelledby="quote-source-heading">
+              <div class="quote-section-heading"><h3 id="quote-source-heading">Quote source</h3></div>
+              <div class="form-grid">
+                <label class="carbon-field">Insurance company <span class="required">*</span>
+                  <select formControlName="insuranceCompanyId">
+                    <option value="">Select company</option>
+                    @for (company of companies(); track company.id) { <option [value]="company.id">{{ company.companyName }}</option> }
+                  </select>
+                  @if (quoteForm.controls.insuranceCompanyId.touched && quoteForm.controls.insuranceCompanyId.invalid) { <small>Select an insurance company.</small> }
+                </label>
+                <label class="carbon-field">Vendor <span class="optional">Optional</span>
+                  <select formControlName="vendorId"><option value="">Select vendor</option>@for (vendor of vendors(); track vendor.id) { <option [value]="vendor.id">{{ vendor.name }}</option> }</select>
+                </label>
+              </div>
+            </section>
+            <section class="quote-form-section" aria-labelledby="quote-pricing-heading">
+              <div class="quote-section-heading"><h3 id="quote-pricing-heading">Premium breakdown</h3><p>Enter amounts in rupees. Required values are marked with an asterisk.</p></div>
+              <div class="form-grid">
+                <label class="carbon-field">IDV <span class="optional">Optional</span>
+                  <input type="number" min="0" step="0.01" formControlName="idv" inputmode="decimal">
+                </label>
+                <label class="carbon-field">Premium <span class="required">*</span>
+                  <input type="number" min="0.01" step="0.01" formControlName="premium" inputmode="decimal">
+                  @if (quoteForm.controls.premium.touched && quoteForm.controls.premium.invalid) { <small>Premium must be greater than zero.</small> }
+                </label>
+                <label class="carbon-field">Company payable <span class="required">*</span>
+                  <input type="number" min="0" step="0.01" formControlName="companyPayable" inputmode="decimal">
+                  @if (quoteForm.controls.companyPayable.touched && quoteForm.controls.companyPayable.invalid) { <small>Enter a valid amount.</small> }
+                </label>
+                <label class="carbon-field">Agent points <span class="required">*</span>
+                  <input type="number" min="0" step="0.01" formControlName="agentPoints" inputmode="decimal">
+                  @if (quoteForm.controls.agentPoints.touched && quoteForm.controls.agentPoints.invalid) { <small>Enter a valid amount.</small> }
+                </label>
+                <label class="carbon-field">Admin profit <span class="required">*</span>
+                  <input type="number" min="0" step="0.01" formControlName="adminProfit" inputmode="decimal">
+                  @if (quoteForm.controls.adminProfit.touched && quoteForm.controls.adminProfit.invalid) { <small>Enter a valid amount.</small> }
+                </label>
+              </div>
+              <label class="commission-option"><input type="checkbox" formControlName="agentClassCommissionApplicable"><span><strong>Apply agent class commission</strong><small>Commission is applied using this agency’s agent class rule.</small></span></label>
+            </section>
+            <section class="quote-form-section remarks-section" aria-labelledby="quote-remarks-heading">
+              <div class="quote-section-heading"><h3 id="quote-remarks-heading">Notes</h3></div>
+              <label class="carbon-field">Remarks <span class="optional">Optional</span>
+                <textarea rows="2" formControlName="remarks" maxlength="1000" placeholder="Add a note for this quote"></textarea>
+              </label>
+            </section>
+          </div>
+          <footer class="modal-footer quote-modal-footer">
+            <button type="button" class="carbon-btn-secondary" (click)="closeQuoteModal()" [disabled]="quoteSubmitting()">Cancel</button>
+            <button type="submit" class="carbon-btn-primary" [disabled]="quoteSubmitting()">{{ quoteSubmitting() ? 'Saving…' : 'Save quote' }}</button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+
+  @if (paymentModalOpen()) {
+    <div class="modal-backdrop payment-backdrop">
+      <section class="payment-modal" role="dialog" aria-modal="true" aria-labelledby="payment-modal-title">
+        <header class="payment-modal-header">
+          <div>
+            <p class="eyebrow">PAYMENT VERIFICATION</p>
+            <h2 id="payment-modal-title">Review customer payment</h2>
+            <p class="quote-modal-description">Confirm the payment information and credited bank account before approving.</p>
+          </div>
+        </header>
+
+        <div class="payment-modal-body">
+          @if (paymentLoading() || paymentSectionLoading()) {
+            <div class="payment-state" role="status"><span class="spinner"></span> Checking payment status and details…</div>
+          } @else if ((paymentError() || paymentSectionError()) && !paymentDetails()) {
+            <div class="form-error" role="alert">{{ paymentError() || paymentSectionError() }}</div>
+            <button type="button" class="text-button" (click)="retryPaymentReview()">Retry payment lookup</button>
+          } @else if (paymentDetails(); as payment) {
+            @if (paymentError() || paymentSectionError()) { <div class="form-error" role="alert">{{ paymentError() || paymentSectionError() }}</div> }
+            <div class="payment-status-line"><span>Payment status</span><strong class="pending-status">{{ payment.paymentStatus }}</strong></div>
+            <section class="payment-section">
+              <div class="quote-section-heading"><h3>Payment details</h3></div>
+              <dl class="payment-details-grid">
+                <div><dt>Customer</dt><dd>{{ payment.fullName || '—' }}</dd></div>
+                <div><dt>Enquiry</dt><dd class="mono">{{ payment.enquiryId || enquiryId() }}</dd></div>
+                <div><dt>Vehicle</dt><dd>{{ payment.vehicleNumber || '—' }}</dd></div>
+                <div><dt>Insurance company</dt><dd>{{ payment.insuranceCompanyName || '—' }}</dd></div>
+                <div><dt>Payment mode</dt><dd>{{ payment.paymentMode || '—' }}</dd></div>
+                <div><dt>Payment reference</dt><dd>{{ payment.referenceNumber || payment.transactionId || '—' }}</dd></div>
+                <div><dt>Amount submitted</dt><dd class="amount-value">{{ payment.paymentAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                <div><dt>Premium</dt><dd>{{ payment.premiumAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                <div><dt>Final payable</dt><dd>{{ payment.finalPayableAmount | currency:'INR':'symbol':'1.2-2' }}</dd></div>
+                <div><dt>Transaction ID</dt><dd>{{ payment.transactionId || '—' }}</dd></div>
+                <div><dt>Wallet balance at submission</dt><dd>{{ payment.manualWalletBalance || '—' }}</dd></div>
+                <div><dt>Submitted by</dt><dd>{{ payment.submittedBy || '—' }}</dd></div>
+                <div><dt>Submitted on</dt><dd>{{ payment.submittedOn || '—' }}</dd></div>
+                <div><dt>Remarks</dt><dd>{{ payment.remarks || '—' }}</dd></div>
+              </dl>
+            </section>
+
+            <section class="payment-section bank-destination">
+              <div class="quote-section-heading"><h3>Credited bank account</h3><p>Destination recorded against this payment.</p></div>
+              @if (payment.bankAccountId) {
+                <dl class="payment-details-grid">
+                  <div><dt>Account name</dt><dd>{{ payment.bankAccountName || '—' }}</dd></div>
+                  <div><dt>Bank</dt><dd>{{ payment.bankName || '—' }}</dd></div>
+                  <div><dt>Account holder</dt><dd>{{ payment.accountHolderName || '—' }}</dd></div>
+                  <div><dt>Account number</dt><dd class="mono">{{ payment.bankAccountNumber || '—' }}</dd></div>
+                  <div><dt>Branch</dt><dd>{{ payment.bankBranch || '—' }}</dd></div>
+                  <div><dt>IFSC</dt><dd class="mono">{{ payment.bankIfscCode || '—' }}</dd></div>
+                </dl>
+              } @else {
+                <p class="no-bank-account">No bank account is linked to this payment record.</p>
+              }
+            </section>
+
+            @if (paymentConfirmation(); as action) {
+              <section class="payment-confirmation" aria-live="polite">
+                <h3>Confirm {{ action === 'approve' ? 'approval' : 'rejection' }}</h3>
+                <p>{{ action === 'approve' ? 'Approving records this amount against the bank account shown above.' : 'Rejecting this payment will mark it as rejected.' }}</p>
+                <label class="form-field">{{ action === 'approve' ? 'Approval note' : 'Reason for rejection' }} @if (action === 'reject') { <span class="required">*</span> }
+                  <textarea rows="2" maxlength="1000" [value]="paymentActionRemarks()" (input)="paymentActionRemarks.set($any($event.target).value)" [placeholder]="action === 'approve' ? 'Optional' : 'Enter a reason'"></textarea>
+                </label>
+                <div class="confirmation-actions">
+                  <button type="button" class="button button-tertiary" (click)="cancelPaymentConfirmation()" [disabled]="paymentSubmitting()">Back</button>
+                  <button type="button" class="button" [class.button-primary]="action === 'approve'" [class.button-danger]="action === 'reject'" (click)="confirmPaymentAction()" [disabled]="paymentSubmitting()">{{ paymentSubmitting() ? 'Submitting…' : (action === 'approve' ? 'Confirm approval' : 'Confirm rejection') }}</button>
+                </div>
+              </section>
+            }
+          }
+        </div>
+
+        @if (paymentDetails() && !paymentConfirmation()) {
+          <footer class="payment-modal-footer">
+            <button type="button" class="button button-danger" (click)="requestPaymentConfirmation('reject')">Reject payment</button>
+            <button type="button" class="button button-primary" (click)="requestPaymentConfirmation('approve')">Approve payment</button>
+          </footer>
+        }
+      </section>
+    </div>
+  }
+</main>

@@ -43,6 +43,12 @@ import {
   AdminQuoteQueuePagedData,
   AdminPolicyQueueFilterParams,
   AdminPolicyQueuePagedData,
+  AdminEnquiryDetails,
+  AdminPolicyDetails,
+  CreateAdminPolicyDetailsRequest,
+  PaymentVerificationDetails,
+  AdminPolicyPaymentDetails,
+  ChangeAdminEnquiryStatusRequest,
 } from '../../models/enquiry.model';
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
@@ -86,6 +92,66 @@ export class EnquiryService {
   private enquiriesSignal = signal<EnquiryItem[]>(this.loadInitial());
 
   readonly enquiries = this.enquiriesSignal.asReadonly();
+
+  getAdminEnquiryDetails(enquiryId: string): Observable<ApiResponse<AdminEnquiryDetails>> {
+    return this.http.get<ApiResponse<AdminEnquiryDetails>>(
+      `${environment.apiUrl}/Enquiry/${encodeURIComponent(enquiryId)}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getAdminPolicyDetails(enquiryId: string): Observable<ApiResponse<AdminPolicyDetails>> {
+    return this.http.get<ApiResponse<AdminPolicyDetails>>(
+      `${environment.apiUrl}/Enquiry/admin/${encodeURIComponent(enquiryId)}/policy-details`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  createAdminPolicyDetails(enquiryId: string, payload: CreateAdminPolicyDetailsRequest): Observable<ApiResponse<AdminPolicyDetails>> {
+    return this.http.post<ApiResponse<AdminPolicyDetails>>(
+      `${environment.apiUrl}/Enquiry/admin/${encodeURIComponent(enquiryId)}/policy-details`,
+      payload,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getPaymentVerification(enquiryId: string): Observable<ApiResponse<PaymentVerificationDetails>> {
+    return this.http.get<ApiResponse<PaymentVerificationDetails>>(
+      `${environment.apiUrl}/VehicleEnquiry/${encodeURIComponent(enquiryId)}/payment-verification`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getAdminPolicyPaymentDetails(enquiryId: string): Observable<ApiResponse<AdminPolicyPaymentDetails>> {
+    return this.http.get<ApiResponse<AdminPolicyPaymentDetails>>(
+      `${environment.apiUrl}/PolicyPayment/${encodeURIComponent(enquiryId)}/details`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  changeAdminEnquiryStatus(request: ChangeAdminEnquiryStatusRequest): Observable<ApiResponse<boolean>> {
+    return this.http.put<ApiResponse<boolean>>(
+      `${environment.apiUrl}/Enquiry/admin/change-status`,
+      request,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  approvePolicyPayment(policyPaymentId: string, remarks = 'Approved'): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(
+      `${environment.apiUrl}/PolicyPayment/approve`,
+      { policyPaymentId, remarks },
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  rejectPolicyPayment(policyPaymentId: string, remarks: string): Observable<ApiResponse<string>> {
+    return this.http.post<ApiResponse<string>>(
+      `${environment.apiUrl}/PolicyPayment/reject`,
+      { policyPaymentId, remarks },
+      { headers: this.getAuthHeaders() }
+    );
+  }
 
   getAssignableEmployees(enquiryId: string): Observable<ApiResponse<AssignableEmployee[]>> {
     return this.http.get<ApiResponse<AssignableEmployee[]>>(
