@@ -4,6 +4,7 @@ import { provideHttpClientTesting } from '@angular/common/http/testing';
 import { of, throwError } from 'rxjs';
 import { AdminEmployee } from './admin-employee';
 import { EmployeeService } from '../../../services/employee/employee.service';
+import { EnquiryService } from '../../../services/enquiry/enquiry.service';
 import { AdminEmployeeItem, AdminEmployeePagedData } from '../../../models/employee.model';
 import { ApiResponse } from '../../../models/response.model';
 
@@ -66,6 +67,33 @@ describe('AdminEmployee', () => {
           useValue: {
             getAllEmployees: vi.fn().mockReturnValue(of(mockPagedResponse)),
             toggleEmployeeStatus: vi.fn().mockReturnValue(of({ isSuccess: true })),
+            createInternalUser: vi.fn().mockReturnValue(of({ isSuccess: true, data: true, message: 'Employee created' })),
+            updateEmployee: vi.fn().mockReturnValue(of({ isSuccess: true, data: true, message: 'Employee updated' })),
+            getEmployeeRights: vi.fn().mockReturnValue(of({
+              isSuccess: true,
+              data: {
+                userId: mockEmployees[0].id,
+                fullName: mockEmployees[0].employeeName,
+                userType: mockEmployees[0].role,
+                workAllocations: [{ insuranceTypeId: 'vehicle-insurance', vehicleTypeIds: ['car'] }],
+                modulePermissions: ['Dashboard'],
+              },
+              message: 'Rights fetched',
+            })),
+            updateEmployeeRights: vi.fn().mockReturnValue(of({ isSuccess: true, data: true, message: 'Rules updated' })),
+          },
+        },
+        {
+          provide: EnquiryService,
+          useValue: {
+            getInsuranceTypes: vi.fn().mockReturnValue(of({
+              isSuccess: true,
+              data: [{ id: 'vehicle-insurance', name: 'Vehicle Insurance', isActive: true }],
+            })),
+            getVehicleTypes: vi.fn().mockReturnValue(of({
+              isSuccess: true,
+              data: [{ id: 'car', typeName: 'Car', isActive: true }],
+            })),
           },
         },
       ],
@@ -176,22 +204,69 @@ describe('AdminEmployee', () => {
     expect(component.toastMessage()).toContain('Failed to update employee status');
   });
 
-  it('should show toast when clicking Manage Rights button', () => {
+  it('should open the rules manager and load current rights', () => {
     fixture.detectChanges();
     component.onManageRights(mockEmployees[0]);
-    expect(component.toastMessage()).toContain('Manage rights for "Samuel John"');
+    expect(component.modalMode()).toBe('rights');
+    expect(component.modulePermissions()).toEqual(['Dashboard']);
+    expect(component.selectedInsuranceTypeIds()).toEqual(['vehicle-insurance']);
+    expect(component.isVehicleTypeSelected('vehicle-insurance', 'car')).toBe(true);
   });
 
-  it('should show toast when clicking Edit Employee button', () => {
+  it('should save changed employee rules', () => {
+    fixture.detectChanges();
+    component.onManageRights(mockEmployees[0]);
+    component.toggleModulePermission('Reports', true);
+    component.submitEmployeeForm();
+
+    expect(employeeService.updateEmployeeRights).toHaveBeenCalledWith({
+      UserId: mockEmployees[0].id,
+      ModulePermissions: ['Dashboard', 'Reports'],
+      WorkAllocations: [{ InsuranceTypeId: 'vehicle-insurance', VehicleTypeIds: ['car'] }],
+    });
+    expect(component.modalMode()).toBeNull();
+  });
+
+  it('should update employee details from the edit dialog', () => {
     fixture.detectChanges();
     component.onEditEmployee(mockEmployees[0]);
-    expect(component.toastMessage()).toContain('Edit Employee "Samuel John"');
+    component.fullName.set('Samuel J');
+    component.email.set('samuel.j@example.com');
+    component.phoneNumber.set('9744510308');
+    component.submitEmployeeForm();
+    expect(employeeService.updateEmployee).toHaveBeenCalledWith({
+      UserId: mockEmployees[0].id,
+      FullName: 'Samuel J',
+      Email: 'samuel.j@example.com',
+      PhoneNumber: '9744510308',
+    });
+    expect(component.modalMode()).toBeNull();
   });
 
-  it('should show toast when clicking Add Employee button', () => {
+  it('should create an employee with the selected module and work allocation rules', () => {
     fixture.detectChanges();
     component.onAddEmployee();
-    expect(component.toastMessage()).toContain('Add Employee popup');
+    component.fullName.set('Alex Employee');
+    component.userName.set('alex');
+    component.email.set('alex@example.com');
+    component.phoneNumber.set('1234567890');
+    component.password.set('securepass');
+    component.toggleModulePermission('Dashboard', true);
+    component.toggleInsuranceType('vehicle-insurance', true);
+    component.toggleVehicleType('vehicle-insurance', 'car', true);
+    component.submitEmployeeForm();
+
+    expect(employeeService.createInternalUser).toHaveBeenCalledWith({
+      UserName: 'alex',
+      FullName: 'Alex Employee',
+      Email: 'alex@example.com',
+      PhoneNumber: '1234567890',
+      Password: 'securepass',
+      UserType: 'AdminEmployee',
+      ModulePermissions: ['Dashboard'],
+      WorkAllocations: [{ InsuranceTypeId: 'vehicle-insurance', VehicleTypeIds: ['car'] }],
+    });
+    expect(component.modalMode()).toBeNull();
   });
 
   it('should handle pagination changes', () => {

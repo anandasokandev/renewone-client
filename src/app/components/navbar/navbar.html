@@ -10,6 +10,7 @@
         @if (isAdmin()) {
           <a
             [routerLink]="['/admin/dashboard']"
+            [hidden]="!hasModule('Dashboard')"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
@@ -18,6 +19,7 @@
           </a>
           <a
             [routerLink]="['/admin/enquiries']"
+            [hidden]="!hasModule('Enquiries')"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
@@ -26,6 +28,7 @@
           </a>
           <a
             [routerLink]="['/admin/employees']"
+            [hidden]="!hasModule('Employees')"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
@@ -34,6 +37,7 @@
           </a>
           <a
             [routerLink]="['/admin/agents']"
+            [hidden]="!hasModule('Agents')"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
@@ -42,6 +46,7 @@
           </a>
           <a
             [routerLink]="['/admin/reports']"
+            [hidden]="!hasModule('Reports')"
             routerLinkActive="active"
             class="nav-square-btn"
             (click)="closeMenus()"
@@ -52,6 +57,7 @@
           <!-- Accelerator Dropdown -->
           <div
             class="nav-dropdown"
+            [hidden]="!hasModule('Accelerators')"
             [class.open]="isAcceleratorMenuOpen()"
             (mouseenter)="openAcceleratorMenu()"
             (mouseleave)="closeAcceleratorMenu()"
@@ -277,6 +283,7 @@
       @if (isAdmin()) {
         <a
           [routerLink]="['/admin/dashboard']"
+          [hidden]="!hasModule('Dashboard')"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -292,6 +299,7 @@
 
         <a
           [routerLink]="['/admin/enquiries']"
+          [hidden]="!hasModule('Enquiries')"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -304,6 +312,7 @@
 
         <a
           [routerLink]="['/admin/employees']"
+          [hidden]="!hasModule('Employees')"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -318,6 +327,7 @@
 
         <a
           [routerLink]="['/admin/agents']"
+          [hidden]="!hasModule('Agents')"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -333,6 +343,7 @@
 
         <a
           [routerLink]="['/admin/reports']"
+          [hidden]="!hasModule('Reports')"
           routerLinkActive="active"
           class="drawer-nav-link"
           (click)="closeMenus()"
@@ -346,7 +357,7 @@
         </a>
 
         <!-- Accelerator Accordion in Drawer -->
-        <div class="drawer-accordion-group">
+        <div class="drawer-accordion-group" [hidden]="!hasModule('Accelerators')">
           <button
             type="button"
             class="drawer-nav-link drawer-nav-accordion-trigger"

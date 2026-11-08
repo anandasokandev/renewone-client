@@ -1,1 +1,105 @@
-<p>admin-reports works!</p>
+<main class="reports-page">
+  @if (error()) { <div class="message error" role="alert">{{ error() }} <button type="button" (click)="loadDefinitions()">Retry</button></div> }
+  @if (notice()) { <div class="message success" role="status">{{ notice() }}</div> }
+
+  <section class="report-workspace" aria-label="Report builder">
+    <div class="builder-header">
+      <div>
+        <h2>Build a report</h2>
+      </div>
+      <div class="export-actions">
+        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(1)">{{ exporting() === 1 ? 'Exporting…' : 'CSV' }}</button>
+        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(2)">{{ exporting() === 2 ? 'Exporting…' : 'Excel' }}</button>
+        <button type="button" class="button-tertiary" [disabled]="!result() || exporting() !== null" (click)="exportReport(3)">{{ exporting() === 3 ? 'Exporting…' : 'PDF' }}</button>
+      </div>
+    </div>
+
+    <div class="filters">
+      <label class="field report-field">
+        <span>Report</span>
+        <select [ngModel]="selectedType()" (ngModelChange)="changeReport($event)" [disabled]="loadingDefinitions() || definitions().length === 0">
+          @for (definition of definitions(); track definition.type) { <option [ngValue]="definition.type">{{ definition.name }}</option> }
+        </select>
+      </label>
+      <button type="button" class="button-primary generate-button" [disabled]="!selectedType() || loadingReport() || loadingDefinitions()" (click)="generateReport(1)">{{ loadingReport() ? 'Generating…' : 'Generate report' }}</button>
+    </div>
+
+    @if (loadingDefinitions()) {
+      <div class="state">Loading available reports…</div>
+    } @else if (!selectedDefinition()) {
+      <div class="state">No report definitions are available.</div>
+    } @else {
+      <div class="report-description">{{ selectedDefinition()?.description }}</div>
+      <div class="filters advanced-filters">
+        @for (filter of selectedDefinition()?.filters ?? []; track filter.key) {
+          @if (filter.type.toLowerCase().includes('daterange')) {
+            <fieldset class="range-field field">
+              <legend>{{ filter.label }}</legend>
+              @if (filter.key === 'dateRange' || filter.key === 'enquiryDateRange') {
+                <label><span>From</span><input type="date" [ngModel]="fromDate()" (ngModelChange)="fromDate.set($event)" /></label>
+                <label><span>To</span><input type="date" [ngModel]="toDate()" (ngModelChange)="toDate.set($event)" [min]="fromDate() || null" /></label>
+              } @else {
+                <label><span>From</span><input type="date" [ngModel]="filterValue(filter.key + '_from')" (ngModelChange)="setFilterValue(filter.key + '_from', $event)" /></label>
+                <label><span>To</span><input type="date" [ngModel]="filterValue(filter.key + '_to')" (ngModelChange)="setFilterValue(filter.key + '_to', $event)" [min]="filterValue(filter.key + '_from') || null" /></label>
+              }
+            </fieldset>
+          } @else if (filter.type.toLowerCase() === 'numberrange' || filter.type.toLowerCase() === 'percentagerange') {
+            <fieldset class="range-field field">
+              <legend>{{ filter.label }}</legend>
+              <label><span>Minimum</span><input type="number" [ngModel]="filterValue(filter.key + '_min')" (ngModelChange)="setFilterValue(filter.key + '_min', $event)" /></label>
+              <label><span>Maximum</span><input type="number" [ngModel]="filterValue(filter.key + '_max')" (ngModelChange)="setFilterValue(filter.key + '_max', $event)" /></label>
+            </fieldset>
+          } @else if (filter.key === 'groupBy') {
+            <label class="field"><span>{{ filter.label }}</span><select [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)"><option value="day">Daily</option><option value="month">Monthly</option></select></label>
+          } @else if (filter.type.toLowerCase() === 'multiselect') {
+            <label class="field"><span>{{ filter.label }}</span><input type="text" [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)" [placeholder]="filter.key === 'status' ? 'e.g. Submitted, Quoted' : 'Enter comma-separated IDs or values'" /></label>
+          } @else {
+            <label class="field"><span>{{ filter.label }}</span><input type="text" [ngModel]="filterValue(filter.key)" (ngModelChange)="setFilterValue(filter.key, $event)" /></label>
+          }
+        }
+      </div>
+    }
+  </section>
+
+  @if (loadingReport()) {
+    <section class="result-state" role="status"><span class="spinner"></span>Generating report…</section>
+  } @else if (result(); as report) {
+    @if (report.metrics.length > 0) {
+      <section class="metrics" aria-label="Report summary">
+        @for (metric of report.metrics; track metric.key) {
+          <article class="metric-card">
+            <span>{{ metric.label }}</span>
+            <strong>{{ formatMetric(metric.value, metric.format) }}</strong>
+          </article>
+        }
+      </section>
+    }
+    <section class="results-panel">
+      <div class="results-heading">
+        <div><h2>{{ selectedDefinition()?.name }}</h2><p>{{ report.data.totalRecords }} records</p></div>
+        <label class="page-size"><span>Rows per page</span><select [ngModel]="pageSize()" (ngModelChange)="pageSize.set(+$event); generateReport(1)"><option [ngValue]="10">10</option><option [ngValue]="25">25</option><option [ngValue]="50">50</option><option [ngValue]="100">100</option></select></label>
+      </div>
+      @if (report.data.items.length === 0) {
+        <div class="state">No records match this report and date range.</div>
+      } @else {
+        <div class="table-scroll">
+          <table>
+            <thead><tr>@for (column of report.columns; track column.key) { <th scope="col">{{ column.label }}</th> }</tr></thead>
+            <tbody>
+              @for (row of report.data.items; track $index) {
+                <tr>@for (column of report.columns; track column.key) { <td>{{ cellValue(row, column.key) }}</td> }</tr>
+              }
+            </tbody>
+          </table>
+        </div>
+        <footer class="pagination">
+          <span>Page {{ report.data.pageNumber }} of {{ report.data.totalPages }} · {{ report.data.totalRecords }} total</span>
+          <div>
+            <button type="button" class="page-button" [disabled]="report.data.pageNumber <= 1 || loadingReport()" (click)="generateReport(report.data.pageNumber - 1)">Previous</button>
+            <button type="button" class="page-button" [disabled]="report.data.pageNumber >= report.data.totalPages || loadingReport()" (click)="generateReport(report.data.pageNumber + 1)">Next</button>
+          </div>
+        </footer>
+      }
+    </section>
+  }
+</main>

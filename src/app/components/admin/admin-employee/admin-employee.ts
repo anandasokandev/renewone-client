@@ -1,10 +1,24 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
 import { FormsModule } from '@angular/forms';
-import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { forkJoin } from 'rxjs';
+import { finalize } from 'rxjs/operators';
+import { EnquiryService } from '../../../services/enquiry/enquiry.service';
 import { EmployeeService } from '../../../services/employee/employee.service';
-import { AdminEmployeeItem } from '../../../models/employee.model';
+import { ADMIN_USER_TYPES } from '../../../models/auth.model';
+import {
+  AdminEmployeeItem,
+  CreateInternalUserPayload,
+  GetAllEmployeesPayload,
+  UpdateEmployeePayload,
+  UpdateEmployeeRightsPayload,
+  WorkAllocationPayload,
+} from '../../../models/employee.model';
+import { InsuranceTypeItem, VehicleTypeItem } from '../../../models/enquiry.model';
+
+type EmployeeModalMode = 'add' | 'edit' | 'rights';
+type ToastType = 'success' | 'info' | 'error';
 
 @Component({
   selector: 'app-admin-employee',
@@ -14,9 +28,9 @@ import { AdminEmployeeItem } from '../../../models/employee.model';
 })
 export class AdminEmployee implements OnInit {
   private readonly employeeService = inject(EmployeeService);
+  private readonly enquiryService = inject(EnquiryService);
   private readonly destroyRef = inject(DestroyRef);
 
-  // Data state
   readonly employees = signal<AdminEmployeeItem[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly searchQuery = signal<string>('');
@@ -29,37 +43,64 @@ export class AdminEmployee implements OnInit {
   readonly hasNextPage = signal<boolean>(false);
   readonly togglingEmployeeId = signal<string | null>(null);
 
-  // Toast feedback & Clipboard state
   readonly toastMessage = signal<string | null>(null);
-  readonly toastType = signal<'success' | 'info' | 'error'>('success');
+  readonly toastType = signal<ToastType>('success');
   readonly copiedField = signal<string | null>(null);
 
-  // Client-side quick filter over retrieved page items
+  readonly modalMode = signal<EmployeeModalMode | null>(null);
+  readonly modalEmployee = signal<AdminEmployeeItem | null>(null);
+  readonly modalSubmitting = signal(false);
+  readonly rulesLoading = signal(false);
+  readonly employeeRightsLoading = signal(false);
+  readonly rulesError = signal<string | null>(null);
+  readonly employeeRightsError = signal<string | null>(null);
+  readonly formError = signal<string | null>(null);
+  readonly submitAttempted = signal(false);
+
+  readonly fullName = signal('');
+  readonly userName = signal('');
+  readonly email = signal('');
+  readonly phoneNumber = signal('');
+  readonly password = signal('');
+  readonly userType = signal('AdminEmployee');
+
+  readonly insuranceTypes = signal<InsuranceTypeItem[]>([]);
+  readonly vehicleTypes = signal<VehicleTypeItem[]>([]);
+  readonly modulePermissions = signal<string[]>([]);
+  readonly selectedInsuranceTypeIds = signal<string[]>([]);
+  readonly selectedVehicleTypeIds = signal<Record<string, string[]>>({});
+
+  readonly availableModules = [
+    'Dashboard',
+    'Enquiries',
+    'Employees',
+    'Agents',
+    'Reports',
+    'Accelerators',
+  ];
+  readonly availableUserTypes = ADMIN_USER_TYPES;
+
   readonly filteredEmployees = computed<AdminEmployeeItem[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
     const status = this.statusFilter();
     let items = this.employees();
 
-    if (status === 'Active') {
-      items = items.filter((e) => e.status === true);
-    } else if (status === 'Inactive') {
-      items = items.filter((e) => e.status === false);
-    }
-
+    if (status === 'Active') items = items.filter((employee) => employee.status);
+    if (status === 'Inactive') items = items.filter((employee) => !employee.status);
     if (!query) return items;
 
-    return items.filter(
-      (e) =>
-        e.employeeId?.toLowerCase().includes(query) ||
-        e.employeeName?.toLowerCase().includes(query) ||
-        (e.userName && e.userName.toLowerCase().includes(query)) ||
-        e.email?.toLowerCase().includes(query) ||
-        e.phoneNumber?.toLowerCase().includes(query) ||
-        e.role?.toLowerCase().includes(query)
+    return items.filter((employee) =>
+      [
+        employee.employeeId,
+        employee.employeeName,
+        employee.userName,
+        employee.email,
+        employee.phoneNumber,
+        employee.role,
+      ].some((value) => value?.toLowerCase().includes(query))
     );
   });
 
-  // Range display calculation for pagination
   readonly showingRangeText = computed<string>(() => {
     const total = this.totalRecords();
     if (total === 0) return '0 - 0 of 0 employees';
@@ -68,43 +109,58 @@ export class AdminEmployee implements OnInit {
     return `${start} - ${end} of ${total} employees`;
   });
 
+  readonly hasValidIdentity = computed(() => {
+    const email = this.email().trim();
+    const identityValid = !!this.fullName().trim() && !!this.phoneNumber().trim() && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    if (this.modalMode() === 'edit') return identityValid;
+    return identityValid && !!this.userName().trim() && this.password().length >= 8 && this.availableUserTypes.some((role) => role === this.userType());
+  });
+
+  readonly hasValidRules = computed(() =>
+    this.modulePermissions().length > 0 && this.selectedInsuranceTypeIds().length > 0
+  );
+
+  readonly canSubmitModal = computed(() => {
+    const mode = this.modalMode();
+    if (!mode || this.modalSubmitting()) return false;
+    if (mode === 'edit') return true;
+    return !this.rulesLoading() && !this.employeeRightsLoading() && !this.rulesError() && !this.employeeRightsError();
+  });
+
   ngOnInit(): void {
     this.loadEmployees();
   }
 
   loadEmployees(): void {
     this.isLoading.set(true);
+    const payload: GetAllEmployeesPayload = {
+      Search: this.searchQuery().trim(),
+      PageNumber: this.pageNumber(),
+      PageSize: this.pageSize(),
+    };
     this.employeeService
-      .getAllEmployees({
-        Search: this.searchQuery().trim(),
-        PageNumber: this.pageNumber(),
-        PageSize: this.pageSize(),
-      })
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.isLoading.set(false))
-      )
+      .getAllEmployees(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.isLoading.set(false)))
       .subscribe({
-        next: (res) => {
-          if (res.isSuccess && res.data) {
-            this.employees.set(res.data.items || []);
-            this.totalRecords.set(res.data.totalRecords ?? (res.data.items?.length || 0));
-            this.totalPages.set(res.data.totalPages ?? 1);
-            this.pageNumber.set(res.data.pageNumber ?? 1);
-            this.pageSize.set(res.data.pageSize ?? 5);
-            this.hasPreviousPage.set(res.data.hasPreviousPage ?? (this.pageNumber() > 1));
-            this.hasNextPage.set(res.data.hasNextPage ?? (this.pageNumber() < this.totalPages()));
+        next: (response) => {
+          if (!response.isSuccess || !response.data) {
+            this.showToast(response.message || 'Failed to fetch employees.', 'error');
+            return;
           }
+          this.employees.set(response.data.items || []);
+          this.totalRecords.set(response.data.totalRecords ?? (response.data.items?.length || 0));
+          this.totalPages.set(response.data.totalPages ?? 1);
+          this.pageNumber.set(response.data.pageNumber ?? 1);
+          this.pageSize.set(response.data.pageSize ?? 5);
+          this.hasPreviousPage.set(response.data.hasPreviousPage ?? this.pageNumber() > 1);
+          this.hasNextPage.set(response.data.hasNextPage ?? this.pageNumber() < this.totalPages());
         },
-        error: (err) => {
-          this.showToast(err?.error?.message || 'Failed to fetch employees.', 'error');
-        },
+        error: (error) => this.showToast(this.getErrorMessage(error, 'Failed to fetch employees.'), 'error'),
       });
   }
 
   refreshEmployees(): void {
     this.loadEmployees();
-    this.showToast('Employees refreshed.', 'info');
   }
 
   onSearchChange(query: string): void {
@@ -127,9 +183,7 @@ export class AdminEmployee implements OnInit {
   }
 
   onPageChange(newPage: number): void {
-    if (newPage < 1 || newPage > this.totalPages() || newPage === this.pageNumber()) {
-      return;
-    }
+    if (newPage < 1 || newPage > this.totalPages() || newPage === this.pageNumber()) return;
     this.pageNumber.set(newPage);
     this.loadEmployees();
   }
@@ -141,62 +195,157 @@ export class AdminEmployee implements OnInit {
   }
 
   onToggleStatus(employee: AdminEmployeeItem, event?: Event): void {
-    if (event) event.stopPropagation();
+    event?.stopPropagation();
     if (this.togglingEmployeeId() === employee.id) return;
 
-    this.togglingEmployeeId.set(employee.id);
     const originalStatus = employee.status;
     const newStatus = !originalStatus;
-
-    // Optimistic UI update
-    this.employees.update((items) =>
-      items.map((e) => (e.id === employee.id ? { ...e, status: newStatus } : e))
-    );
+    this.togglingEmployeeId.set(employee.id);
+    this.employees.update((items) => items.map((item) => item.id === employee.id ? { ...item, status: newStatus } : item));
 
     this.employeeService
       .toggleEmployeeStatus(employee.id)
-      .pipe(
-        takeUntilDestroyed(this.destroyRef),
-        finalize(() => this.togglingEmployeeId.set(null))
-      )
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.togglingEmployeeId.set(null)))
       .subscribe({
-        next: () => {
-          this.showToast(
-            `Employee "${employee.employeeName}" is now ${newStatus ? 'Active' : 'Inactive'}.`,
-            'success'
-          );
+        next: (response) => {
+          if (!response.isSuccess) {
+            this.revertEmployeeStatus(employee.id, originalStatus);
+            this.showToast(response.message || 'Failed to update employee status.', 'error');
+            return;
+          }
+          this.showToast(`Employee "${employee.employeeName}" is now ${newStatus ? 'Active' : 'Inactive'}.`, 'success');
         },
-        error: () => {
-          // Revert optimistic update on failure
-          this.employees.update((items) =>
-            items.map((e) => (e.id === employee.id ? { ...e, status: originalStatus } : e))
-          );
-          this.showToast('Failed to update employee status.', 'error');
+        error: (error) => {
+          this.revertEmployeeStatus(employee.id, originalStatus);
+          this.showToast(this.getErrorMessage(error, 'Failed to update employee status.'), 'error');
         },
       });
   }
 
   onManageRights(employee: AdminEmployeeItem, event?: Event): void {
-    if (event) event.stopPropagation();
-    this.showToast(`Manage rights for "${employee.employeeName}" will be configured in the rights matrix.`, 'info');
+    event?.stopPropagation();
+    this.resetModalState();
+    this.modalMode.set('rights');
+    this.modalEmployee.set(employee);
+    this.loadRuleOptions();
+    this.loadEmployeeRights(employee);
+  }
+
+  reloadEmployeeRights(): void {
+    const employee = this.modalEmployee();
+    if (employee) this.loadEmployeeRights(employee);
+  }
+
+  private loadEmployeeRights(employee: AdminEmployeeItem): void {
+    this.employeeRightsLoading.set(true);
+    this.employeeRightsError.set(null);
+    this.employeeService
+      .getEmployeeRights(employee.id)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.employeeRightsLoading.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.isSuccess || !response.data) {
+            this.employeeRightsError.set(response.message || 'Unable to load employee rules.');
+            return;
+          }
+          this.modulePermissions.set(response.data.modulePermissions ?? []);
+          this.selectedInsuranceTypeIds.set((response.data.workAllocations ?? []).map((allocation) => allocation.insuranceTypeId));
+          this.selectedVehicleTypeIds.set(Object.fromEntries(
+            (response.data.workAllocations ?? []).map((allocation) => [allocation.insuranceTypeId, allocation.vehicleTypeIds ?? []])
+          ));
+        },
+        error: (error) => this.employeeRightsError.set(this.getErrorMessage(error, 'Unable to load employee rules.')),
+      });
   }
 
   onEditEmployee(employee: AdminEmployeeItem, event?: Event): void {
-    if (event) event.stopPropagation();
-    this.showToast(`Edit Employee "${employee.employeeName}" will be configured next.`, 'info');
+    event?.stopPropagation();
+    this.resetModalState();
+    this.modalMode.set('edit');
+    this.modalEmployee.set(employee);
+    this.fullName.set(employee.employeeName ?? '');
+    this.email.set(employee.email ?? '');
+    this.phoneNumber.set(employee.phoneNumber ?? '');
   }
 
   onAddEmployee(): void {
-    this.showToast('Add Employee popup will be configured next.', 'info');
+    this.resetModalState();
+    this.modalMode.set('add');
+    this.loadRuleOptions();
+  }
+
+  closeModal(): void {
+    if (!this.modalSubmitting()) this.modalMode.set(null);
+  }
+
+  submitEmployeeForm(): void {
+    const mode = this.modalMode();
+    if (!mode) return;
+    this.submitAttempted.set(true);
+    this.formError.set(null);
+
+    const identityRequired = mode !== 'rights';
+    if ((identityRequired && !this.hasValidIdentity()) || (mode !== 'edit' && (!this.hasValidRules() || this.rulesLoading() || this.employeeRightsLoading() || !!this.rulesError() || !!this.employeeRightsError()))) {
+      this.formError.set('Complete the required fields and assign at least one module and work allocation.');
+      return;
+    }
+
+    this.modalSubmitting.set(true);
+    if (mode === 'edit') this.submitEmployeeUpdate();
+    else if (mode === 'add') this.submitEmployeeCreate();
+    else this.submitRulesUpdate();
+  }
+
+  toggleModulePermission(moduleName: string, checked: boolean): void {
+    this.modulePermissions.update((current) => checked
+      ? [...new Set([...current, moduleName])]
+      : current.filter((module) => module !== moduleName));
+  }
+
+  toggleInsuranceType(insuranceTypeId: string, checked: boolean): void {
+    this.selectedInsuranceTypeIds.update((current) => checked
+      ? [...new Set([...current, insuranceTypeId])]
+      : current.filter((id) => id !== insuranceTypeId));
+    if (!checked) {
+      this.selectedVehicleTypeIds.update((current) => {
+        const next = { ...current };
+        delete next[insuranceTypeId];
+        return next;
+      });
+    }
+  }
+
+  toggleVehicleType(insuranceTypeId: string, vehicleTypeId: string, checked: boolean): void {
+    this.selectedVehicleTypeIds.update((current) => {
+      const selected = current[insuranceTypeId] ?? [];
+      return {
+        ...current,
+        [insuranceTypeId]: checked
+          ? [...new Set([...selected, vehicleTypeId])]
+          : selected.filter((id) => id !== vehicleTypeId),
+      };
+    });
+  }
+
+  isModuleSelected(moduleName: string): boolean {
+    return this.modulePermissions().includes(moduleName);
+  }
+
+  isInsuranceTypeSelected(insuranceTypeId: string): boolean {
+    return this.selectedInsuranceTypeIds().includes(insuranceTypeId);
+  }
+
+  isVehicleTypeSelected(insuranceTypeId: string, vehicleTypeId: string): boolean {
+    return (this.selectedVehicleTypeIds()[insuranceTypeId] ?? []).includes(vehicleTypeId);
+  }
+
+  isVehicleInsurance(insuranceTypeId: string): boolean {
+    return this.insuranceTypes().find((type) => type.id === insuranceTypeId)?.name.trim().toLowerCase() === 'vehicle insurance';
   }
 
   getUserName(item: AdminEmployeeItem): string {
-    if (item.userName && item.userName.trim()) {
-      return item.userName;
-    }
-    if (item.email && item.email.includes('@')) {
-      return item.email.split('@')[0];
-    }
+    if (item.userName?.trim()) return item.userName;
+    if (item.email?.includes('@')) return item.email.split('@')[0];
     return item.employeeName || '—';
   }
 
@@ -207,30 +356,169 @@ export class AdminEmployee implements OnInit {
 
   formatDate(dateStr?: string): string {
     if (!dateStr) return '—';
-    try {
-      const d = new Date(dateStr);
-      if (isNaN(d.getTime())) return '—';
-      return d.toLocaleDateString('en-GB', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-      });
-    } catch {
-      return '—';
-    }
+    const date = new Date(dateStr);
+    return Number.isNaN(date.getTime()) ? '—' : date.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
   }
 
   copyToClipboard(text: string, label: string): void {
     if (!text || text === '—') return;
-
-    if (navigator.clipboard && navigator.clipboard.writeText) {
+    if (navigator.clipboard?.writeText) {
       navigator.clipboard.writeText(text).then(
         () => this.setCopiedFeedback(text, label),
         () => this.fallbackCopy(text, label)
       );
-    } else {
-      this.fallbackCopy(text, label);
+    } else this.fallbackCopy(text, label);
+  }
+
+  showToast(message: string, type: ToastType = 'info'): void {
+    this.toastMessage.set(message);
+    this.toastType.set(type);
+    setTimeout(() => {
+      if (this.toastMessage() === message) this.toastMessage.set(null);
+    }, 3500);
+  }
+
+  clearToast(): void {
+    this.toastMessage.set(null);
+  }
+
+  loadRuleOptions(): void {
+    this.rulesLoading.set(true);
+    this.rulesError.set(null);
+    forkJoin({
+      insurance: this.enquiryService.getInsuranceTypes(),
+      vehicles: this.enquiryService.getVehicleTypes(),
+    })
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.rulesLoading.set(false)))
+      .subscribe({
+        next: ({ insurance, vehicles }) => {
+          if (!insurance.isSuccess || !vehicles.isSuccess) {
+            this.rulesError.set(insurance.message || vehicles.message || 'Unable to load rule options.');
+            return;
+          }
+          this.insuranceTypes.set(insurance.data ?? []);
+          this.vehicleTypes.set(vehicles.data ?? []);
+        },
+        error: (error) => this.rulesError.set(this.getErrorMessage(error, 'Unable to load rule options.')),
+      });
+  }
+
+  private submitEmployeeCreate(): void {
+    const payload: CreateInternalUserPayload = {
+      UserName: this.userName().trim(),
+      FullName: this.fullName().trim(),
+      Email: this.email().trim(),
+      PhoneNumber: this.phoneNumber().trim(),
+      Password: this.password(),
+      UserType: this.userType(),
+      ModulePermissions: [...this.modulePermissions()],
+      WorkAllocations: this.buildWorkAllocations(),
+    };
+    this.employeeService.createInternalUser(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.modalSubmitting.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.isSuccess) {
+            this.formError.set(response.message || 'Unable to add employee.');
+            return;
+          }
+          this.modalMode.set(null);
+          this.showToast(response.message || 'Employee added successfully.', 'success');
+          this.loadEmployees();
+        },
+        error: (error) => this.formError.set(this.getErrorMessage(error, 'Unable to add employee.')),
+      });
+  }
+
+  private submitEmployeeUpdate(): void {
+    const employee = this.modalEmployee();
+    if (!employee) {
+      this.modalSubmitting.set(false);
+      return;
     }
+    const payload: UpdateEmployeePayload = {
+      UserId: employee.id,
+      FullName: this.fullName().trim(),
+      Email: this.email().trim(),
+      PhoneNumber: this.phoneNumber().trim(),
+    };
+    this.employeeService.updateEmployee(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.modalSubmitting.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.isSuccess) {
+            this.formError.set(response.message || 'Unable to update employee.');
+            return;
+          }
+          this.modalMode.set(null);
+          this.showToast(response.message || 'Employee updated successfully.', 'success');
+          this.loadEmployees();
+        },
+        error: (error) => this.formError.set(this.getErrorMessage(error, 'Unable to update employee.')),
+      });
+  }
+
+  private submitRulesUpdate(): void {
+    const employee = this.modalEmployee();
+    if (!employee) {
+      this.modalSubmitting.set(false);
+      return;
+    }
+    const payload: UpdateEmployeeRightsPayload = {
+      UserId: employee.id,
+      ModulePermissions: [...this.modulePermissions()],
+      WorkAllocations: this.buildWorkAllocations(),
+    };
+    this.employeeService.updateEmployeeRights(payload)
+      .pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.modalSubmitting.set(false)))
+      .subscribe({
+        next: (response) => {
+          if (!response.isSuccess) {
+            this.formError.set(response.message || 'Unable to update employee rules.');
+            return;
+          }
+          this.modalMode.set(null);
+          this.showToast(response.message || 'Employee rules updated successfully.', 'success');
+        },
+        error: (error) => this.formError.set(this.getErrorMessage(error, 'Unable to update employee rules.')),
+      });
+  }
+
+  private buildWorkAllocations(): WorkAllocationPayload[] {
+    return this.selectedInsuranceTypeIds().map((insuranceTypeId) => ({
+      InsuranceTypeId: insuranceTypeId,
+      VehicleTypeIds: this.isVehicleInsurance(insuranceTypeId)
+        ? [...(this.selectedVehicleTypeIds()[insuranceTypeId] ?? [])]
+        : [],
+    }));
+  }
+
+  private resetModalState(): void {
+    this.modalEmployee.set(null);
+    this.modalSubmitting.set(false);
+    this.rulesLoading.set(false);
+    this.employeeRightsLoading.set(false);
+    this.rulesError.set(null);
+    this.employeeRightsError.set(null);
+    this.formError.set(null);
+    this.submitAttempted.set(false);
+    this.fullName.set('');
+    this.userName.set('');
+    this.email.set('');
+    this.phoneNumber.set('');
+    this.password.set('');
+    this.userType.set('AdminEmployee');
+    this.modulePermissions.set([]);
+    this.selectedInsuranceTypeIds.set([]);
+    this.selectedVehicleTypeIds.set({});
+  }
+
+  private revertEmployeeStatus(employeeId: string, status: boolean): void {
+    this.employees.update((items) => items.map((item) => item.id === employeeId ? { ...item, status } : item));
+  }
+
+  private getErrorMessage(error: any, fallback: string): string {
+    return error?.error?.message || error?.error?.errors?.[0] || fallback;
   }
 
   private fallbackCopy(text: string, label: string): void {
@@ -253,27 +541,7 @@ export class AdminEmployee implements OnInit {
     this.copiedField.set(text);
     this.showToast(`Copied ${label} to clipboard.`, 'info');
     setTimeout(() => {
-      if (this.copiedField() === text) {
-        this.copiedField.set(null);
-      }
+      if (this.copiedField() === text) this.copiedField.set(null);
     }, 2000);
-  }
-
-  showToast(message: string, type: 'success' | 'info' | 'error' = 'info'): void {
-    this.toastMessage.set(message);
-    this.toastType.set(type);
-    setTimeout(() => {
-      if (this.toastMessage() === message) {
-        this.toastMessage.set(null);
-      }
-    }, 3500);
-  }
-
-  clearToast(): void {
-    this.toastMessage.set(null);
-  }
-
-  closeToast(): void {
-    this.toastMessage.set(null);
   }
 }

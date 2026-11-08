@@ -1,1 +1,207 @@
-<p>pricing-master works!</p>
+<main class="pricing-page">
+  @if (notice()) {
+  <div class="pricing-notice" [class.notice-error]="noticeType() === 'error'" role="status">
+    <span>{{ notice() }}</span>
+    <button type="button" (click)="clearNotice()" aria-label="Dismiss notification">×</button>
+  </div>
+  }
+
+  <header class="page-heading">
+    <div>
+      <p class="eyebrow">ADMINISTRATION / CATALOG</p>
+      <h1>Pricing master</h1>
+    </div>
+    <button type="button" class="button-primary" (click)="openCreate()"
+      [disabled]="lookupLoading() || companies().length === 0 || agentClasses().length === 0 || vehicleTypes().length === 0">
+      <span aria-hidden="true">＋</span> Add pricing rule
+    </button>
+  </header>
+
+  @if (lookupError()) {
+  <div class="inline-error" role="alert"><span>{{ lookupError() }}</span><button type="button"
+      (click)="loadLookups()">Retry lookups</button></div>
+  }
+
+  <section class="summary-grid" aria-label="Pricing summary">
+    <article class="summary-tile"><span class="summary-label">Matching rules</span><strong>{{ totalRecords()
+        }}</strong><small>Based on current filters</small></article>
+    <article class="summary-tile"><span class="summary-label">Active on this page</span><strong>{{ pageActiveCount()
+        }}</strong><small>Of {{ items().length }} visible rules</small></article>
+    <article class="summary-tile"><span class="summary-label">Admin profit on this page</span><strong>{{
+        pageAdminProfit() | currency:'INR':'symbol':'1.0-2' }}</strong><small>Sum of visible rule values</small>
+    </article>
+  </section>
+
+  <section class="pricing-panel" aria-labelledby="pricing-table-title">
+    <div class="filters-grid">
+      <label class="filter-search"><span>Search</span><input type="search" [value]="search()"
+          (input)="onSearchChange($any($event.target).value)" placeholder="Company, class, vehicle, fuel…" /></label>
+      <label><span>Insurance company</span><select [value]="insuranceCompanyId()"
+          (change)="setFilter('company', $any($event.target).value)">
+          <option value="">All companies</option>@for (company of companies(); track company.id) { <option
+            [value]="company.id">{{ company.companyName }}</option> }
+        </select></label>
+      <label><span>Agent class</span><select [value]="agentClassId()"
+          (change)="setFilter('class', $any($event.target).value)">
+          <option value="">All classes</option>@for (agentClass of agentClasses(); track agentClass.id) { <option
+            [value]="agentClass.id">{{ agentClass.className }}</option> }
+        </select></label>
+      <label><span>Vehicle type</span><select [value]="vehicleTypeId()"
+          (change)="setFilter('vehicle', $any($event.target).value)">
+          <option value="">All vehicles</option>@for (vehicle of vehicleTypes(); track vehicle.id) { <option
+            [value]="vehicle.id">{{ vehicle.typeName }}</option> }
+        </select></label>
+      <label><span>Fuel type</span><select [value]="fuelType()" (change)="setFilter('fuel', $any($event.target).value)">
+          <option value="">All fuel types</option>@for (fuel of fuelTypes; track fuel) { <option [value]="fuel">{{ fuel
+            }}</option> }
+        </select></label>
+      <label><span>Status</span><select [value]="activeFilter()"
+          (change)="setFilter('active', $any($event.target).value)">
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select></label>
+      <button type="button" class="button-secondary clear-button" (click)="clearFilters()">Clear filters</button>
+    </div>
+
+    @if (pageError()) {
+    <div class="table-error" role="alert"><span>{{ pageError() }}</span><button type="button" class="button-secondary"
+        (click)="loadPricing()">Retry</button></div>
+    } @else if (isLoading()) {
+    <div class="table-state" role="status"><span class="spinner" aria-hidden="true"></span> Loading pricing rules…</div>
+    } @else if (items().length === 0) {
+    <div class="table-state empty-state"><strong>No pricing rules found</strong><span>Adjust the filters or add a
+        pricing rule to begin.</span></div>
+    } @else {
+    <div class="table-scroll">
+      <table>
+        <thead>
+          <tr>
+            <th>Company</th>
+            <th>Agent class</th>
+            <th>Vehicle &amp; fuel</th>
+            <th>Engine range</th>
+            <th>Total premium</th>
+            <th>Company payable</th>
+            <th>Agent points</th>
+            <th>Admin profit</th>
+            <th>Status</th>
+            <th><span class="visually-hidden">Actions</span></th>
+          </tr>
+        </thead>
+        <tbody>
+          @for (item of items(); track item.id) {
+          <tr>
+            <td class="primary-cell">{{ item.insuranceCompanyName }}</td>
+            <td>{{ item.agentClassName }}</td>
+            <td>{{ item.vehicleTypeName }}<small>{{ item.fuelType || 'Any fuel' }}</small></td>
+            <td>{{ item.minCC ?? '—' }}–{{ item.maxCC ?? '—' }} cc</td>
+            <td class="money-cell">{{ item.totalPremium | currency:'INR':'symbol':'1.0-2' }}</td>
+            <td>{{ item.companyPayable | currency:'INR':'symbol':'1.0-2' }}</td>
+            <td>{{ item.agentPoints | currency:'INR':'symbol':'1.0-2' }}</td>
+            <td class="profit-cell">{{ item.adminProfit | currency:'INR':'symbol':'1.0-2' }}</td>
+            <td><span class="status-tag" [class.status-inactive]="!item.isActive">{{ item.isActive ? 'Active' :
+                'Inactive' }}</span></td>
+            <td><button type="button" class="icon-button" (click)="openEdit(item)" [disabled]="!!loadingEditId()"
+                [attr.aria-label]="'Edit pricing rule for ' + item.insuranceCompanyName" title="Edit pricing rule">@if
+                (loadingEditId() === item.id) { <span class="tiny-spinner"></span> } @else { <svg viewBox="0 0 20 20"
+                  aria-hidden="true">
+                  <path
+                    d="M13.586 3.586a2 2 0 0 1 2.828 2.828l-.707.707-2.828-2.828.707-.707ZM11.465 5.707l2.828 2.828-8.9 8.9H2.565v-2.828l8.9-8.9Z" />
+                </svg> }</button></td>
+          </tr>
+          }
+        </tbody>
+      </table>
+    </div>
+    <footer class="pagination-bar">
+      <span>Showing {{ firstRecord() }}–{{ lastRecord() }} of {{ totalRecords() }} rules</span>
+      <div class="pagination-controls">
+        <label>Rows per page<select [value]="pageSize()" (change)="changePageSize($any($event.target).value)">
+            <option value="10">10</option>
+            <option value="25">25</option>
+            <option value="50">50</option>
+            <option value="100">100</option>
+          </select></label>
+        <button type="button" class="page-button" (click)="changePage(pageNumber() - 1)" [disabled]="pageNumber() <= 1"
+          aria-label="Previous page">‹</button>
+        <span>Page {{ pageNumber() }} of {{ totalPages() }}</span>
+        <button type="button" class="page-button" (click)="changePage(pageNumber() + 1)"
+          [disabled]="pageNumber() >= totalPages()" aria-label="Next page">›</button>
+      </div>
+    </footer>
+    }
+  </section>
+
+  @if (isModalOpen()) {
+  <div class="modal-backdrop" (click)="closeModal()" role="presentation">
+    <section class="pricing-modal" (click)="$event.stopPropagation()" role="dialog" aria-modal="true"
+      aria-labelledby="pricing-modal-title">
+      <header class="modal-header">
+        <div>
+          <p class="eyebrow">PRICING MATRIX</p>
+          <h2 id="pricing-modal-title">{{ editingId() ? 'Edit pricing rule' : 'Add pricing rule' }}</h2>
+          <p>Set the cost and commission values used when preparing quotes.</p>
+        </div><button type="button" class="modal-close" (click)="closeModal()" [disabled]="isSubmitting()"
+          aria-label="Close dialog">×</button>
+      </header>
+      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+        <div class="modal-body">
+          @if (modalError()) { <div class="inline-error" role="alert">{{ modalError() }}</div> }
+          <div class="form-grid">
+            <label class="form-field"><span>Insurance company <b>*</b></span><select
+                formControlName="insuranceCompanyId">
+                <option value="">Choose company</option>@for (company of companies(); track company.id) { <option
+                  [value]="company.id">{{ company.companyName }}</option> }
+              </select>@if (form.controls.insuranceCompanyId.touched && form.controls.insuranceCompanyId.invalid) {
+              <small class="field-error">Select an insurance company.</small> }</label>
+            <label class="form-field"><span>Agent class <b>*</b></span><select formControlName="agentClassId">
+                <option value="">Choose class</option>@for (agentClass of agentClasses(); track agentClass.id) { <option
+                  [value]="agentClass.id">{{ agentClass.className }} · {{ agentClass.commSharePercentage }}%</option> }
+              </select>@if (form.controls.agentClassId.touched && form.controls.agentClassId.invalid) { <small
+                class="field-error">Select an agent class.</small> }</label>
+            <label class="form-field"><span>Vehicle type <b>*</b></span><select formControlName="vehicleTypeId">
+                <option value="">Choose vehicle</option>@for (vehicle of vehicleTypes(); track vehicle.id) { <option
+                  [value]="vehicle.id">{{ vehicle.typeName }}</option> }
+              </select>@if (form.controls.vehicleTypeId.touched && form.controls.vehicleTypeId.invalid) { <small
+                class="field-error">Select a vehicle type.</small> }</label>
+            <label class="form-field"><span>Fuel type</span><select formControlName="fuelType">
+                <option value="">Any fuel</option>@for (fuel of fuelTypes; track fuel) { <option [value]="fuel">{{ fuel
+                  }}</option> }
+              </select></label>
+            <label class="form-field"><span>Minimum engine CC <b>*</b></span><input type="number"
+                formControlName="minCC" min="0" step="1" />@if (form.controls.minCC.touched &&
+              form.controls.minCC.invalid) { <small class="field-error">Enter a non-negative CC value.</small> }</label>
+            <label class="form-field"><span>Maximum engine CC <b>*</b></span><input type="number"
+                formControlName="maxCC" min="1" step="1" />@if (form.controls.maxCC.touched &&
+              form.controls.maxCC.invalid) { <small class="field-error">Enter a CC value above zero.</small> }@if
+              (form.controls.maxCC.touched && form.controls.maxCC.value <= form.controls.minCC.value) { <small
+                class="field-error">Maximum CC must exceed minimum CC.</small> }</label>
+            <div class="form-divider">Financial values <small>Enter non-negative amounts in INR.</small></div>
+            <label class="form-field"><span>Total premium <b>*</b></span><input type="number"
+                formControlName="totalPremium" min="0" step="0.01" />@if (form.controls.totalPremium.touched &&
+              form.controls.totalPremium.invalid) { <small class="field-error">Enter a non-negative premium.</small>
+              }</label>
+            <label class="form-field"><span>Company payable <b>*</b></span><input type="number"
+                formControlName="companyPayable" min="0" step="0.01" />@if (form.controls.companyPayable.touched &&
+              form.controls.companyPayable.invalid) { <small class="field-error">Enter a non-negative payable
+                amount.</small> }</label>
+            <label class="form-field"><span>Agent points <b>*</b></span><input type="number"
+                formControlName="agentPoints" min="0" step="1" />@if (form.controls.agentPoints.touched &&
+              form.controls.agentPoints.invalid) { <small class="field-error">Enter a non-negative whole number.</small>
+              }</label>
+            <label class="form-field"><span>Admin profit <b>*</b></span><input type="number"
+                formControlName="adminProfit" min="0" step="0.01" />@if (form.controls.adminProfit.touched &&
+              form.controls.adminProfit.invalid) { <small class="field-error">Enter a non-negative profit
+                amount.</small> }</label>
+          </div>
+        </div>
+        <footer class="modal-actions"><button type="button" class="button-tertiary" (click)="closeModal()"
+            [disabled]="isSubmitting()">Cancel</button><button type="submit" class="button-primary"
+            [disabled]="isSubmitting()">{{ isSubmitting() ? 'Saving…' : (editingId() ? 'Save changes' : 'Create pricing
+            rule') }}</button></footer>
+      </form>
+    </section>
+  </div>
+  }
+</main>

@@ -380,4 +380,171 @@
       }
     </div>
   </section>
+
+  @if (modalMode(); as mode) {
+    <div class="employee-modal-backdrop">
+      <section
+        class="employee-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="employee-modal-title"
+        tabindex="-1"
+        (keydown.escape)="closeModal()"
+      >
+        <header class="modal-header">
+          <div>
+            <p class="modal-eyebrow">Employee administration</p>
+            <h2 id="employee-modal-title">
+              @if (mode === 'add') { Add employee }
+              @else if (mode === 'edit') { Edit employee }
+              @else { Manage employee rules }
+            </h2>
+            @if (mode !== 'add' && modalEmployee(); as employee) {
+              <p class="modal-subtitle">{{ employee.employeeName }} · {{ employee.employeeId }}</p>
+            }
+          </div>
+          <button type="button" class="modal-close" aria-label="Close dialog" (click)="closeModal()" [disabled]="modalSubmitting()">×</button>
+        </header>
+
+        <form class="modal-form" (ngSubmit)="submitEmployeeForm()">
+          <div class="modal-body">
+            @if (mode !== 'rights') {
+              <section class="modal-section" aria-labelledby="employee-details-heading">
+                <div class="modal-section-heading">
+                  <h3 id="employee-details-heading">Employee details</h3>
+                  <p>Enter the employee’s identity and contact information.</p>
+                </div>
+                <div class="form-grid">
+                  <label class="form-field">
+                    <span>Full name <span class="required-mark">*</span></span>
+                    <input name="fullName" type="text" autocomplete="name" maxlength="120" required [ngModel]="fullName()" (ngModelChange)="fullName.set($event)" />
+                  </label>
+                  <label class="form-field">
+                    <span>Email address <span class="required-mark">*</span></span>
+                    <input name="email" type="email" autocomplete="email" maxlength="200" required [ngModel]="email()" (ngModelChange)="email.set($event)" />
+                  </label>
+                  <label class="form-field">
+                    <span>Phone number <span class="required-mark">*</span></span>
+                    <input name="phoneNumber" type="tel" autocomplete="tel" maxlength="30" required [ngModel]="phoneNumber()" (ngModelChange)="phoneNumber.set($event)" />
+                  </label>
+                  @if (mode === 'add') {
+                    <label class="form-field">
+                      <span>Username <span class="required-mark">*</span></span>
+                      <input name="userName" type="text" autocomplete="username" maxlength="80" required [ngModel]="userName()" (ngModelChange)="userName.set($event)" />
+                    </label>
+                    <label class="form-field">
+                      <span>Password <span class="required-mark">*</span></span>
+                      <input name="password" type="password" autocomplete="new-password" minlength="8" required [ngModel]="password()" (ngModelChange)="password.set($event)" />
+                      <small>Use at least 8 characters.</small>
+                    </label>
+                    <label class="form-field">
+                      <span>Role <span class="required-mark">*</span></span>
+                      <select name="userType" required [ngModel]="userType()" (ngModelChange)="userType.set($event)">
+                        @for (role of availableUserTypes; track role) {
+                          <option [value]="role">{{ formatRole(role) }}</option>
+                        }
+                      </select>
+                    </label>
+                  }
+                </div>
+              </section>
+            }
+
+            @if (mode === 'rights' && employeeRightsLoading()) {
+              <div class="rules-loading current-rules-loading" role="status">
+                <span class="carbon-spinner" aria-hidden="true"></span>
+                <span>Loading current employee rules…</span>
+              </div>
+            } @else if (mode === 'rights' && employeeRightsError()) {
+              <div class="rules-error" role="alert">
+                <span>{{ employeeRightsError() }}</span>
+                <button type="button" class="text-button" (click)="reloadEmployeeRights()">Retry</button>
+              </div>
+            }
+
+            @if (mode === 'add' || (mode === 'rights' && !employeeRightsLoading() && !employeeRightsError())) {
+              <section class="modal-section" aria-labelledby="module-rules-heading">
+                <div class="modal-section-heading">
+                  <h3 id="module-rules-heading">Module access</h3>
+                  <p>Select the admin areas this employee can access.</p>
+                </div>
+                <div class="rule-options-grid">
+                  @for (moduleName of availableModules; track moduleName) {
+                    <label class="rule-option">
+                      <input type="checkbox" [checked]="isModuleSelected(moduleName)" (change)="toggleModulePermission(moduleName, $any($event.target).checked)" />
+                      <span>{{ moduleName }}</span>
+                    </label>
+                  }
+                </div>
+                @if (submitAttempted() && modulePermissions().length === 0) {
+                  <p class="field-error" role="alert">Choose at least one module.</p>
+                }
+              </section>
+
+              <section class="modal-section" aria-labelledby="work-rules-heading">
+                <div class="modal-section-heading">
+                  <h3 id="work-rules-heading">Work allocation</h3>
+                  <p>Assign at least one insurance type. Vehicle insurance can also be limited by vehicle type.</p>
+                </div>
+                @if (rulesLoading()) {
+                  <div class="rules-loading"><span class="carbon-spinner" aria-hidden="true"></span><span>Loading insurance and vehicle types…</span></div>
+                } @else if (rulesError()) {
+                  <div class="rules-error" role="alert">
+                    <span>{{ rulesError() }}</span>
+                    <button type="button" class="text-button" (click)="loadRuleOptions()">Retry</button>
+                  </div>
+                } @else if (insuranceTypes().length === 0) {
+                  <p class="rules-empty">No insurance types are available.</p>
+                } @else {
+                  <div class="insurance-options">
+                    @for (insurance of insuranceTypes(); track insurance.id) {
+                      <div class="insurance-option">
+                        <label class="rule-option insurance-choice">
+                          <input type="checkbox" [checked]="isInsuranceTypeSelected(insurance.id)" (change)="toggleInsuranceType(insurance.id, $any($event.target).checked)" />
+                          <span>{{ insurance.name }}</span>
+                          @if (!insurance.isActive) { <small>Inactive</small> }
+                        </label>
+                        @if (isInsuranceTypeSelected(insurance.id) && isVehicleInsurance(insurance.id)) {
+                          <div class="vehicle-options">
+                            <p>Vehicle types</p>
+                            @if (vehicleTypes().length === 0) {
+                              <span class="rules-empty">No vehicle types are available; this allocation will cover the insurance type.</span>
+                            } @else {
+                              @for (vehicle of vehicleTypes(); track vehicle.id) {
+                                <label class="rule-option">
+                                  <input type="checkbox" [checked]="isVehicleTypeSelected(insurance.id, vehicle.id)" (change)="toggleVehicleType(insurance.id, vehicle.id, $any($event.target).checked)" />
+                                  <span>{{ vehicle.typeName }}</span>
+                                </label>
+                              }
+                            }
+                          </div>
+                        }
+                      </div>
+                    }
+                  </div>
+                }
+                @if (submitAttempted() && selectedInsuranceTypeIds().length === 0) {
+                  <p class="field-error" role="alert">Choose at least one insurance type.</p>
+                }
+              </section>
+            }
+
+            @if (formError()) {
+              <p class="modal-error" role="alert">{{ formError() }}</p>
+            }
+          </div>
+
+          <footer class="modal-footer">
+            <button type="button" class="carbon-btn-tertiary" (click)="closeModal()" [disabled]="modalSubmitting()">Cancel</button>
+            <button type="submit" class="carbon-btn-primary" [disabled]="!canSubmitModal()">
+              @if (modalSubmitting()) { Saving… }
+              @else if (mode === 'add') { Add employee }
+              @else if (mode === 'edit') { Save changes }
+              @else { Save rules }
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
 </div>

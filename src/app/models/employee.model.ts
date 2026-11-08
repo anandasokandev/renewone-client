@@ -28,3 +28,45 @@ export interface GetAllEmployeesPayload {
   PageSize: number;
 }
 
+export interface WorkAllocationPayload {
+  InsuranceTypeId: string;
+  VehicleTypeIds: string[];
+}
+
+export interface CreateInternalUserPayload {
+  UserName: string;
+  FullName: string;
+  Email: string;
+  PhoneNumber: string;
+  Password: string;
+  UserType: string;
+  WorkAllocations: WorkAllocationPayload[];
+  ModulePermissions: string[];
+}
+
+export interface UpdateEmployeePayload {
+  UserId: string;
+  FullName: string;
+  Email: string;
+  PhoneNumber: string;
+}
+
+export interface EmployeeWorkAllocation {
+  insuranceTypeId: string;
+  vehicleTypeIds: string[];
+}
+
+export interface EmployeeRights {
+  userId: string;
+  fullName: string;
+  userType: string;
+  workAllocations: EmployeeWorkAllocation[];
+  modulePermissions: string[];
+}
+
+export interface UpdateEmployeeRightsPayload {
+  UserId: string;
+  WorkAllocations: WorkAllocationPayload[];
+  ModulePermissions: string[];
+}
+

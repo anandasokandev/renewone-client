@@ -1,10 +1,11 @@
 import { CommonModule } from '@angular/common';
 import { Component, computed, ElementRef, HostListener, inject, signal } from '@angular/core';
 import { NavigationEnd, Router, RouterLink, RouterLinkActive } from '@angular/router';
-import { filter } from 'rxjs';
+import { filter, finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { Auth } from '../../services/auth/auth';
 import { ADMIN_USER_TYPES } from '../../models/auth.model';
+import { EmployeeService } from '../../services/employee/employee.service';
 
 @Component({
   selector: 'app-navbar',
@@ -16,6 +17,9 @@ export class Navbar {
   protected readonly authService = inject(Auth);
   private readonly router = inject(Router);
   private readonly elementRef = inject(ElementRef);
+  private readonly employeeService = inject(EmployeeService);
+  readonly employeeModulePermissions = signal<string[]>([]);
+  readonly employeeRightsLoading = signal(false);
 
   readonly isProfileMenuOpen = signal<boolean>(false);
   readonly isMobileDrawerOpen = signal<boolean>(false);
@@ -24,6 +28,17 @@ export class Navbar {
   readonly currentUrl = signal<string>(this.router?.url || '');
 
   constructor() {
+    const user = this.authService.currentUser();
+    if (user && this.isAdmin() && user.userType.trim().toLowerCase() !== 'superadmin') {
+      this.employeeRightsLoading.set(true);
+      this.employeeService.getEmployeeRights(user.userId)
+        .pipe(takeUntilDestroyed())
+        .pipe(finalize(() => this.employeeRightsLoading.set(false)))
+        .subscribe({
+          next: (response) => this.employeeModulePermissions.set(response.isSuccess ? response.data?.modulePermissions ?? [] : []),
+          error: () => this.employeeModulePermissions.set([]),
+        });
+    }
     if (this.router && this.router.events) {
       this.router.events
         .pipe(
@@ -64,6 +79,13 @@ export class Navbar {
   });
 
   readonly homeRoute = computed<string>(() => (this.isAdmin() ? '/admin/dashboard' : '/dashboard'));
+
+  hasModule(moduleName: string): boolean {
+    const userType = this.authService.currentUser()?.userType?.trim().toLowerCase();
+    if (userType === 'superadmin') return true;
+    if (userType !== 'supervisor' && userType !== 'adminemployee') return true;
+    return this.employeeModulePermissions().some((permission) => permission.trim().toLowerCase() === moduleName.toLowerCase());
+  }
 
   getUserInitials(): string {
     const name = this.authService.currentUser()?.fullName;
