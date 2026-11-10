@@ -24,6 +24,7 @@ export interface AdminEnquiryQuote {
   insuranceCompanyName: string;
   idv?: number | null;
   premium: number;
+  companyPayable?: number | null;
   agentPoints: number;
   agentClassCommissionApplied: boolean;
   agentClassCommissionPercentage: number;
@@ -127,6 +128,19 @@ export interface ChangeAdminEnquiryStatusRequest {
   enquiryId: string;
   currentStatus: string;
   newStatus: string;
+  cancellationReason?: string | null;
+  refundBankAccountId?: string | null;
+}
+
+export interface SubmitVendorSettlementRequest {
+  enquiryId: string;
+  vendorId: string;
+  settlementMethod: number;
+  paymentMode?: string | null;
+  referenceNumber?: string | null;
+  remarks?: string | null;
+  bankAccountId?: string | null;
+  settlementDate: string;
 }
 
 export interface PaymentVerificationDetails {

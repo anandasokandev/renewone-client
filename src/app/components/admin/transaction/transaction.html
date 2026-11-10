@@ -1,0 +1,72 @@
+<main class="transactions-page">
+  <header class="page-header">
+    <div><p class="eyebrow">FINANCE · BANK LEDGER</p><h1>Transactions</h1><p class="page-description">Review bank activity across accounts, filter the ledger, and export a complete report.</p></div>
+    <button type="button" class="button button-primary" (click)="manualModalOpen.set(true)">+ Record transaction</button>
+  </header>
+
+  @if (notice()) { <div class="notice success" role="status">{{ notice() }}</div> }
+  @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
+
+  <section class="summary-grid" aria-label="Filtered transaction totals">
+    <article class="summary-card"><span>Transactions</span><strong>{{ summary()?.totalTransactions ?? totalRecords() }}</strong></article>
+    <article class="summary-card"><span>Total credited</span><strong class="credit">{{ summary()?.totalCredited ?? 0 | currency:'INR':'symbol':'1.2-2' }}</strong></article>
+    <article class="summary-card"><span>Total debited</span><strong class="debit">{{ summary()?.totalDebited ?? 0 | currency:'INR':'symbol':'1.2-2' }}</strong></article>
+    <article class="summary-card"><span>Net cash flow</span><strong>{{ (summary()?.totalCredited ?? 0) - (summary()?.totalDebited ?? 0) | currency:'INR':'symbol':'1.2-2' }}</strong></article>
+  </section>
+
+  <section class="panel filters-panel" aria-labelledby="filters-title">
+    <div class="panel-heading"><div><p class="eyebrow">LEDGER</p><h2 id="filters-title">Filter transactions</h2></div><div class="report-actions"><button type="button" class="button button-secondary" (click)="exportReport('csv')" [disabled]="!!exporting()">{{ exporting() === 'csv' ? 'Preparing…' : 'CSV' }}</button><button type="button" class="button button-secondary" (click)="exportReport('excel')" [disabled]="!!exporting()">{{ exporting() === 'excel' ? 'Preparing…' : 'Excel' }}</button><button type="button" class="button button-secondary" (click)="exportReport('pdf')" [disabled]="!!exporting()">{{ exporting() === 'pdf' ? 'Preparing…' : 'PDF / Print' }}</button></div></div>
+    <div class="filters-grid">
+      <label class="field field-wide">Search<input type="search" [value]="search()" (input)="search.set($any($event.target).value)" placeholder="Description, category, bank or account number"></label>
+      <label class="field">Bank account<select [value]="bankAccountId()" (change)="bankAccountId.set($any($event.target).value)"><option value="">All bank accounts</option>@for (account of accounts(); track account.id) { <option [value]="account.id">{{ account.accountName }} · {{ account.bankName }} · {{ account.accountNumber }}</option> }</select></label>
+      <label class="field">Transaction type<select [value]="transactionType()" (change)="transactionType.set($any($event.target).value)"><option value="">All types</option><option value="Credit">Credit</option><option value="Debit">Debit</option></select></label>
+      <label class="field">Category<input list="transaction-categories" [value]="category()" (input)="category.set($any($event.target).value)" placeholder="All categories"><datalist id="transaction-categories">@for (value of categories; track value) { <option [value]="value"></option> }</datalist></label>
+      <label class="field">Agency User ID<input type="text" [value]="userIdFilter()" (input)="userIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">Vendor ID<input type="text" [value]="vendorIdFilter()" (input)="vendorIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">Policy payment ID<input type="text" [value]="policyPaymentIdFilter()" (input)="policyPaymentIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">Transaction ID<input type="text" [value]="transactionIdFilter()" (input)="transactionIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">Enquiry ID<input type="text" [value]="enquiryIdFilter()" (input)="enquiryIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">Admin Employee ID<input type="text" [value]="employeeIdFilter()" (input)="employeeIdFilter.set($any($event.target).value)" placeholder="Optional UUID"></label>
+      <label class="field">From date<input type="date" [value]="fromDate()" (input)="fromDate.set($any($event.target).value)"></label>
+      <label class="field">To date<input type="date" [value]="toDate()" (input)="toDate.set($any($event.target).value)"></label>
+      <label class="field">Minimum amount<input type="number" min="0" step="0.01" [value]="minAmount()" (input)="minAmount.set($any($event.target).value)"></label>
+      <label class="field">Maximum amount<input type="number" min="0" step="0.01" [value]="maxAmount()" (input)="maxAmount.set($any($event.target).value)"></label>
+      <label class="field">Sort by<select [value]="sortBy()" (change)="sortBy.set($any($event.target).value)"><option value="date">Transaction date</option><option value="amount">Amount</option></select></label>
+      <label class="field">Order<select [value]="sortOrder()" (change)="sortOrder.set($any($event.target).value)"><option value="desc">Newest / highest first</option><option value="asc">Oldest / lowest first</option></select></label>
+    </div>
+    <div class="filter-actions"><button type="button" class="button button-primary" (click)="applyFilters()">Apply filters</button><button type="button" class="button button-tertiary" (click)="resetFilters()">Reset</button></div>
+  </section>
+
+  <section class="panel ledger-panel" aria-labelledby="ledger-title">
+    <div class="panel-heading"><div><p class="eyebrow">{{ totalRecords() }} RECORDS</p><h2 id="ledger-title">Bank transaction ledger</h2></div><label class="page-size">Rows<select [value]="pageSize()" (change)="changePageSize($any($event.target).value)"><option value="25">25</option><option value="50">50</option><option value="100">100</option></select></label></div>
+    @if (loading()) { <div class="state" role="status">Loading transactions…</div> }
+    @else if (transactions().length) {
+      <div class="table-wrap"><table><thead><tr><th><button type="button" class="sort-button" (click)="setSort('date')">DATE {{ sortBy() === 'date' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</button></th><th>BANK ACCOUNT</th><th>TYPE</th><th><button type="button" class="sort-button" (click)="setSort('amount')">AMOUNT {{ sortBy() === 'amount' ? (sortOrder() === 'asc' ? '↑' : '↓') : '' }}</button></th><th>CATEGORY</th><th>DESCRIPTION</th><th>SOURCE</th><th>AGENCY USER ID</th><th>ADMIN EMPLOYEE ID</th><th>ENQUIRY ID</th></tr></thead><tbody>
+        @for (row of transactions(); track row.id) {
+          <tr><td>{{ row.transactionDate | date:'medium' }}</td><td><strong>{{ accountLabel(row.bankAccountId) }}</strong><small>{{ row.bankName }} · {{ row.accountNumberMasked }}</small></td><td><span class="type-pill" [class.credit-pill]="row.transactionType.toLowerCase() === 'credit'" [class.debit-pill]="row.transactionType.toLowerCase() === 'debit'">{{ row.transactionType }}</span></td><td class="amount" [class.credit]="row.transactionType.toLowerCase() === 'credit'" [class.debit]="row.transactionType.toLowerCase() === 'debit'">{{ row.transactionType.toLowerCase() === 'credit' ? '+' : '−' }}{{ row.amount | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ row.category }}</td><td class="description-cell">{{ row.description }}</td><td class="source-cell">{{ sourceReference(row) }}</td><td class="id-cell">{{ row.userId || '—' }}</td><td class="id-cell">{{ row.employeeId || '—' }}</td><td class="id-cell">{{ row.enquiryId || '—' }}</td></tr>
+        }
+      </tbody></table></div>
+      <footer class="pagination"><span>Page {{ page() }} of {{ totalPages() }} · {{ totalRecords() }} transactions</span><div><button type="button" class="button button-secondary" (click)="loadTransactions(page() - 1)" [disabled]="page() <= 1 || loading()">Previous</button><button type="button" class="button button-secondary" (click)="loadTransactions(page() + 1)" [disabled]="page() >= totalPages() || loading()">Next</button></div></footer>
+    } @else { <div class="empty-state">No transactions match these filters.</div> }
+  </section>
+
+  @if (manualModalOpen()) {
+    <div class="modal-backdrop" (click)="manualModalOpen.set(false)" role="presentation">
+      <section class="manual-modal" role="dialog" aria-modal="true" aria-labelledby="manual-title" (click)="$event.stopPropagation()">
+        <header class="modal-heading"><div><p class="eyebrow">BANK ACCOUNT ADJUSTMENT</p><h2 id="manual-title">Record a transaction</h2><p>Balance changes and the transaction entry are saved together.</p></div><button type="button" class="close-button" (click)="manualModalOpen.set(false)" [disabled]="submitting()" aria-label="Close">×</button></header>
+        <form [formGroup]="manualForm" (ngSubmit)="saveManualTransaction()" novalidate>
+          <div class="manual-grid">
+            <label class="field">Bank account <span class="required">*</span><select formControlName="bankAccountId"><option value="">{{ accountsLoading() ? 'Loading accounts…' : 'Select account' }}</option>@for (account of accounts(); track account.id) { @if (account.isActive) { <option [value]="account.id">{{ account.accountName }} · {{ account.bankName }} · {{ account.accountNumber }} ({{ account.currentBalance | currency:'INR':'symbol':'1.2-2' }})</option> } }</select>@if (manualForm.controls.bankAccountId.touched && manualForm.controls.bankAccountId.invalid) { <small>Select an account.</small> }</label>
+            <label class="field">Direction <span class="required">*</span><select formControlName="transactionType"><option value="Debit">Debit</option><option value="Credit">Credit</option></select></label>
+            <label class="field">Amount <span class="required">*</span><input type="number" min="0.01" step="0.01" formControlName="amount">@if (manualForm.controls.amount.touched && manualForm.controls.amount.invalid) { <small>Enter an amount greater than zero.</small> }</label>
+            <label class="field">Transaction date <span class="required">*</span><input type="date" formControlName="transactionDate"></label>
+            <label class="field">Category <span class="required">*</span><input type="text" formControlName="category" maxlength="80" list="manual-categories"><datalist id="manual-categories">@for (value of categories; track value) { <option [value]="value"></option> }</datalist></label>
+            <label class="field field-wide">Description / reason <span class="required">*</span><textarea rows="3" formControlName="description" maxlength="500"></textarea>@if (manualForm.controls.description.touched && manualForm.controls.description.invalid) { <small>Enter a description between 3 and 500 characters.</small> }</label>
+          </div>
+          @if (error()) { <div class="notice error" role="alert">{{ error() }}</div> }
+          <footer class="modal-actions"><button type="button" class="button button-secondary" (click)="manualModalOpen.set(false)" [disabled]="submitting()">Close</button><button type="submit" class="button button-primary" [disabled]="submitting() || accountsLoading()">{{ submitting() ? 'Saving…' : 'Save transaction' }}</button></footer>
+        </form>
+      </section>
+    </div>
+  }
+</main>

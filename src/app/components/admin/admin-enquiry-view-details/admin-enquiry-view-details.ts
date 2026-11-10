@@ -6,6 +6,8 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { environment } from '../../../../environments/environment';
 import { AdminEnquiryDetails, AdminEnquiryRcDetails, AdminPolicyDetails, AdminPolicyPaymentDetails, UploadDocPayload } from '../../../models/enquiry.model';
 import { EnquiryService } from '../../../services/enquiry/enquiry.service';
+import { BankAccountService } from '../../../services/bank-account/bank-account.service';
+import { BankAccountItem } from '../../../models/bank-account.model';
 
 type DetailField = { label: string; value: string };
 type DetailSection = { title: string; fields: DetailField[] };
@@ -32,6 +34,7 @@ export class AdminEnquiryViewDetails implements OnInit {
   private readonly route = inject(ActivatedRoute);
   private readonly router = inject(Router);
   private readonly service = inject(EnquiryService);
+  private readonly bankAccountService = inject(BankAccountService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly formBuilder = inject(FormBuilder);
 
@@ -73,8 +76,27 @@ export class AdminEnquiryViewDetails implements OnInit {
   readonly statusSubmitting = signal(false);
   readonly statusError = signal('');
   readonly statusSuccess = signal('');
+  readonly cancellationModalOpen = signal(false);
+  readonly cancellationReason = signal('');
+  readonly cancellationPayment = signal<AdminPolicyPaymentDetails | null>(null);
+  readonly cancellationPaymentLoading = signal(false);
+  readonly cancellationPaymentError = signal('');
+  readonly refundBankAccountId = signal('');
   readonly companies = signal<Array<{ id: string; companyName: string }>>([]);
   readonly vendors = signal<Array<{ id: string; name: string; isActive: boolean }>>([]);
+  readonly bankAccounts = signal<BankAccountItem[]>([]);
+  readonly bankAccountsLoading = signal(false);
+  readonly vendorSettlementLoading = signal(false);
+  readonly vendorSettlementSubmitting = signal(false);
+  readonly vendorSettlementSettled = signal(false);
+  readonly vendorSettlementError = signal('');
+  readonly vendorSettlementSuccess = signal('');
+  readonly vendorSettlementForm = this.formBuilder.group({
+    vendorId: ['', Validators.required],
+    bankAccountId: ['', Validators.required],
+    settlementDate: [this.todayDate(), Validators.required],
+    remarks: ['', Validators.maxLength(1000)],
+  });
   readonly rcSections = RC_SECTIONS;
   readonly quoteForm = this.formBuilder.group({
     insuranceCompanyId: ['', Validators.required],
@@ -116,6 +138,17 @@ export class AdminEnquiryViewDetails implements OnInit {
       next: (response) => this.vendors.set(response?.isSuccess ? (response.data ?? []).filter((vendor) => vendor.isActive) : []),
       error: () => this.vendors.set([]),
     });
+    this.bankAccountsLoading.set(true);
+    this.bankAccountService.getBankAccounts({ pageNumber: 1, pageSize: 100 }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.bankAccountsLoading.set(false);
+        this.bankAccounts.set(response?.isSuccess ? (response.data?.items ?? []).filter((account) => account.isActive) : []);
+      },
+      error: () => {
+        this.bankAccountsLoading.set(false);
+        this.bankAccounts.set([]);
+      },
+    });
   }
 
   openQuoteModal(): void {
@@ -149,7 +182,7 @@ export class AdminEnquiryViewDetails implements OnInit {
     if (!nextStatus) return false;
     if (nextStatus === 'PolicyIssued') {
       const enquiry = this.enquiry();
-      return !!enquiry && this.policyDocuments(enquiry).length > 0;
+      return !!enquiry && this.policyDocuments(enquiry).length > 0 && !!this.policyDetails() && this.vendorSettlementSettled();
     }
     return true;
   }
@@ -157,6 +190,55 @@ export class AdminEnquiryViewDetails implements OnInit {
   selectTab(tab: 'vehicle' | 'payment' | 'documents' | 'quotes' | 'vendor' | 'policy'): void {
     if (['payment', 'vendor', 'policy'].includes(tab) && !this.isPolicyStage()) return;
     this.activeTab.set(tab);
+    if (tab === 'vendor') this.loadVendorSettlementStatus();
+  }
+
+  loadVendorSettlementStatus(): void {
+    const id = this.enquiryId();
+    if (!id || this.vendorSettlementLoading()) return;
+    this.vendorSettlementLoading.set(true);
+    this.service.getVendorSettlementStatus(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.vendorSettlementLoading.set(false);
+        this.vendorSettlementSettled.set(response?.isSuccess && response.data === true);
+        if (this.vendorSettlementSettled()) this.vendorSettlementForm.disable();
+      },
+      error: () => this.vendorSettlementLoading.set(false),
+    });
+  }
+
+  submitVendorSettlement(): void {
+    this.vendorSettlementForm.markAllAsTouched();
+    if (this.vendorSettlementForm.invalid || this.vendorSettlementSubmitting() || this.vendorSettlementSettled()) return;
+    const enquiry = this.enquiry();
+    const vendorId = this.vendorSettlementForm.controls.vendorId.value;
+    if (!enquiry || !vendorId) return;
+    this.vendorSettlementSubmitting.set(true);
+    this.vendorSettlementError.set('');
+    this.vendorSettlementSuccess.set('');
+    this.service.submitVendorSettlement({
+      enquiryId: enquiry.id,
+      vendorId,
+      settlementMethod: 2,
+      bankAccountId: this.vendorSettlementForm.controls.bankAccountId.value || null,
+      settlementDate: this.vendorSettlementForm.controls.settlementDate.value || this.todayDate(),
+      remarks: this.vendorSettlementForm.controls.remarks.value?.trim() || null,
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.vendorSettlementSubmitting.set(false);
+        if (!response?.isSuccess || response.data !== true) {
+          this.vendorSettlementError.set(response?.message || 'Vendor settlement could not be recorded.');
+          return;
+        }
+        this.vendorSettlementSettled.set(true);
+        this.vendorSettlementForm.disable();
+        this.vendorSettlementSuccess.set(response.message || 'Vendor settlement recorded.');
+      },
+      error: (err) => {
+        this.vendorSettlementSubmitting.set(false);
+        this.vendorSettlementError.set(err?.error?.message || 'Vendor settlement could not be recorded.');
+      },
+    });
   }
 
   isPolicyStage(status = this.enquiry()?.status): boolean {
@@ -176,6 +258,68 @@ export class AdminEnquiryViewDetails implements OnInit {
     if (!this.canUpdateStatus() || this.statusSubmitting()) return;
     this.statusError.set('');
     this.statusModalOpen.set(true);
+  }
+
+  canCancelEnquiry(): boolean {
+    const status = this.canonicalStatus(this.enquiry()?.status);
+    return !!status && status !== 'PolicyIssued' && status !== 'Cancelled';
+  }
+
+  openCancellationModal(): void {
+    if (!this.canCancelEnquiry() || this.statusSubmitting()) return;
+    this.cancellationReason.set('');
+    this.statusError.set('');
+    this.cancellationPayment.set(null);
+    this.cancellationPaymentError.set('');
+    this.refundBankAccountId.set('');
+    this.cancellationModalOpen.set(true);
+    const id = this.enquiry()?.id;
+    if (!id) return;
+    this.cancellationPaymentLoading.set(true);
+    this.service.getAdminPolicyPaymentDetails(id).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.cancellationPaymentLoading.set(false);
+        if (response?.isSuccess && response.data?.paymentStatus?.toLowerCase() === 'approved') {
+          this.cancellationPayment.set(response.data);
+        }
+      },
+      error: (err) => {
+        this.cancellationPaymentLoading.set(false);
+        if (err?.status !== 404) this.cancellationPaymentError.set(err?.error?.message || 'Could not check payment status. Retry before cancelling.');
+      },
+    });
+  }
+
+  cancelEnquiry(): void {
+    const enquiry = this.enquiry();
+    const reason = this.cancellationReason().trim();
+    if (!enquiry || reason.length < 5 || this.statusSubmitting() || this.cancellationPaymentLoading() || this.cancellationPaymentError()) return;
+    const refundBankAccountId = this.refundBankAccountId();
+    if (this.cancellationPayment() && !refundBankAccountId) return;
+    this.statusSubmitting.set(true);
+    this.statusError.set('');
+    this.service.changeAdminEnquiryStatus({
+      enquiryId: enquiry.id,
+      currentStatus: String(enquiry.status),
+      newStatus: 'Cancelled',
+      cancellationReason: reason,
+      refundBankAccountId: refundBankAccountId || null,
+    }).pipe(takeUntilDestroyed(this.destroyRef)).subscribe({
+      next: (response) => {
+        this.statusSubmitting.set(false);
+        if (!response?.isSuccess) {
+          this.statusError.set(response?.message || 'The enquiry could not be cancelled.');
+          return;
+        }
+        this.cancellationModalOpen.set(false);
+        this.statusSuccess.set(response.message || 'Enquiry cancelled.');
+        this.load();
+      },
+      error: (err) => {
+        this.statusSubmitting.set(false);
+        this.statusError.set(err?.error?.message || 'The enquiry could not be cancelled.');
+      },
+    });
   }
 
   closeStatusModal(): void {
@@ -285,6 +429,9 @@ export class AdminEnquiryViewDetails implements OnInit {
         this.loading.set(false);
         if (response?.isSuccess && response.data) {
           this.enquiry.set(response.data);
+          const selectedVendorId = this.selectedQuote(response.data.quotes)?.vendorId ?? '';
+          if (selectedVendorId && !this.vendorSettlementSettled()) this.vendorSettlementForm.patchValue({ vendorId: selectedVendorId });
+          this.loadVendorSettlementStatus();
           if (!this.isPolicyStage(response.data.status) && ['payment', 'vendor', 'policy'].includes(this.activeTab())) {
             this.activeTab.set('vehicle');
           }
@@ -376,6 +523,9 @@ export class AdminEnquiryViewDetails implements OnInit {
         this.policyDetails.set(response.data);
         this.policySuccess.set(response.message || 'Policy details saved.');
         this.load();
+        if (this.vendorSettlementSettled() && this.enquiry() && this.policyDocuments(this.enquiry()!).length > 0) {
+          this.openStatusModal();
+        }
       },
       error: (err) => {
         this.policySaving.set(false);
@@ -599,6 +749,10 @@ export class AdminEnquiryViewDetails implements OnInit {
     if (/^(https?:|blob:|data:)/i.test(url)) return url;
     const base = (environment.r2Url || '').replace(/\/+$/, '');
     return base ? `${base}/${url.replace(/^\/+/, '')}` : url;
+  }
+
+  todayDate(): string {
+    return new Date().toISOString().slice(0, 10);
   }
 
   display(value: unknown): string {

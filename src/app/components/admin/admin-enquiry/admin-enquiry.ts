@@ -1225,11 +1225,7 @@ export class AdminEnquiry implements OnInit {
   }
 
   onTransactions(): void {
-    this.showToast('Transactions & Payment Ledger will be configured in next phase.', 'info');
-  }
-
-  onAssignQueue(): void {
-    this.showToast('Batch queue assignment to employees will be configured in next phase.', 'info');
+    this.router.navigate(['/admin/transactions']);
   }
 
   exportQueueCsv(): void {

@@ -65,6 +65,10 @@ export const routes: Routes = [
           import('./components/admin/admin-reports/admin-reports').then(m => m.AdminReports),
       },
       {
+        path: 'transactions',
+        loadComponent: () => import('./components/admin/transaction/transaction').then(m => m.Transaction),
+      },
+      {
         path: 'accelerators',
         children: [
           { path: '', redirectTo: 'qr-management', pathMatch: 'full' },

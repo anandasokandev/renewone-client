@@ -8,6 +8,7 @@
       @if (nextEnquiryStatus()) {
         <button type="button" class="button button-secondary" (click)="openStatusModal()" [disabled]="!canUpdateStatus()" [attr.title]="canUpdateStatus() ? null : 'Upload the final Policy document before changing the status to Policy Issued.'">Update Status</button>
       }
+      @if (canCancelEnquiry()) { <button type="button" class="button button-danger" (click)="openCancellationModal()">Cancel enquiry</button> }
       <button type="button" class="button button-primary" (click)="openQuoteModal()">+ Add quote</button>
       <button type="button" class="button button-secondary" (click)="load()" [disabled]="loading()">Refresh</button>
     </div>
@@ -175,7 +176,7 @@
           <ul class="list">
             @for (doc of item.documents; track trackById($index, doc)) {
               <li class="list-row"><div class="list-copy"><strong>{{ doc.docName || doc.docType || 'Document' }}</strong><span>{{ doc.docType }}@if (doc.docSide) { · {{ doc.docSide }} } · {{ formatDate(doc.uploadedAt) }}</span></div>
-                @if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View / download</a> }
+                @if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View</a><a class="button button-secondary" [href]="documentUrl(doc.url)" [attr.download]="doc.docName || doc.docType || 'document'" rel="noopener noreferrer">Download</a> }
               </li>
             }
           </ul>
@@ -208,13 +209,24 @@
     <div id="panel-vendor" class="tab-panel" role="tabpanel" aria-labelledby="tab-vendor">
       <section class="panel">
         <header class="panel-heading"><div><p class="eyebrow">VENDOR</p><h2>Vendor information</h2></div><span class="count">{{ item.quotes.length }}</span></header>
-        @if (item.quotes.length) {
-          <div class="table-wrap"><table><thead><tr><th>VENDOR</th><th>INSURANCE COMPANY</th><th>PREMIUM</th><th>QUOTE DATE</th></tr></thead><tbody>
-            @for (quote of item.quotes; track trackById($index, quote)) {
-              <tr><td>{{ quote.vendorName || 'Not specified' }}</td><td>{{ quote.insuranceCompanyName || '—' }}</td><td>{{ quote.premium | currency:'INR':'symbol':'1.2-2' }}</td><td>{{ formatDate(quote.quoteDate) }}</td></tr>
-            }
-          </tbody></table></div>
-        } @else { <p class="empty-state">No vendor is associated with a quote yet.</p> }
+        <section class="vendor-settlement" aria-labelledby="vendor-settlement-heading">
+          @if (vendorSettlementLoading()) { <p class="empty-state" role="status">Checking settlement status…</p> }
+          @if (vendorSettlementError()) { <div class="policy-feedback policy-error" role="alert">{{ vendorSettlementError() }}</div> }
+          @if (vendorSettlementSuccess()) { <div class="policy-feedback policy-success" role="status">{{ vendorSettlementSuccess() }}</div> }
+          @if (vendorSettlementSettled()) {
+            <p class="policy-feedback policy-success" role="status">Vendor payment is settled. Both bank and vendor transactions have been recorded.</p>
+          } @else {
+            <form class="policy-form" [formGroup]="vendorSettlementForm" (ngSubmit)="submitVendorSettlement()" novalidate>
+              <div class="vendor-settlement-grid">
+                <label class="policy-field">Vendor <span class="required">*</span><select formControlName="vendorId"><option value="">Select vendor</option>@for (vendor of vendors(); track vendor.id) { <option [value]="vendor.id">{{ vendor.name }}</option> }</select>@if (vendorSettlementForm.controls.vendorId.touched && vendorSettlementForm.controls.vendorId.invalid) { <small>Select the vendor.</small> }</label>
+                <label class="policy-field">Payment date <span class="required">*</span><input type="date" formControlName="settlementDate"></label>
+                <label class="policy-field">Pay from bank account <span class="required">*</span><select formControlName="bankAccountId"><option value="">{{ bankAccountsLoading() ? 'Loading accounts…' : 'Select bank account' }}</option>@for (account of bankAccounts(); track account.id) { <option [value]="account.id">{{ account.accountName }} · {{ account.bankName }} · {{ account.accountNumber }} ({{ account.currentBalance | currency:'INR':'symbol':'1.2-2' }})</option> }</select>@if (vendorSettlementForm.controls.bankAccountId.touched && vendorSettlementForm.controls.bankAccountId.invalid) { <small>Select the paying bank account.</small> }</label>
+                <label class="policy-field vendor-settlement-remarks">Remarks <span class="optional">Optional</span><textarea rows="2" formControlName="remarks" maxlength="1000"></textarea></label>
+              </div>
+              <div class="policy-form-actions"><button type="submit" class="button button-primary" [disabled]="vendorSettlementSubmitting() || vendorSettlementLoading() || bankAccountsLoading()">{{ vendorSettlementSubmitting() ? 'Recording…' : 'Record vendor payment' }}</button></div>
+            </form>
+          }
+        </section>
       </section>
     </div>
     }
@@ -269,7 +281,7 @@
           @if (policyFile(); as file) { <p class="selected-file">Selected: {{ file.name }}</p> }
         </div>
         @if (policyDocuments(item).length) {
-          <ul class="list">@for (doc of policyDocuments(item); track trackById($index, doc)) { <li class="list-row"><div class="list-copy"><strong>{{ doc.docName || doc.docType }}</strong><span>{{ formatDate(doc.uploadedAt) }}</span></div>@if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View / download</a> }</li> }</ul>
+          <ul class="list">@for (doc of policyDocuments(item); track trackById($index, doc)) { <li class="list-row"><div class="list-copy"><strong>{{ doc.docName || doc.docType }}</strong><span>{{ formatDate(doc.uploadedAt) }}</span></div>@if (doc.url) { <a class="button button-secondary" [href]="documentUrl(doc.url)" target="_blank" rel="noopener noreferrer">View</a><a class="button button-secondary" [href]="documentUrl(doc.url)" [attr.download]="doc.docName || doc.docType || 'policy'" rel="noopener noreferrer">Download</a> }</li> }</ul>
         } @else {
           <p class="empty-state">No policy document has been uploaded to this enquiry.</p>
         }
@@ -285,7 +297,7 @@
           <div class="header-titles">
             <span class="carbon-eyebrow">Enquiry workflow</span>
             <h2 id="status-modal-title" class="modal-headline">Update Status</h2>
-            <p class="modal-subhead">Advance this enquiry to the next stage.</p>
+            <p class="modal-subhead">{{ nextEnquiryStatus() === 'PolicyIssued' ? 'Issuing this policy is permanent and cannot be reverted.' : 'Advance this enquiry to the next stage.' }}</p>
           </div>
           <button type="button" class="modal-close-btn" (click)="closeStatusModal()" [disabled]="statusSubmitting()" aria-label="Close status update">×</button>
         </header>
@@ -296,12 +308,32 @@
             <span class="status-transition-arrow" aria-hidden="true">→</span>
             <div class="status-transition-item status-transition-next"><span>Next status</span><strong>{{ statusLabel(nextEnquiryStatus()) }}</strong></div>
           </div>
-          <p class="status-update-note">The update will be checked by the server against the enquiry’s current status and stage requirements.</p>
+          <p class="status-update-note">{{ nextEnquiryStatus() === 'PolicyIssued' ? 'Confirm only after vendor payment is settled, the policy document is uploaded, and policy details are saved.' : 'The update will be checked by the server against the enquiry’s current status and stage requirements.' }}</p>
         </div>
         <footer class="modal-footer status-modal-footer">
           <button type="button" class="carbon-btn-secondary" (click)="closeStatusModal()" [disabled]="statusSubmitting()">Cancel</button>
-          <button type="button" class="carbon-btn-primary" (click)="confirmStatusUpdate()" [disabled]="statusSubmitting()">{{ statusSubmitting() ? 'Updating…' : 'Confirm update' }}</button>
+          <button type="button" class="carbon-btn-primary" (click)="confirmStatusUpdate()" [disabled]="statusSubmitting()">{{ statusSubmitting() ? 'Updating…' : (nextEnquiryStatus() === 'PolicyIssued' ? 'Issue policy permanently' : 'Confirm update') }}</button>
         </footer>
+      </section>
+    </div>
+  }
+
+  @if (cancellationModalOpen()) {
+    <div class="carbon-modal-overlay status-modal-overlay" (click)="cancellationModalOpen.set(false)" role="presentation">
+      <section class="carbon-modal-dialog status-modal" role="dialog" aria-modal="true" aria-labelledby="cancel-modal-title" (click)="$event.stopPropagation()">
+        <header class="modal-header status-modal-header"><div class="header-titles"><span class="carbon-eyebrow">Enquiry workflow</span><h2 id="cancel-modal-title" class="modal-headline">Cancel enquiry</h2><p class="modal-subhead">Cancellation cannot be reversed. Any approved payment will be refunded from the bank account you select below.</p></div><button type="button" class="modal-close-btn" (click)="cancellationModalOpen.set(false)" [disabled]="statusSubmitting()" aria-label="Close cancellation dialog">×</button></header>
+        <div class="status-modal-body">
+          @if (statusError()) { <div class="form-error" role="alert">{{ statusError() }}</div> }
+          @if (cancellationPaymentLoading()) { <p class="empty-state" role="status">Checking approved payment…</p> }
+          @if (cancellationPaymentError()) { <div class="form-error" role="alert">{{ cancellationPaymentError() }} Close and reopen this dialog to retry.</div> }
+          @if (cancellationPayment(); as payment) {
+            <section class="refund-summary"><p class="eyebrow">REFUND REQUIRED</p><strong>{{ payment.paymentAmount | currency:'INR':'symbol':'1.2-2' }}</strong><span>Approved customer payment · {{ payment.paymentMode }}</span></section>
+            <label class="policy-field refund-bank-field">Refund from bank account <span class="required">*</span><select [value]="refundBankAccountId()" (change)="refundBankAccountId.set($any($event.target).value)"><option value="">{{ bankAccountsLoading() ? 'Loading accounts…' : 'Select bank account' }}</option>@for (account of bankAccounts(); track account.id) { <option [value]="account.id">{{ account.accountName }} · {{ account.bankName }} · {{ account.accountNumber }} ({{ account.currentBalance | currency:'INR':'symbol':'1.2-2' }})</option> }</select></label>
+          }
+          <label class="policy-field">Reason for cancellation <span class="required">*</span><textarea rows="4" maxlength="1000" [value]="cancellationReason()" (input)="cancellationReason.set($any($event.target).value)" placeholder="Explain why this enquiry is being cancelled"></textarea></label>
+          @if (cancellationReason().trim().length < 5) { <small>Enter at least 5 characters.</small> }
+        </div>
+        <footer class="modal-footer status-modal-footer"><button type="button" class="carbon-btn-secondary" (click)="cancellationModalOpen.set(false)" [disabled]="statusSubmitting()">Keep enquiry</button><button type="button" class="button button-danger" (click)="cancelEnquiry()" [disabled]="statusSubmitting() || cancellationPaymentLoading() || !!cancellationPaymentError() || bankAccountsLoading() || cancellationReason().trim().length < 5 || (!!cancellationPayment() && !refundBankAccountId())">{{ statusSubmitting() ? 'Cancelling…' : (cancellationPayment() ? 'Refund and cancel' : 'Confirm cancellation') }}</button></footer>
       </section>
     </div>
   }

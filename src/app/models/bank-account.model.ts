@@ -25,19 +25,33 @@ export interface BankAccountFilterParams {
 }
 
 export interface BankTransactionFilterParams {
-  bankAccountId: string;
+  bankAccountId?: string;
   search?: string;
   transactionType?: 'Credit' | 'Debit';
   category?: string;
   userId?: string;
   vendorId?: string;
   policyPaymentId?: string;
+  transactionId?: string;
+  enquiryId?: string;
+  employeeId?: string;
   fromDate?: string;
   toDate?: string;
+  minAmount?: number;
+  maxAmount?: number;
   sortBy?: 'date' | 'amount';
   sortOrder?: 'asc' | 'desc';
   pageNumber?: number;
   pageSize?: number;
+}
+
+export interface CreateManualBankTransactionRequest {
+  bankAccountId: string;
+  transactionType: 'Credit' | 'Debit';
+  amount: number;
+  category: string;
+  description: string;
+  transactionDate: string;
 }
 
 export interface BankTransactionItem {
@@ -53,6 +67,8 @@ export interface BankTransactionItem {
   salaryId?: string | null;
   vendorId?: string | null;
   userId?: string | null;
+  employeeId?: string | null;
+  enquiryId?: string | null;
   transactionDate: string;
   createdAt: string;
 }

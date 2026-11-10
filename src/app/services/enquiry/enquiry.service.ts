@@ -49,6 +49,7 @@ import {
   PaymentVerificationDetails,
   AdminPolicyPaymentDetails,
   ChangeAdminEnquiryStatusRequest,
+  SubmitVendorSettlementRequest,
 } from '../../models/enquiry.model';
 
 const INITIAL_ENQUIRIES: EnquiryItem[] = [];
@@ -133,6 +134,20 @@ export class EnquiryService {
     return this.http.put<ApiResponse<boolean>>(
       `${environment.apiUrl}/Enquiry/admin/change-status`,
       request,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  getVendorSettlementStatus(enquiryId: string): Observable<ApiResponse<boolean>> {
+    return this.http.get<ApiResponse<boolean>>(
+      `${environment.apiUrl}/Enquiry/admin/vendor-settlement-status/${encodeURIComponent(enquiryId)}`,
+      { headers: this.getAuthHeaders() }
+    );
+  }
+
+  submitVendorSettlement(request: SubmitVendorSettlementRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(
+      `${environment.apiUrl}/Enquiry/admin/vendor-settlement`, request,
       { headers: this.getAuthHeaders() }
     );
   }

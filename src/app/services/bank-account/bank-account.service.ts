@@ -11,6 +11,7 @@ import {
   UpdateBankAccountRequest,
   BankTransactionFilterParams,
   BankTransactionResponse,
+  CreateManualBankTransactionRequest,
 } from '../../models/bank-account.model';
 
 @Injectable({
@@ -49,11 +50,12 @@ export class BankAccountService {
     filters: BankTransactionFilterParams
   ): Observable<ApiResponse<BankTransactionResponse>> {
     let params = new HttpParams()
-      .set('BankAccountId', filters.bankAccountId)
       .set('PageNumber', String(filters.pageNumber ?? 1))
       .set('PageSize', String(filters.pageSize ?? 25))
       .set('SortBy', filters.sortBy ?? 'date')
       .set('SortOrder', filters.sortOrder ?? 'desc');
+
+    if (filters.bankAccountId) params = params.set('BankAccountId', filters.bankAccountId);
 
     if (filters.search?.trim()) params = params.set('Search', filters.search.trim());
     if (filters.transactionType) params = params.set('TransactionType', filters.transactionType);
@@ -61,12 +63,21 @@ export class BankAccountService {
     if (filters.userId) params = params.set('UserId', filters.userId);
     if (filters.vendorId) params = params.set('VendorId', filters.vendorId);
     if (filters.policyPaymentId) params = params.set('PolicyPaymentId', filters.policyPaymentId);
+    if (filters.transactionId) params = params.set('TransactionId', filters.transactionId);
+    if (filters.enquiryId) params = params.set('EnquiryId', filters.enquiryId);
+    if (filters.employeeId) params = params.set('EmployeeId', filters.employeeId);
     if (filters.fromDate) params = params.set('FromDate', filters.fromDate);
     if (filters.toDate) params = params.set('ToDate', filters.toDate);
+    if (filters.minAmount != null) params = params.set('MinAmount', String(filters.minAmount));
+    if (filters.maxAmount != null) params = params.set('MaxAmount', String(filters.maxAmount));
 
     return this.http.get<ApiResponse<BankTransactionResponse>>(
       `${this.baseUrl}/bank-accounts/transactions`, { params }
     );
+  }
+
+  createManualTransaction(payload: CreateManualBankTransactionRequest): Observable<ApiResponse<boolean>> {
+    return this.http.post<ApiResponse<boolean>>(`${this.baseUrl}/bank-accounts/transactions/manual`, payload);
   }
 
   toggleBankAccountStatus(id: string): Observable<ApiResponse<any>> {
