@@ -304,4 +304,61 @@ describe('AdminEmployee', () => {
       })
     ).toBe('customUser');
   });
+
+  it('should render mobile card view for employees', () => {
+    fixture.detectChanges();
+    const compiled = fixture.nativeElement as HTMLElement;
+
+    const cards = compiled.querySelectorAll('.employee-mobile-card');
+    expect(cards.length).toBe(2);
+
+    const firstCard = cards[0] as HTMLElement;
+    expect(firstCard.textContent).toContain('Samuel John');
+    expect(firstCard.textContent).toContain('EMP-0001');
+    expect(firstCard.textContent).toContain('Admin Employee');
+  });
+
+  it('should append records when loadMoreEmployees is invoked', () => {
+    fixture.detectChanges();
+    component.totalPages.set(2);
+    component.pageNumber.set(1);
+
+    const nextPageData: ApiResponse<AdminEmployeePagedData> = {
+      isSuccess: true,
+      data: {
+        items: [
+          {
+            id: 'extra-1',
+            employeeId: 'EMP-0003',
+            employeeName: 'David Miller',
+            email: 'david@renew1.in',
+            phoneNumber: '9123456789',
+            role: 'Employee',
+            status: true,
+          },
+        ],
+        pageNumber: 2,
+        pageSize: 5,
+        totalRecords: 3,
+        totalPages: 2,
+        hasPreviousPage: true,
+        hasNextPage: false,
+      },
+      message: 'OK',
+      statusCode: 200,
+      errors: null,
+    };
+
+    vi.spyOn(employeeService, 'getAllEmployees').mockReturnValue(of(nextPageData));
+
+    component.loadMoreEmployees();
+
+    expect(employeeService.getAllEmployees).toHaveBeenCalledWith({
+      Search: '',
+      PageNumber: 2,
+      PageSize: 5,
+    });
+    expect(component.employees().length).toBe(3);
+    expect(component.employees()[2].employeeName).toBe('David Miller');
+  });
 });

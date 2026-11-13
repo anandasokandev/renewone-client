@@ -1,6 +1,7 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideHttpClient } from '@angular/common/http';
 import { provideHttpClientTesting } from '@angular/common/http/testing';
+import { provideRouter } from '@angular/router';
 import { of, throwError } from 'rxjs';
 import { BankAccountManagement } from './bank-account-management';
 import { BankAccountService } from '../../../../services/bank-account/bank-account.service';
@@ -61,7 +62,7 @@ describe('BankAccountManagement', () => {
   beforeEach(async () => {
     await TestBed.configureTestingModule({
       imports: [BankAccountManagement],
-      providers: [BankAccountService, provideHttpClient(), provideHttpClientTesting()],
+      providers: [BankAccountService, provideHttpClient(), provideHttpClientTesting(), provideRouter([])],
     }).compileComponents();
 
     bankAccountService = TestBed.inject(BankAccountService);
@@ -245,6 +246,88 @@ describe('BankAccountManagement', () => {
       expect(component.isAddModalOpen()).toBe(true);
       expect(component.addError()).toBe('Account number already registered.');
       expect(component.isSubmitting()).toBe(false);
+    });
+  });
+
+  describe('Status Filtering & Mobile Cards & Infinite Scroll', () => {
+    it('should filter bank accounts by status', () => {
+      expect(component.accounts().length).toBe(2);
+      expect(component.filteredAccounts().length).toBe(2);
+      expect(component.activeAccountsCount()).toBe(1);
+      expect(component.inactiveAccountsCount()).toBe(1);
+
+      component.setStatusFilter('active');
+      expect(component.filteredAccounts().length).toBe(1);
+      expect(component.filteredAccounts()[0].isActive).toBe(true);
+
+      component.setStatusFilter('inactive');
+      expect(component.filteredAccounts().length).toBe(1);
+      expect(component.filteredAccounts()[0].isActive).toBe(false);
+
+      component.setStatusFilter('all');
+      expect(component.filteredAccounts().length).toBe(2);
+    });
+
+    it('should render mobile card view matching design', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const mobileList = compiled.querySelector('.bank-mobile-list');
+      expect(mobileList).toBeTruthy();
+
+      const cards = mobileList?.querySelectorAll('.bank-mobile-card');
+      expect(cards?.length).toBe(2);
+
+      const firstCard = cards?.[0];
+      expect(firstCard?.textContent).toContain('VEN Rahul');
+      expect(firstCard?.textContent).toContain('Federal Bank');
+      expect(firstCard?.textContent).toContain('12100100077431');
+      expect(firstCard?.textContent).toContain('FDRL0001210');
+      expect(firstCard?.textContent).toContain('Primary');
+    });
+
+    it('should append records when loadMoreAccounts is called', () => {
+      const nextPageData: ApiResponse<PagedResult<BankAccountItem>> = {
+        isSuccess: true,
+        data: {
+          items: [
+            {
+              id: 'new-account-id',
+              accountName: 'SBI Branch',
+              bankName: 'State Bank of India',
+              branchName: 'Kochi',
+              accountHolderName: 'Kochi Branch',
+              accountNumber: '998877665544',
+              ifscCode: 'SBIN0001234',
+              upiId: 'sbi@upi',
+              openingBalance: 0.0,
+              currentBalance: 5000.0,
+              isPrimary: false,
+              isActive: true,
+            },
+          ],
+          pageNumber: 2,
+          pageSize: 10,
+          totalRecords: 3,
+          totalPages: 2,
+          hasPreviousPage: true,
+          hasNextPage: false,
+        },
+        message: 'OK',
+        statusCode: 200,
+        errors: null,
+      };
+
+      const loadSpy = vi.spyOn(bankAccountService, 'getBankAccounts').mockReturnValue(of(nextPageData));
+      component.totalPages.set(2);
+      component.pageNumber.set(1);
+
+      component.loadMoreAccounts();
+
+      expect(loadSpy).toHaveBeenCalledWith({ pageNumber: 2, pageSize: 10, search: undefined });
+      expect(component.accounts().length).toBe(3);
+      expect(component.accounts()[2].accountName).toBe('SBI Branch');
     });
   });
 });

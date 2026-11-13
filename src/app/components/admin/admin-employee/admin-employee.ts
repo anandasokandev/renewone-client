@@ -1,5 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormsModule } from '@angular/forms';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { forkJoin } from 'rxjs';
@@ -26,7 +38,7 @@ type ToastType = 'success' | 'info' | 'error';
   templateUrl: './admin-employee.html',
   styleUrl: './admin-employee.css',
 })
-export class AdminEmployee implements OnInit {
+export class AdminEmployee implements OnInit, AfterViewInit, OnDestroy {
   private readonly employeeService = inject(EmployeeService);
   private readonly enquiryService = inject(EnquiryService);
   private readonly destroyRef = inject(DestroyRef);
@@ -42,6 +54,11 @@ export class AdminEmployee implements OnInit {
   readonly hasPreviousPage = signal<boolean>(false);
   readonly hasNextPage = signal<boolean>(false);
   readonly togglingEmployeeId = signal<string | null>(null);
+
+  // Infinite Scroll for Small Screens
+  readonly hasMoreEmployees = computed(() => this.pageNumber() < this.totalPages());
+  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
 
   readonly toastMessage = signal<string | null>(null);
   readonly toastType = signal<ToastType>('success');
@@ -131,7 +148,52 @@ export class AdminEmployee implements OnInit {
     this.loadEmployees();
   }
 
-  loadEmployees(): void {
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (!this.hasMoreEmployees() || this.isLoading()) return;
+    const scrollPos = window.innerHeight + window.scrollY;
+    const bodyHeight = document.documentElement.scrollHeight;
+    if (bodyHeight - scrollPos < 200) {
+      this.loadMoreEmployees();
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+    this.observer?.disconnect();
+    this.observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          this.loadMoreEmployees();
+        }
+      },
+      { root: null, rootMargin: '100px', threshold: 0.1 }
+    );
+    if (this.scrollSentinel?.nativeElement) {
+      this.observer.observe(this.scrollSentinel.nativeElement);
+    }
+  }
+
+  loadMoreEmployees(): void {
+    if (!this.hasMoreEmployees() || this.isLoading()) return;
+    this.pageNumber.update(p => p + 1);
+    this.loadEmployees(true);
+    setTimeout(() => {
+      if (this.scrollSentinel?.nativeElement && this.observer) {
+        this.observer.observe(this.scrollSentinel.nativeElement);
+      }
+    }, 50);
+  }
+
+  loadEmployees(isAppend = false): void {
     this.isLoading.set(true);
     const payload: GetAllEmployeesPayload = {
       Search: this.searchQuery().trim(),
@@ -147,8 +209,13 @@ export class AdminEmployee implements OnInit {
             this.showToast(response.message || 'Failed to fetch employees.', 'error');
             return;
           }
-          this.employees.set(response.data.items || []);
-          this.totalRecords.set(response.data.totalRecords ?? (response.data.items?.length || 0));
+          const items = response.data.items || [];
+          if (isAppend) {
+            this.employees.update(current => [...current, ...items]);
+          } else {
+            this.employees.set(items);
+          }
+          this.totalRecords.set(response.data.totalRecords ?? (this.employees().length));
           this.totalPages.set(response.data.totalPages ?? 1);
           this.pageNumber.set(response.data.pageNumber ?? 1);
           this.pageSize.set(response.data.pageSize ?? 5);
@@ -160,7 +227,8 @@ export class AdminEmployee implements OnInit {
   }
 
   refreshEmployees(): void {
-    this.loadEmployees();
+    this.pageNumber.set(1);
+    this.loadEmployees(false);
   }
 
   onSearchChange(query: string): void {
@@ -169,13 +237,13 @@ export class AdminEmployee implements OnInit {
 
   submitSearch(): void {
     this.pageNumber.set(1);
-    this.loadEmployees();
+    this.loadEmployees(false);
   }
 
   clearSearch(): void {
     this.searchQuery.set('');
     this.pageNumber.set(1);
-    this.loadEmployees();
+    this.loadEmployees(false);
   }
 
   onStatusFilterChange(status: 'All' | 'Active' | 'Inactive'): void {

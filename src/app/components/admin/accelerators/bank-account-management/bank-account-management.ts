@@ -1,6 +1,18 @@
 import { CommonModule } from '@angular/common';
 import { RouterLink } from '@angular/router';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,7 +26,7 @@ import { BankAccountItem, UpdateBankAccountRequest } from '../../../../models/ba
   templateUrl: './bank-account-management.html',
   styleUrl: './bank-account-management.css',
 })
-export class BankAccountManagement implements OnInit {
+export class BankAccountManagement implements OnInit, AfterViewInit, OnDestroy {
   private readonly bankAccountService = inject(BankAccountService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
@@ -24,12 +36,25 @@ export class BankAccountManagement implements OnInit {
   readonly accounts = signal<BankAccountItem[]>([]);
   readonly isLoading = signal<boolean>(false);
   readonly searchQuery = signal<string>('');
+  readonly statusFilter = signal<'all' | 'active' | 'inactive'>('all');
   readonly pageNumber = signal<number>(1);
   readonly pageSize = signal<number>(10);
   readonly totalRecords = signal<number>(0);
   readonly totalPages = signal<number>(1);
   readonly togglingAccountId = signal<string | null>(null);
   readonly editingAccountId = signal<string | null>(null);
+
+  // Infinite Scroll State
+  readonly hasMoreAccounts = computed(() => this.pageNumber() < this.totalPages());
+  readonly activeAccountsCount = computed(() => this.accounts().filter((a) => a.isActive).length);
+  readonly inactiveAccountsCount = computed(() => this.accounts().filter((a) => !a.isActive).length);
+
+  @ViewChild('scrollSentinel') set scrollSentinelRef(el: ElementRef<HTMLElement> | undefined) {
+    if (el?.nativeElement && this.scrollObserver) {
+      this.scrollObserver.observe(el.nativeElement);
+    }
+  }
+  private scrollObserver?: IntersectionObserver;
 
   // Add Bank Account Modal State
   readonly isAddModalOpen = signal<boolean>(false);
@@ -56,7 +81,15 @@ export class BankAccountManagement implements OnInit {
   // Client-side instant filter over retrieved items
   readonly filteredAccounts = computed<BankAccountItem[]>(() => {
     const query = this.searchQuery().trim().toLowerCase();
-    const items = this.accounts();
+    const status = this.statusFilter();
+    let items = this.accounts();
+
+    if (status === 'active') {
+      items = items.filter((item) => item.isActive);
+    } else if (status === 'inactive') {
+      items = items.filter((item) => !item.isActive);
+    }
+
     if (!query) return items;
     return items.filter(
       (item) =>
@@ -74,7 +107,45 @@ export class BankAccountManagement implements OnInit {
     this.loadBankAccounts();
   }
 
-  loadBankAccounts(): void {
+  ngAfterViewInit(): void {
+    this.setupScrollObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.scrollObserver?.disconnect();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (typeof window === 'undefined') return;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    if (scrollHeight - scrollTop - clientHeight < 250) {
+      this.loadMoreAccounts();
+    }
+  }
+
+  private setupScrollObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    this.scrollObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            this.loadMoreAccounts();
+          }
+        }
+      },
+      { root: null, rootMargin: '200px', threshold: 0.1 }
+    );
+  }
+
+  setStatusFilter(filter: 'all' | 'active' | 'inactive'): void {
+    this.statusFilter.set(filter);
+  }
+
+  loadBankAccounts(isAppend: boolean = false): void {
     this.isLoading.set(true);
     this.bankAccountService
       .getBankAccounts({
@@ -89,7 +160,16 @@ export class BankAccountManagement implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.isSuccess && res.data) {
-            this.accounts.set(res.data.items || []);
+            const newItems = res.data.items || [];
+            if (isAppend) {
+              this.accounts.update((prev) => {
+                const existingIds = new Set(prev.map((i) => i.id));
+                const uniqueNew = newItems.filter((i) => !existingIds.has(i.id));
+                return [...prev, ...uniqueNew];
+              });
+            } else {
+              this.accounts.set(newItems);
+            }
             this.totalRecords.set(res.data.totalRecords ?? 0);
             this.totalPages.set(res.data.totalPages ?? 1);
             this.pageNumber.set(res.data.pageNumber ?? 1);
@@ -101,8 +181,15 @@ export class BankAccountManagement implements OnInit {
       });
   }
 
+  loadMoreAccounts(): void {
+    if (!this.hasMoreAccounts() || this.isLoading()) return;
+    this.pageNumber.update((p) => p + 1);
+    this.loadBankAccounts(true);
+  }
+
   refreshBankAccounts(): void {
-    this.loadBankAccounts();
+    this.pageNumber.set(1);
+    this.loadBankAccounts(false);
     this.showToast('Bank accounts refreshed.', 'info');
   }
 
@@ -113,7 +200,7 @@ export class BankAccountManagement implements OnInit {
   clearSearch(): void {
     this.searchQuery.set('');
     this.pageNumber.set(1);
-    this.loadBankAccounts();
+    this.loadBankAccounts(false);
   }
 
   onToggleStatus(account: BankAccountItem, event?: Event): void {

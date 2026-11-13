@@ -61,8 +61,84 @@
 
   <!-- Main Card Section: Agents Table -->
   <section class="carbon-card-section" id="section-agents-table">
-    <!-- Toolbar -->
-    <div class="section-toolbar">
+    <!-- Mobile Section Header (visible <= 767px) -->
+    <div class="mobile-section-header">
+      <div class="title-with-badge">
+        <h1 class="section-title">Agents Directory</h1>
+        <span class="carbon-count-tag">{{ totalRecords() }} total</span>
+      </div>
+    </div>
+
+    <!-- Mobile Single-Row Toolbar (visible <= 767px) -->
+    <div class="mobile-toolbar-row">
+      <!-- Search Box -->
+      <div class="carbon-search-box">
+        <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+        </svg>
+        <input
+          type="search"
+          class="carbon-input search-input"
+          placeholder="Search agents..."
+          [ngModel]="searchQuery()"
+          (ngModelChange)="onSearchChange($event)"
+          (keyup.enter)="submitSearch()"
+          aria-label="Search agents"
+        />
+        @if (searchQuery()) {
+          <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
+        }
+      </div>
+
+      <!-- Status Filter -->
+      <div class="status-filter-wrapper">
+        <select
+          class="carbon-select status-select"
+          [ngModel]="statusFilter()"
+          (ngModelChange)="onStatusFilterChange($event); submitSearch()"
+          aria-label="Filter by status"
+        >
+          <option value="All">All statuses</option>
+          <option value="Active">Active</option>
+          <option value="Pending">Pending</option>
+          <option value="Inactive">Inactive</option>
+        </select>
+      </div>
+
+      <!-- Refresh Button -->
+      <button
+        type="button"
+        class="refresh-btn"
+        (click)="refreshAgents()"
+        [disabled]="isLoading()"
+        title="Refresh agents list"
+        aria-label="Refresh agents list"
+      >
+        <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"></path>
+          <path d="M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span class="btn-label-text">Refresh</span>
+      </button>
+
+      <!-- Add Button -->
+      <button
+        type="button"
+        class="add-btn"
+        (click)="openAddAgentModal()"
+        title="Add new Agent"
+        aria-label="Add new Agent"
+      >
+        <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+        </svg>
+        <span class="btn-label-text">Add Agent</span>
+      </button>
+    </div>
+
+    <!-- Desktop Toolbar (hidden <= 767px) -->
+    <div class="section-toolbar desktop-toolbar">
       <div class="section-title-group">
         <div class="title-with-badge">
           <h2 class="section-title">Agents Directory</h2>
@@ -353,8 +429,8 @@
           </table>
         </div>
 
-        <!-- Pagination Bar -->
-        <div class="carbon-pagination-bar">
+        <!-- Pagination Bar (Desktop only, hidden on mobile <= 767px) -->
+        <div class="carbon-pagination-bar desktop-pagination">
           <div class="pagination-info">
             Showing <strong>{{ filteredAgents().length }}</strong> of <strong>{{ totalRecords() }}</strong> items
           </div>
@@ -402,7 +478,291 @@
             </div>
           </div>
         </div>
+
+        <!-- Mobile Exact Card View (matching specified design) -->
+        <div class="agents-mobile-list" aria-label="Agents list">
+          @for (item of filteredAgents(); track item.accountId) {
+            <article
+              class="agent-mobile-card"
+              tabindex="0"
+              (click)="openAgent(item)"
+              (keydown.enter)="openAgent(item)"
+              role="button"
+              [attr.aria-label]="'View agent ' + item.agentName"
+            >
+              <div class="card-icon-wrap" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="12" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+
+              <div class="card-primary-col">
+                <span class="agent-title-text">{{ item.agentName }}</span>
+                <span class="agent-id-sub">{{ item.agentId }} · {{ item.agencyName || item.agentName }}</span>
+              </div>
+
+              <div class="card-col-divider" aria-hidden="true"></div>
+
+              <div class="card-secondary-col">
+                <span
+                  class="carbon-tag"
+                  [class.tag-active]="item.status.toLowerCase() === 'active'"
+                  [class.tag-pending]="item.status.toLowerCase() === 'pending'"
+                  [class.tag-inactive]="item.status.toLowerCase() === 'inactive'"
+                >
+                  {{ item.status || 'Active' }}
+                </span>
+                <span class="agent-contact-text">{{ item.phoneNumber || item.email || 'No contact' }}</span>
+              </div>
+
+              <div class="card-actions-col" (click)="$event.stopPropagation()">
+                @if (item.status.toLowerCase() === 'pending') {
+                  <!-- Approve Button -->
+                  <button
+                    type="button"
+                    class="carbon-btn-approve mini-approve-btn"
+                    [disabled]="approvingAccountId() === item.accountId"
+                    (click)="onApproveAgent(item, $event)"
+                    title="Approve Agent"
+                    aria-label="Approve Agent"
+                  >
+                    @if (approvingAccountId() === item.accountId) {
+                      <span class="spinner tiny-spinner"></span>
+                    } @else {
+                      <svg class="approve-svg" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clip-rule="evenodd"/>
+                      </svg>
+                      <span class="btn-label-text">Approve</span>
+                    }
+                  </button>
+                } @else {
+                  <!-- Flat / Rounded Toggle Switch -->
+                  <button
+                    type="button"
+                    class="carbon-toggle-switch"
+                    [class.checked]="item.status.toLowerCase() === 'active'"
+                    [disabled]="togglingAccountId() === item.accountId"
+                    (click)="onToggleStatus(item, $event)"
+                    role="switch"
+                    [attr.aria-checked]="item.status.toLowerCase() === 'active'"
+                    [title]="item.status.toLowerCase() === 'active' ? 'Disable agent' : 'Enable agent'"
+                    [attr.aria-label]="item.status.toLowerCase() === 'active' ? 'Disable agent' : 'Enable agent'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                }
+              </div>
+            </article>
+          }
+
+          @if (isLoading() && agents().length > 0) {
+            <div class="scroll-loading-indicator">
+              <span class="spinner tiny-spinner"></span>
+              <span>Loading more agents...</span>
+            </div>
+          }
+          @if (!hasMoreAgents() && agents().length > 0) {
+            <div class="scroll-end-indicator">
+              <span>Showing all {{ agents().length }} of {{ totalRecords() }} agents</span>
+            </div>
+          }
+          <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
+        </div>
       }
     </div>
   </section>
+
+  <!-- Add Agent Modal Dialog -->
+  @if (isAddModalOpen()) {
+    <div class="modal-backdrop" (click)="closeAddAgentModal()" role="presentation">
+      <section
+        class="agent-modal"
+        (click)="$event.stopPropagation()"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="agent-modal-title"
+        tabindex="-1"
+        (keydown.escape)="closeAddAgentModal()"
+      >
+        <header class="modal-header">
+          <div>
+            <p class="modal-eyebrow">AGENT REGISTRATION</p>
+            <h2 id="agent-modal-title">Add New Agent</h2>
+          </div>
+          <button
+            type="button"
+            class="modal-close"
+            (click)="closeAddAgentModal()"
+            [disabled]="isSubmitting()"
+            aria-label="Close dialog"
+          >
+            &times;
+          </button>
+        </header>
+
+        <form [formGroup]="addAgentForm" (ngSubmit)="submitAddAgent()" class="modal-form" novalidate>
+          <div class="modal-body">
+            @if (addError()) {
+              <div class="modal-inline-error" role="alert">
+                <svg class="error-svg" viewBox="0 0 20 20" fill="currentColor">
+                  <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                </svg>
+                <span>{{ addError() }}</span>
+              </div>
+            }
+
+            <div class="form-grid">
+              <!-- Agent / Agency Name -->
+              <label class="form-field full-width">
+                <span>Agent / Agency Name <span class="required-mark">*</span></span>
+                <input
+                  type="text"
+                  class="carbon-input"
+                  formControlName="agentName"
+                  placeholder="e.g. Apex Agency / John Doe"
+                  autocomplete="name"
+                />
+                @if (addAgentForm.controls.agentName.touched && addAgentForm.controls.agentName.invalid) {
+                  <small class="field-error">Agent name is required (min 2 characters).</small>
+                }
+              </label>
+
+              <!-- Username -->
+              <label class="form-field">
+                <span>Username <span class="required-mark">*</span></span>
+                <input
+                  type="text"
+                  class="carbon-input"
+                  formControlName="userName"
+                  placeholder="e.g. apex.agent"
+                  autocomplete="username"
+                />
+                @if (addAgentForm.controls.userName.touched && addAgentForm.controls.userName.invalid) {
+                  <small class="field-error">Username is required (min 3 characters).</small>
+                }
+              </label>
+
+              <!-- Contact Number -->
+              <label class="form-field">
+                <span>Contact Number <span class="required-mark">*</span></span>
+                <input
+                  type="tel"
+                  class="carbon-input"
+                  formControlName="contactNumber"
+                  placeholder="10-digit mobile number"
+                  maxlength="10"
+                  autocomplete="tel"
+                />
+                @if (addAgentForm.controls.contactNumber.touched && addAgentForm.controls.contactNumber.invalid) {
+                  <small class="field-error">Valid 10-digit mobile number is required.</small>
+                }
+              </label>
+
+              <!-- Email Address -->
+              <label class="form-field">
+                <span>Email Address <span class="required-mark">*</span></span>
+                <input
+                  type="email"
+                  class="carbon-input"
+                  formControlName="email"
+                  placeholder="e.g. agent@agency.com"
+                  autocomplete="email"
+                />
+                @if (addAgentForm.controls.email.touched && addAgentForm.controls.email.invalid) {
+                  <small class="field-error">Valid email address is required.</small>
+                }
+              </label>
+
+              <!-- Password -->
+              <label class="form-field">
+                <span>Password <span class="required-mark">*</span></span>
+                <div class="password-input-wrapper">
+                  <input
+                    [type]="showPassword() ? 'text' : 'password'"
+                    class="carbon-input password-input"
+                    formControlName="password"
+                    placeholder="Min 6 characters"
+                    autocomplete="new-password"
+                  />
+                  <button
+                    type="button"
+                    class="password-toggle-btn"
+                    (click)="togglePasswordVisibility()"
+                    [title]="showPassword() ? 'Hide password' : 'Show password'"
+                    tabindex="-1"
+                  >
+                    @if (showPassword()) {
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path d="M10 12a2 2 0 100-4 2 2 0 000 4z"/>
+                        <path fill-rule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clip-rule="evenodd"/>
+                      </svg>
+                    } @else {
+                      <svg viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clip-rule="evenodd"/>
+                        <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.064 7 9.542 7 .847 0 1.669-.105 2.454-.303z"/>
+                      </svg>
+                    }
+                  </button>
+                </div>
+                @if (addAgentForm.controls.password.touched && addAgentForm.controls.password.invalid) {
+                  <small class="field-error">Password must be at least 6 characters.</small>
+                }
+              </label>
+
+              <!-- Pincode -->
+              <label class="form-field">
+                <span>Pincode (Optional)</span>
+                <input
+                  type="text"
+                  class="carbon-input"
+                  formControlName="pincode"
+                  placeholder="6-digit pincode"
+                  maxlength="6"
+                />
+                @if (addAgentForm.controls.pincode.touched && addAgentForm.controls.pincode.invalid) {
+                  <small class="field-error">Must be a valid 6-digit pincode.</small>
+                }
+              </label>
+
+              <!-- Address -->
+              <label class="form-field full-width">
+                <span>Address (Optional)</span>
+                <input
+                  type="text"
+                  class="carbon-input"
+                  formControlName="address"
+                  placeholder="Street, City, State"
+                  maxlength="200"
+                />
+              </label>
+            </div>
+          </div>
+
+          <footer class="modal-actions">
+            <button
+              type="button"
+              class="carbon-btn-secondary"
+              (click)="closeAddAgentModal()"
+              [disabled]="isSubmitting()"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              class="carbon-btn-primary"
+              [disabled]="isSubmitting()"
+            >
+              @if (isSubmitting()) {
+                <span class="spinner tiny-spinner"></span>
+                <span>Adding...</span>
+              } @else {
+                <span>Add Agent</span>
+              }
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
 </div>

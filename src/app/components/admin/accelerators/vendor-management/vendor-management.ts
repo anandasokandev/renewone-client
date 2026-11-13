@@ -1,5 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -14,17 +26,22 @@ type VendorStatusFilter = 'all' | 'active' | 'inactive';
   templateUrl: './vendor-management.html',
   styleUrl: './vendor-management.css',
 })
-export class VendorManagement implements OnInit {
+export class VendorManagement implements OnInit, AfterViewInit, OnDestroy {
   private readonly vendorService = inject(VendorService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
+
+  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLElement>;
+  private observer?: IntersectionObserver;
+
+  readonly batchSize = 10;
+  readonly displayedCount = signal(10);
+  readonly isLoadingMore = signal(false);
 
   readonly vendors = signal<Vendor[]>([]);
   readonly isLoading = signal(false);
   readonly searchQuery = signal('');
   readonly statusFilter = signal<VendorStatusFilter>('all');
-  readonly pageNumber = signal(1);
-  readonly pageSize = signal(10);
   readonly isModalOpen = signal(false);
   readonly isSubmitting = signal(false);
   readonly editingVendorId = signal<string | null>(null);
@@ -56,16 +73,47 @@ export class VendorManagement implements OnInit {
       return matchesSearch && matchesStatus;
     });
   });
-  readonly totalPages = computed(() => Math.max(1, Math.ceil(this.filteredVendors().length / this.pageSize())));
-  readonly pageStart = computed(() => this.filteredVendors().length ? (this.pageNumber() - 1) * this.pageSize() + 1 : 0);
-  readonly pageEnd = computed(() => Math.min(this.pageNumber() * this.pageSize(), this.filteredVendors().length));
-  readonly pagedVendors = computed(() => {
-    const start = (this.pageNumber() - 1) * this.pageSize();
-    return this.filteredVendors().slice(start, start + this.pageSize());
-  });
+  readonly hasMore = computed(() => this.displayedCount() < this.filteredVendors().length);
+  readonly visibleVendors = computed(() => this.filteredVendors().slice(0, this.displayedCount()));
 
   ngOnInit(): void {
     this.loadVendors();
+  }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.observer?.disconnect();
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof IntersectionObserver === 'undefined' || !this.scrollSentinel?.nativeElement) return;
+    this.observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          this.loadMore();
+        }
+      },
+      { rootMargin: '120px' }
+    );
+    this.observer.observe(this.scrollSentinel.nativeElement);
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (!this.hasMore() || this.isLoadingMore()) return;
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.scrollHeight - 160;
+    if (scrollPosition >= threshold) {
+      this.loadMore();
+    }
+  }
+
+  loadMore(): void {
+    if (!this.hasMore() || this.isLoadingMore()) return;
+    this.displayedCount.update(count => count + this.batchSize);
   }
 
   loadVendors(): void {
@@ -76,7 +124,7 @@ export class VendorManagement implements OnInit {
         next: response => {
           if (response.isSuccess && response.data) {
             this.vendors.set(response.data);
-            this.clampPage();
+            this.resetScrollBatch();
           } else {
             this.showToast(response.message || 'Unable to load vendors.', 'error');
           }
@@ -91,22 +139,16 @@ export class VendorManagement implements OnInit {
 
   onSearchChange(value: string): void {
     this.searchQuery.set(value);
-    this.pageNumber.set(1);
+    this.resetScrollBatch();
   }
 
   setStatusFilter(value: string): void {
     this.statusFilter.set(value as VendorStatusFilter);
-    this.pageNumber.set(1);
+    this.resetScrollBatch();
   }
 
-  onPageSizeChange(value: string): void {
-    this.pageSize.set(Number(value));
-    this.pageNumber.set(1);
-  }
-
-  changePage(page: number): void {
-    if (page < 1 || page > this.totalPages()) return;
-    this.pageNumber.set(page);
+  private resetScrollBatch(): void {
+    this.displayedCount.set(this.batchSize);
   }
 
   openCreateModal(): void {
@@ -212,7 +254,6 @@ export class VendorManagement implements OnInit {
           }
           const isActive = response.data;
           this.vendors.update(items => items.map(item => item.id === vendor.id ? { ...item, isActive } : item));
-          this.clampPage();
           this.showToast(`${vendor.name} is now ${isActive ? 'active' : 'inactive'}.`, 'success');
         },
         error: error => this.showToast(error?.error?.message || 'Unable to change vendor status.', 'error'),
@@ -221,7 +262,7 @@ export class VendorManagement implements OnInit {
 
   clearSearch(): void {
     this.searchQuery.set('');
-    this.pageNumber.set(1);
+    this.resetScrollBatch();
   }
 
   showToast(message: string, type: 'success' | 'error' | 'info' = 'success'): void {
@@ -234,9 +275,5 @@ export class VendorManagement implements OnInit {
 
   clearToast(): void {
     this.toastMessage.set(null);
-  }
-
-  private clampPage(): void {
-    this.pageNumber.set(Math.min(this.pageNumber(), this.totalPages()));
   }
 }

@@ -3,9 +3,65 @@
     <div class="carbon-toast" role="status"><div class="toast-content"><span class="toast-icon">✓</span><span>{{ notice() }}</span></div><button type="button" class="toast-close" (click)="notice.set(null)" aria-label="Close notification">×</button></div>
   }
   @if (pageError()) { <div class="carbon-toast toast-error" role="alert"><div class="toast-content">{{ pageError() }}</div><button type="button" class="toast-close" (click)="pageError.set(null)" aria-label="Close notification">×</button></div> }
+
+  <!-- Section Title Row on Mobile -->
+  <div class="mobile-section-header">
+    <div class="title-with-badge">
+      <h1 class="section-title">Agent Classes</h1>
+      <span class="carbon-count-tag">{{ filteredClasses().length }} total</span>
+    </div>
+  </div>
+
+  <!-- Mobile Single-Row Toolbar matching exact design -->
+  <div class="mobile-toolbar-row">
+    <div class="carbon-search-box">
+      <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+      </svg>
+      <input
+        type="search"
+        class="carbon-input search-input"
+        [value]="search()"
+        (input)="search.set($any($event.target).value); visibleCount.set(batchSize)"
+        placeholder="Search agent class..."
+        aria-label="Search agent classes"
+      />
+      @if (search()) {
+        <button type="button" class="search-clear-btn" (click)="search.set(''); visibleCount.set(batchSize)" aria-label="Clear search">&times;</button>
+      }
+    </div>
+
+    <button
+      type="button"
+      class="refresh-btn"
+      (click)="loadClasses()"
+      [disabled]="loading()"
+      title="Refresh agent classes"
+    >
+      <svg class="btn-svg" [class.spinning]="loading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+        <path d="M23 4v6h-6"></path>
+        <path d="M1 20v-6h6"></path>
+        <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+      </svg>
+      <span class="btn-label-text">Refresh</span>
+    </button>
+
+    <button
+      type="button"
+      class="add-btn"
+      (click)="openCreate()"
+      title="Add agent class"
+    >
+      <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+        <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+      </svg>
+      <span class="btn-label-text">Add Agent Class</span>
+    </button>
+  </div>
+
   <section class="carbon-card-section" aria-labelledby="agent-class-heading">
-    <div class="section-toolbar">
-      <div class="section-title-group"><div class="title-with-badge"><h2 id="agent-class-heading" class="section-title">Agent Classes</h2><span class="carbon-count-tag">{{ classes().length }} configured</span></div><p class="section-subtitle">Select a class to view its agents, or use the row actions to manage it.</p></div>
+    <div class="section-toolbar desktop-toolbar">
+      <div class="section-title-group"><div class="title-with-badge"><h2 id="agent-class-heading" class="section-title">Agent Classes</h2><span class="carbon-count-tag">{{ classes().length }} configured</span></div></div>
       <div class="section-actions-group">
         <button type="button" class="carbon-btn-secondary" (click)="loadClasses()" [disabled]="loading()"><span [class.spinning]="loading()">↻</span> Refresh</button>
         <button type="button" class="carbon-btn-primary" (click)="openCreate()"><span aria-hidden="true">＋</span> Add Agent Class</button>
@@ -13,9 +69,10 @@
     </div>
 
     <div class="carbon-table-container">
-      @if (loading()) { <div class="table-loading-state"><div class="carbon-spinner"></div><span class="loading-label">Fetching agent classes…</span></div> }
+      @if (loading() && classes().length === 0) { <div class="table-loading-state"><div class="carbon-spinner"></div><span class="loading-label">Fetching agent classes…</span></div> }
       @else if (classes().length === 0) { <div class="table-empty-state"><div class="empty-icon-wrap"><span>AC</span></div><h3 class="empty-title">No agent classes found</h3><p class="empty-desc">There are currently no classes configured. Add an agent class to get started.</p><button type="button" class="carbon-btn-primary" (click)="openCreate()">＋ Add Agent Class</button></div> }
       @else {
+        <!-- Desktop Table (hidden on mobile <= 767px) -->
         <div class="table-scroll-wrapper"><table class="carbon-table">
           <thead><tr><th scope="col">Agent Class</th><th scope="col">Commission Share</th><th scope="col">Agents</th><th scope="col">Status</th><th scope="col">Enable</th><th scope="col" class="th-actions">Actions</th></tr></thead>
           <tbody>@for (item of classes(); track item.id) {
@@ -29,7 +86,57 @@
             </tr>
           }</tbody>
         </table></div>
-        <div class="carbon-pagination-bar"><span class="pagination-info">Showing <strong>{{ classes().length }}</strong> agent classes</span></div>
+        <div class="carbon-pagination-bar desktop-pagination"><span class="pagination-info">Showing <strong>{{ classes().length }}</strong> agent classes</span></div>
+
+        <!-- Mobile Exact Card View (matching specified design) -->
+        <div class="agent-class-mobile-list" aria-label="Agent classes list">
+          @if (filteredClasses().length === 0) {
+            <div class="mobile-empty-search">
+              <span>No agent classes match "{{ search() }}"</span>
+            </div>
+          }
+          @for (item of displayedClasses(); track item.id) {
+            <article
+              class="agent-class-mobile-card"
+              tabindex="0"
+              (click)="openEdit(item)"
+              (keydown.enter)="openEdit(item)"
+              role="button"
+              [attr.aria-label]="'Edit agent class ' + item.className"
+            >
+              <div class="agent-class-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" stroke-linecap="round" stroke-linejoin="round"/>
+                  <circle cx="9" cy="7" r="4" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M23 21v-2a4 4 0 0 0-3-3.87" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M16 3.13a4 4 0 0 1 0 7.75" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+
+              <div class="agent-class-card-primary">
+                <span class="agent-class-title-text">{{ item.className }}</span>
+              </div>
+
+              <div class="agent-class-card-divider" aria-hidden="true"></div>
+
+              <div class="agent-class-card-secondary">
+                <span class="agent-class-sub-text">{{ item.commSharePercentage }}% Commission</span>
+              </div>
+            </article>
+          }
+
+          @if (hasMore()) {
+            <div class="scroll-loading-indicator">
+              <span class="spinner tiny-spinner"></span>
+              <span>Loading more agent classes...</span>
+            </div>
+          } @else if (filteredClasses().length > batchSize) {
+            <div class="scroll-end-indicator">
+              <span>Showing all {{ filteredClasses().length }} agent classes</span>
+            </div>
+          }
+          <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
+        </div>
       }
     </div>
   </section>

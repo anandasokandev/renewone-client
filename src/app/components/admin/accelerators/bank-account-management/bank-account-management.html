@@ -22,6 +22,39 @@
     </div>
   }
 
+  <!-- Summary Cards Row (Active / Inactive) matching design -->
+  <section class="summary-cards-grid" aria-label="Bank accounts summary">
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-active" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3l10 7H2l10-7z" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Active Accounts</span>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ activeAccountsCount() }}</span>
+          <span class="mini-card-badge badge-active">Available</span>
+        </div>
+      </div>
+    </article>
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-inactive" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Inactive Accounts</span>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ inactiveAccountsCount() }}</span>
+          <span class="mini-card-badge badge-inactive">Unavailable</span>
+        </div>
+      </div>
+    </article>
+  </section>
+
   <!-- Main Card Section -->
   <section class="carbon-card-section" id="section-bank-accounts">
     <!-- Toolbar -->
@@ -29,12 +62,19 @@
       <div class="section-title-group">
         <div class="title-with-badge">
           <h2 class="section-title">Bank Accounts</h2>
-          <span class="carbon-count-tag">{{ totalRecords() }} accounts</span>
+          <span class="carbon-count-tag">{{ totalRecords() }} total</span>
         </div>
+        <a class="mobile-tx-link" routerLink="/admin/transactions">Transactions &rarr;</a>
       </div>
 
       <div class="section-actions-group">
-        <a class="carbon-btn-secondary" routerLink="/admin/transactions">All transactions</a>
+        <a class="carbon-btn-secondary all-tx-btn" routerLink="/admin/transactions" title="All transactions">
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M4 4a2 2 0 00-2 2v4a2 2 0 002 2V6h10a2 2 0 00-2-2H4zm2 6a2 2 0 012-2h8a2 2 0 012 2v4a2 2 0 01-2 2H8a2 2 0 01-2-2v-4zm6 4a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+          </svg>
+          <span class="btn-label-text">All transactions</span>
+        </a>
+
         <!-- Search Box -->
         <div class="carbon-search-box">
           <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
@@ -43,7 +83,7 @@
           <input
             type="text"
             class="carbon-input search-input"
-            placeholder="Search account, bank, branch, number, IFSC..."
+            placeholder="Search bank account..."
             [ngModel]="searchQuery()"
             (ngModelChange)="onSearchChange($event)"
           />
@@ -52,10 +92,25 @@
           }
         </div>
 
+        <!-- Status Filter -->
+        <div class="status-filter-wrapper">
+          <label for="bank-status-filter" class="filter-label">Status:</label>
+          <select
+            id="bank-status-filter"
+            class="carbon-select status-select"
+            [value]="statusFilter()"
+            (change)="setStatusFilter($any($event.target).value)"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
         <!-- Refresh Button -->
         <button
           type="button"
-          class="carbon-btn-secondary"
+          class="carbon-btn-secondary refresh-btn"
           (click)="refreshBankAccounts()"
           [disabled]="isLoading()"
           title="Refresh bank accounts"
@@ -65,20 +120,20 @@
             <path d="M1 20v-6h6"></path>
             <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
           </svg>
-          <span>Refresh</span>
+          <span class="btn-label-text">Refresh</span>
         </button>
 
         <!-- Add Button -->
         <button
           type="button"
-          class="carbon-btn-primary"
+          class="carbon-btn-primary add-btn"
           (click)="openAddAccountModal()"
-          title="Add new bank account"
+          title="Add Bank Account"
         >
           <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
             <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
           </svg>
-          <span>Add Bank Account</span>
+          <span class="btn-label-text">Add Bank Account</span>
         </button>
       </div>
     </div>
@@ -283,54 +338,84 @@
           </table>
         </div>
 
-        <!-- Pagination Bar -->
-        <div class="carbon-pagination-bar">
-          <div class="pagination-info">
-            Showing <strong>{{ filteredAccounts().length }}</strong> of <strong>{{ totalRecords() }}</strong> items
-          </div>
-
-          <div class="pagination-controls">
-            <div class="page-size-selector">
-              <label for="bank-page-size" class="page-size-label">Items per page:</label>
-              <select
-                id="bank-page-size"
-                class="carbon-select"
-                [ngModel]="pageSize()"
-                (ngModelChange)="onPageSizeChange($event)"
-              >
-                <option [value]="10">10</option>
-                <option [value]="25">25</option>
-                <option [value]="50">50</option>
-              </select>
-            </div>
-
-            <div class="page-nav-buttons">
-              <span class="page-number-display">Page {{ pageNumber() }} of {{ totalPages() }}</span>
-              <button
-                type="button"
-                class="carbon-page-btn"
-                [disabled]="pageNumber() <= 1 || isLoading()"
-                (click)="onPageChange(pageNumber() - 1)"
-                aria-label="Previous page"
-              >
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                  <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+        <!-- Mobile Exact Card View (matching screenshot) -->
+        <div class="bank-mobile-list" aria-label="Bank accounts list">
+          @for (item of filteredAccounts(); track item.id) {
+            <article class="bank-mobile-card" tabindex="0" (click)="openAccountDetails(item)" (keydown.enter)="openAccountDetails(item)">
+              <div class="bank-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3l10 7H2l10-7z" stroke-linecap="round" stroke-linejoin="round"/>
                 </svg>
-              </button>
-              <button
-                type="button"
-                class="carbon-page-btn"
-                [disabled]="pageNumber() >= totalPages() || isLoading()"
-                (click)="onPageChange(pageNumber() + 1)"
-                aria-label="Next page"
-              >
-                <svg viewBox="0 0 16 16" fill="currentColor">
-                  <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                </svg>
-              </button>
-            </div>
-          </div>
+              </div>
+
+              <div class="bank-card-primary">
+                <div class="name-with-badge">
+                  <span class="bank-name-text">{{ item.accountName }}</span>
+                  @if (item.isPrimary) {
+                    <span class="primary-pill">Primary</span>
+                  }
+                </div>
+                <span class="bank-sub-code">{{ item.bankName }}</span>
+              </div>
+
+              <div class="bank-card-divider" aria-hidden="true"></div>
+
+              <div class="bank-card-details">
+                <div class="detail-item">
+                  <span class="detail-label">A/C:</span>
+                  <span class="detail-value mono">{{ item.accountNumber }}</span>
+                </div>
+                <div class="detail-item">
+                  <span class="detail-label">IFSC:</span>
+                  <span class="detail-value mono">{{ item.ifscCode }}</span>
+                </div>
+              </div>
+
+              <div class="bank-card-divider" aria-hidden="true"></div>
+
+              <div class="bank-card-actions" (click)="$event.stopPropagation()">
+                <button
+                  type="button"
+                  class="carbon-toggle-switch"
+                  [class.checked]="item.isActive"
+                  [disabled]="togglingAccountId() === item.id"
+                  (click)="onToggleStatus(item, $event)"
+                  role="switch"
+                  [attr.aria-checked]="item.isActive"
+                  [title]="item.isActive ? 'Disable account' : 'Enable account'"
+                >
+                  <span class="toggle-slider"></span>
+                </button>
+
+                <button
+                  type="button"
+                  class="bank-edit-btn"
+                  (click)="onEditAccount(item, $event)"
+                  title="Edit Bank Account"
+                  aria-label="Edit Bank Account"
+                >
+                  <svg class="edit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M12 20h9"/>
+                    <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                  </svg>
+                </button>
+              </div>
+            </article>
+          }
         </div>
+
+        @if (isLoading() && accounts().length > 0) {
+          <div class="scroll-loading-indicator">
+            <span class="carbon-spinner tiny-spinner"></span>
+            <span>Loading more bank accounts...</span>
+          </div>
+        }
+        @if (!hasMoreAccounts() && accounts().length > 0) {
+          <div class="scroll-end-indicator">
+            <span>Showing all {{ filteredAccounts().length }} bank accounts</span>
+          </div>
+        }
+        <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
       }
     </div>
   </section>

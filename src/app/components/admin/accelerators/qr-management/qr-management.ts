@@ -1,5 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { FormBuilder, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize, forkJoin } from 'rxjs';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
@@ -13,13 +25,22 @@ import { InsuranceTypeItem, VehicleTypeItem } from '../../../../models/enquiry.m
   templateUrl: './qr-management.html',
   styleUrl: './qr-management.css',
 })
-export class QrManagement implements OnInit {
+export class QrManagement implements OnInit, AfterViewInit, OnDestroy {
   private readonly qrService = inject(QrService);
   private readonly destroyRef = inject(DestroyRef);
   private readonly fb = inject(FormBuilder);
 
+  @ViewChild('scrollSentinelUpi') scrollSentinelUpi?: ElementRef<HTMLElement>;
+  @ViewChild('scrollSentinelMapping') scrollSentinelMapping?: ElementRef<HTMLElement>;
+  private observerUpi?: IntersectionObserver;
+  private observerMapping?: IntersectionObserver;
+
   // Active Tab Filter ('upi' | 'mappings')
   readonly activeTab = signal<'upi' | 'mappings'>('upi');
+
+  // Status Filter signals ('all' | 'active' | 'inactive')
+  readonly upiStatusFilter = signal<'all' | 'active' | 'inactive'>('all');
+  readonly qrMappingStatusFilter = signal<'all' | 'active' | 'inactive'>('all');
 
   // Toast feedback
   readonly toastMessage = signal<string | null>(null);
@@ -66,17 +87,22 @@ export class QrManagement implements OnInit {
   readonly upiTotalPages = signal<number>(1);
   readonly togglingUpiId = signal<string | null>(null);
 
-  // Client-side search filtering over retrieved items
+  readonly hasMoreUpi = computed(() => this.upiPageNumber() < this.upiTotalPages());
+
+  // Client-side search and status filtering over retrieved items
   readonly filteredUpiItems = computed<UpiMasterItem[]>(() => {
     const query = this.upiSearchQuery().trim().toLowerCase();
+    const status = this.upiStatusFilter();
     const items = this.upiItems();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
+    return items.filter((item) => {
+      const matchesSearch =
+        !query ||
         item.upiId?.toLowerCase().includes(query) ||
         item.upiName?.toLowerCase().includes(query) ||
-        item.bankAccount?.toLowerCase().includes(query)
-    );
+        item.bankAccount?.toLowerCase().includes(query);
+      const matchesStatus = status === 'all' || (status === 'active' ? item.isActive : !item.isActive);
+      return matchesSearch && matchesStatus;
+    });
   });
 
   // --- SECTION 2: QR Mapping State ---
@@ -89,18 +115,23 @@ export class QrManagement implements OnInit {
   readonly qrMappingTotalPages = signal<number>(1);
   readonly togglingQrMappingId = signal<string | null>(null);
 
-  // Client-side search filtering over retrieved items
+  readonly hasMoreQrMapping = computed(() => this.qrMappingPageNumber() < this.qrMappingTotalPages());
+
+  // Client-side search and status filtering over retrieved items
   readonly filteredQrMappingItems = computed<QrMappingItem[]>(() => {
     const query = this.qrMappingSearchQuery().trim().toLowerCase();
+    const status = this.qrMappingStatusFilter();
     const items = this.qrMappingItems();
-    if (!query) return items;
-    return items.filter(
-      (item) =>
+    return items.filter((item) => {
+      const matchesSearch =
+        !query ||
         item.qrName?.toLowerCase().includes(query) ||
         item.bankName?.toLowerCase().includes(query) ||
         item.insuranceType?.toLowerCase().includes(query) ||
-        item.vehicleType?.toLowerCase().includes(query)
-    );
+        item.vehicleType?.toLowerCase().includes(query);
+      const matchesStatus = status === 'all' || (status === 'active' ? item.isActive : !item.isActive);
+      return matchesSearch && matchesStatus;
+    });
   });
 
   ngOnInit(): void {
@@ -108,8 +139,65 @@ export class QrManagement implements OnInit {
     this.loadQrMappings();
   }
 
+  ngAfterViewInit(): void {
+    this.setupIntersectionObservers();
+  }
+
+  ngOnDestroy(): void {
+    this.observerUpi?.disconnect();
+    this.observerMapping?.disconnect();
+  }
+
+  setActiveTab(tab: 'upi' | 'mappings'): void {
+    this.activeTab.set(tab);
+    setTimeout(() => this.setupIntersectionObservers(), 60);
+  }
+
+  private setupIntersectionObservers(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+
+    if (this.scrollSentinelUpi?.nativeElement) {
+      this.observerUpi?.disconnect();
+      this.observerUpi = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) {
+            this.loadMoreUpi();
+          }
+        },
+        { rootMargin: '120px' }
+      );
+      this.observerUpi.observe(this.scrollSentinelUpi.nativeElement);
+    }
+
+    if (this.scrollSentinelMapping?.nativeElement) {
+      this.observerMapping?.disconnect();
+      this.observerMapping = new IntersectionObserver(
+        (entries) => {
+          if (entries[0]?.isIntersecting) {
+            this.loadMoreQrMappings();
+          }
+        },
+        { rootMargin: '120px' }
+      );
+      this.observerMapping.observe(this.scrollSentinelMapping.nativeElement);
+    }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    const scrollPosition = window.innerHeight + window.scrollY;
+    const threshold = document.documentElement.scrollHeight - 160;
+    if (scrollPosition >= threshold) {
+      if (this.activeTab() === 'upi') {
+        this.loadMoreUpi();
+      } else {
+        this.loadMoreQrMappings();
+      }
+    }
+  }
+
   // --- UPI ID's Methods ---
-  loadUpiMasters(): void {
+  loadUpiMasters(isAppend = false): void {
     this.isUpiLoading.set(true);
     this.qrService
       .getQrMasters({
@@ -124,7 +212,12 @@ export class QrManagement implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.isSuccess && res.data) {
-            this.upiItems.set(res.data.items || []);
+            const newItems = res.data.items || [];
+            if (isAppend) {
+              this.upiItems.update((existing) => [...existing, ...newItems]);
+            } else {
+              this.upiItems.set(newItems);
+            }
             this.upiTotalRecords.set(res.data.totalRecords ?? 0);
             this.upiTotalPages.set(res.data.totalPages ?? 1);
             this.upiPageNumber.set(res.data.pageNumber ?? 1);
@@ -136,19 +229,32 @@ export class QrManagement implements OnInit {
       });
   }
 
+  loadMoreUpi(): void {
+    if (!this.hasMoreUpi() || this.isUpiLoading()) return;
+    this.upiPageNumber.update((p) => p + 1);
+    this.loadUpiMasters(true);
+  }
+
   refreshUpiMasters(): void {
-    this.loadUpiMasters();
+    this.upiPageNumber.set(1);
+    this.loadUpiMasters(false);
     this.showToast('UPI IDs refreshed.', 'info');
   }
 
   onUpiSearchChange(query: string): void {
     this.upiSearchQuery.set(query);
+    this.upiPageNumber.set(1);
+    this.loadUpiMasters(false);
   }
 
   clearUpiSearch(): void {
     this.upiSearchQuery.set('');
     this.upiPageNumber.set(1);
-    this.loadUpiMasters();
+    this.loadUpiMasters(false);
+  }
+
+  setUpiStatusFilter(status: 'all' | 'active' | 'inactive'): void {
+    this.upiStatusFilter.set(status);
   }
 
   onToggleUpiStatus(item: UpiMasterItem, event?: Event): void {
@@ -309,7 +415,7 @@ export class QrManagement implements OnInit {
   }
 
   // --- QR Mapping Methods ---
-  loadQrMappings(): void {
+  loadQrMappings(isAppend = false): void {
     this.isQrMappingLoading.set(true);
     this.qrService
       .getQrMappings({
@@ -324,7 +430,12 @@ export class QrManagement implements OnInit {
       .subscribe({
         next: (res) => {
           if (res.isSuccess && res.data) {
-            this.qrMappingItems.set(res.data.items || []);
+            const newItems = res.data.items || [];
+            if (isAppend) {
+              this.qrMappingItems.update((existing) => [...existing, ...newItems]);
+            } else {
+              this.qrMappingItems.set(newItems);
+            }
             this.qrMappingTotalRecords.set(res.data.totalRecords ?? 0);
             this.qrMappingTotalPages.set(res.data.totalPages ?? 1);
             this.qrMappingPageNumber.set(res.data.pageNumber ?? 1);
@@ -336,19 +447,32 @@ export class QrManagement implements OnInit {
       });
   }
 
+  loadMoreQrMappings(): void {
+    if (!this.hasMoreQrMapping() || this.isQrMappingLoading()) return;
+    this.qrMappingPageNumber.update((p) => p + 1);
+    this.loadQrMappings(true);
+  }
+
   refreshQrMappings(): void {
-    this.loadQrMappings();
+    this.qrMappingPageNumber.set(1);
+    this.loadQrMappings(false);
     this.showToast('QR Mappings refreshed.', 'info');
   }
 
   onQrMappingSearchChange(query: string): void {
     this.qrMappingSearchQuery.set(query);
+    this.qrMappingPageNumber.set(1);
+    this.loadQrMappings(false);
   }
 
   clearQrMappingSearch(): void {
     this.qrMappingSearchQuery.set('');
     this.qrMappingPageNumber.set(1);
-    this.loadQrMappings();
+    this.loadQrMappings(false);
+  }
+
+  setQrMappingStatusFilter(status: 'all' | 'active' | 'inactive'): void {
+    this.qrMappingStatusFilter.set(status);
   }
 
   onToggleQrMappingStatus(item: QrMappingItem, event?: Event): void {

@@ -12,23 +12,31 @@
     <article class="carbon-mini-card">
       <div class="mini-card-icon-wrap icon-active" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6M8 10h.01M12 10h.01M16 10h.01" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M3 9l1-5h16l1 5v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0v-1z" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M4 14v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6M9 21v-5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="mini-card-content">
         <span class="mini-card-label">Active Vendors</span>
-        <div class="mini-card-val-row"><span class="mini-card-value">{{ activeCount() }}</span><span class="mini-card-badge badge-active">Available</span></div>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ activeCount() }}</span>
+          <span class="mini-card-badge badge-active">Available</span>
+        </div>
       </div>
     </article>
     <article class="carbon-mini-card">
       <div class="mini-card-icon-wrap icon-inactive" aria-hidden="true">
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
-          <circle cx="12" cy="12" r="9"/><path d="M8.5 8.5l7 7M15.5 8.5l-7 7" stroke-linecap="round"/>
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
       </div>
       <div class="mini-card-content">
         <span class="mini-card-label">Inactive Vendors</span>
-        <div class="mini-card-val-row"><span class="mini-card-value">{{ inactiveCount() }}</span><span class="mini-card-badge badge-inactive">Unavailable</span></div>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ inactiveCount() }}</span>
+          <span class="mini-card-badge badge-inactive">Unavailable</span>
+        </div>
       </div>
     </article>
   </section>
@@ -36,57 +44,108 @@
   <section class="carbon-card-section" id="section-vendors-table">
     <div class="section-toolbar">
       <div class="section-title-group">
-        <div class="title-with-badge"><h2 class="section-title">Vendors</h2><span class="carbon-count-tag">{{ vendors().length }} total</span></div>
+        <div class="title-with-badge">
+          <h2 class="section-title">Vendors</h2>
+          <span class="carbon-count-tag">{{ vendors().length }} total</span>
+        </div>
       </div>
       <div class="section-actions-group">
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input type="search" class="carbon-input search-input" placeholder="Search vendor..." [value]="searchQuery()" (input)="onSearchChange($any($event.target).value)" aria-label="Search vendors">
+          @if (searchQuery()) {
+            <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button>
+          }
+        </div>
         <div class="status-filter-wrapper">
           <label for="vendor-status-filter" class="filter-label">Status:</label>
           <select id="vendor-status-filter" class="carbon-select status-select" [value]="statusFilter()" (change)="setStatusFilter($any($event.target).value)">
-            <option value="all">All statuses</option><option value="active">Active</option><option value="inactive">Inactive</option>
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
           </select>
         </div>
-        <div class="carbon-search-box">
-          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/></svg>
-          <input type="search" class="carbon-input search-input" placeholder="Search code, name, email, phone..." [value]="searchQuery()" (input)="onSearchChange($any($event.target).value)" aria-label="Search vendors">
-          @if (searchQuery()) { <button type="button" class="search-clear-btn" (click)="clearSearch()" aria-label="Clear search">&times;</button> }
-        </div>
-        <button type="button" class="carbon-btn-secondary" (click)="refresh()" [disabled]="isLoading()" title="Refresh vendors">
-          <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg><span>Refresh</span>
+        <button type="button" class="carbon-btn-secondary refresh-btn" (click)="refresh()" [disabled]="isLoading()" title="Refresh vendors">
+          <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6M1 20v-6h6M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+          </svg>
+          <span class="btn-label-text">Refresh</span>
         </button>
-        <button type="button" class="carbon-btn-primary" (click)="openCreateModal()">
-          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/></svg><span>Add Vendor</span>
+        <button type="button" class="carbon-btn-primary add-vendor-btn" (click)="openCreateModal()" title="Add Vendor">
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          <span class="btn-label-text">Add Vendor</span>
         </button>
       </div>
     </div>
 
     <div class="carbon-table-container">
       @if (isLoading() && vendors().length === 0) {
-        <div class="table-loading-state"><div class="carbon-spinner"></div><span class="loading-label">Fetching vendors...</span></div>
+        <div class="table-loading-state">
+          <div class="carbon-spinner"></div>
+          <span class="loading-label">Fetching vendors...</span>
+        </div>
       } @else if (filteredVendors().length === 0) {
         <div class="table-empty-state">
-          <div class="empty-icon-wrap" aria-hidden="true"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+          <div class="empty-icon-wrap" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+              <path d="M3 21h18M5 21V8l7-4 7 4v13M9 21v-6h6v6" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
           <h3 class="empty-title">{{ vendors().length ? 'No vendors found' : 'No vendors registered' }}</h3>
           <p class="empty-desc">{{ vendors().length ? 'No vendor records match the current search or status filter.' : 'Add a vendor to start managing settlement contacts.' }}</p>
-          @if (vendors().length) { <button type="button" class="carbon-btn-secondary" (click)="clearSearch(); setStatusFilter('all')">Clear Filters</button> }
-          @else { <button type="button" class="carbon-btn-primary" (click)="openCreateModal()">Add Vendor</button> }
+          @if (vendors().length) {
+            <button type="button" class="carbon-btn-secondary" (click)="clearSearch(); setStatusFilter('all')">Clear Filters</button>
+          } @else {
+            <button type="button" class="carbon-btn-primary" (click)="openCreateModal()">Add Vendor</button>
+          }
         </div>
       } @else {
+        <!-- Desktop / Tablet Table View -->
         <div class="table-scroll-wrapper">
           <table class="carbon-table">
-            <thead><tr><th class="th-code">Vendor Code</th><th class="th-name">Vendor</th><th class="th-contact">Contact</th><th class="th-status">Status</th><th class="th-actions">Actions</th></tr></thead>
+            <thead>
+              <tr>
+                <th class="th-code">Vendor Code</th>
+                <th class="th-name">Vendor</th>
+                <th class="th-contact">Contact</th>
+                <th class="th-status">Status</th>
+                <th class="th-actions">Actions</th>
+              </tr>
+            </thead>
             <tbody>
-              @for (vendor of pagedVendors(); track vendor.id) {
+              @for (vendor of visibleVendors(); track vendor.id) {
                 <tr class="carbon-table-row">
                   <td><span class="vendor-code">{{ vendor.code }}</span></td>
                   <td><div class="vendor-name">{{ vendor.name }}</div></td>
-                  <td><div class="vendor-contact"><a [href]="'mailto:' + vendor.email">{{ vendor.email }}</a><a [href]="'tel:' + vendor.phone">{{ vendor.phone }}</a></div></td>
-                  <td><span class="carbon-tag" [class.tag-active]="vendor.isActive" [class.tag-inactive]="!vendor.isActive">{{ vendor.isActive ? 'Active' : 'Inactive' }}</span></td>
+                  <td>
+                    <div class="vendor-contact">
+                      <a [href]="'mailto:' + vendor.email">{{ vendor.email }}</a>
+                      <a [href]="'tel:' + vendor.phone">{{ vendor.phone }}</a>
+                    </div>
+                  </td>
+                  <td>
+                    <span class="carbon-tag" [class.tag-active]="vendor.isActive" [class.tag-inactive]="!vendor.isActive">
+                      {{ vendor.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
                   <td>
                     <div class="actions-cell-wrapper">
                       <button type="button" class="carbon-icon-btn edit-action-btn" (click)="openEditModal(vendor)" [disabled]="!!loadingVendorId()" [attr.aria-label]="'Edit ' + vendor.name" title="Edit vendor">
-                        @if (loadingVendorId() === vendor.id) { <span class="carbon-spinner tiny-spinner"></span> } @else { <svg class="action-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true"><path d="M13.586 3.586a2 2 0 012.828 2.828l-.707.707-2.828-2.828.707-.707zM11.465 5.707l2.828 2.828-8.9 8.9H2.565v-2.828l8.9-8.9z"/></svg> }
+                        @if (loadingVendorId() === vendor.id) {
+                          <span class="carbon-spinner tiny-spinner"></span>
+                        } @else {
+                          <svg class="action-svg" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                            <path d="M13.586 3.586a2 2 0 012.828 2.828l-.707.707-2.828-2.828.707-.707zM11.465 5.707l2.828 2.828-8.9 8.9H2.565v-2.828l8.9-8.9z"/>
+                          </svg>
+                        }
                       </button>
-                      <button type="button" class="carbon-toggle-switch" [class.checked]="vendor.isActive" (click)="toggleStatus(vendor)" [disabled]="!!togglingVendorId()" role="switch" [attr.aria-checked]="vendor.isActive" [attr.aria-label]="(vendor.isActive ? 'Deactivate ' : 'Activate ') + vendor.name" [title]="vendor.isActive ? 'Deactivate vendor' : 'Activate vendor'"><span class="toggle-slider"></span></button>
+                      <button type="button" class="carbon-toggle-switch" [class.checked]="vendor.isActive" (click)="toggleStatus(vendor)" [disabled]="!!togglingVendorId()" role="switch" [attr.aria-checked]="vendor.isActive" [attr.aria-label]="(vendor.isActive ? 'Deactivate ' : 'Activate ') + vendor.name" [title]="vendor.isActive ? 'Deactivate vendor' : 'Activate vendor'">
+                        <span class="toggle-slider"></span>
+                      </button>
                     </div>
                   </td>
                 </tr>
@@ -94,13 +153,88 @@
             </tbody>
           </table>
         </div>
-        <div class="carbon-pagination-bar">
-          <span class="pagination-info">Showing {{ pageStart() }}–{{ pageEnd() }} of {{ filteredVendors().length }} vendors</span>
-          <div class="pagination-controls">
-            <label class="page-size-selector"><span class="page-size-label">Rows per page</span><select class="carbon-select" [value]="pageSize()" (change)="onPageSizeChange($any($event.target).value)"><option value="5">5</option><option value="10">10</option><option value="25">25</option><option value="50">50</option></select></label>
-            <div class="page-nav-buttons"><span class="page-number-display">Page {{ pageNumber() }} of {{ totalPages() }}</span><button type="button" class="carbon-page-btn" (click)="changePage(pageNumber() - 1)" [disabled]="pageNumber() <= 1" aria-label="Previous page">‹</button><button type="button" class="carbon-page-btn" (click)="changePage(pageNumber() + 1)" [disabled]="pageNumber() >= totalPages()" aria-label="Next page">›</button></div>
-          </div>
+
+        <!-- Mobile Exact Card View (matching screenshot) -->
+        <div class="vendor-mobile-list" aria-label="Vendors list">
+          @for (vendor of visibleVendors(); track vendor.id) {
+            <article class="vendor-mobile-card">
+              <div class="vendor-card-icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                  <path d="M3 9l1-5h16l1 5v1a3 3 0 0 1-6 0 3 3 0 0 1-6 0 3 3 0 0 1-6 0v-1z" stroke-linecap="round" stroke-linejoin="round"/>
+                  <path d="M4 14v6a1 1 0 0 0 1 1h14a1 1 0 0 0 1-1v-6M9 21v-5a1 1 0 0 1 1-1h4a1 1 0 0 1 1 1v5" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+              </div>
+
+              <div class="vendor-card-primary">
+                <span class="vendor-name-text">{{ vendor.name }}</span>
+                <span class="vendor-code-text">{{ vendor.code }}</span>
+              </div>
+
+              <div class="vendor-card-divider" aria-hidden="true"></div>
+
+              <div class="vendor-card-contact">
+                <a [href]="'mailto:' + vendor.email" class="contact-item" [title]="vendor.email">
+                  <svg class="contact-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="5" width="18" height="14" rx="2"/>
+                    <path d="M3 7l9 6 9-6"/>
+                  </svg>
+                  <span class="contact-item-text">{{ vendor.email }}</span>
+                </a>
+                <a [href]="'tel:' + vendor.phone" class="contact-item" [title]="vendor.phone">
+                  <svg class="contact-item-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"/>
+                  </svg>
+                  <span class="contact-item-text">{{ vendor.phone }}</span>
+                </a>
+              </div>
+
+              <div class="vendor-card-divider" aria-hidden="true"></div>
+
+              <div class="vendor-card-actions">
+                <button type="button" 
+                        class="carbon-toggle-switch" 
+                        [class.checked]="vendor.isActive" 
+                        (click)="toggleStatus(vendor)" 
+                        [disabled]="!!togglingVendorId()" 
+                        role="switch" 
+                        [attr.aria-checked]="vendor.isActive" 
+                        [attr.aria-label]="(vendor.isActive ? 'Deactivate ' : 'Activate ') + vendor.name" 
+                        [title]="vendor.isActive ? 'Deactivate vendor' : 'Activate vendor'">
+                  <span class="toggle-slider"></span>
+                </button>
+
+                <button type="button" 
+                        class="vendor-edit-btn" 
+                        (click)="openEditModal(vendor)" 
+                        [disabled]="!!loadingVendorId()" 
+                        [attr.aria-label]="'Edit ' + vendor.name" 
+                        title="Edit vendor">
+                  @if (loadingVendorId() === vendor.id) {
+                    <span class="carbon-spinner tiny-spinner"></span>
+                  } @else {
+                    <svg class="edit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  }
+                </button>
+              </div>
+            </article>
+          }
         </div>
+
+        @if (isLoadingMore()) {
+          <div class="scroll-loading-indicator">
+            <span class="carbon-spinner tiny-spinner"></span>
+            <span>Loading more vendors...</span>
+          </div>
+        }
+        @if (!hasMore() && filteredVendors().length > batchSize) {
+          <div class="scroll-end-indicator">
+            <span>Showing all {{ filteredVendors().length }} vendors</span>
+          </div>
+        }
+        <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
       }
     </div>
   </section>

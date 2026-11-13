@@ -1,1 +1,629 @@
-<p>insurance-management works!</p>
+<div class="carbon-insurance-page">
+  <!-- Toast Notification -->
+  @if (toastMessage()) {
+    <div class="carbon-toast" [class.toast-error]="toastType() === 'error'" [class.toast-info]="toastType() === 'info'" role="status">
+      <div class="toast-content">
+        @if (toastType() === 'success') {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clip-rule="evenodd"/>
+          </svg>
+        } @else {
+          <svg class="toast-icon" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+          </svg>
+        }
+        <span>{{ toastMessage() }}</span>
+      </div>
+      <button type="button" class="toast-close" (click)="clearToast()" aria-label="Close notification">&times;</button>
+    </div>
+  }
+
+  @if (pageError()) {
+    <div class="carbon-toast toast-error" role="alert">
+      <div class="toast-content">{{ pageError() }}</div>
+      <button type="button" class="toast-close" (click)="pageError.set(null)" aria-label="Close error">&times;</button>
+    </div>
+  }
+
+  <!-- Header Area with Tabs -->
+  <header class="page-header">
+    <div class="tabs-bar" role="tablist">
+      <button
+        type="button"
+        class="product-tab"
+        [class.product-tab-selected]="activeTab() === 'insurance'"
+        (click)="setActiveTab('insurance')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'insurance'"
+      >
+        Insurance Types
+        <span class="tab-badge" [class.badge-active]="activeTab() === 'insurance'">{{ filteredInsuranceTypes().length }}</span>
+      </button>
+      <button
+        type="button"
+        class="product-tab"
+        [class.product-tab-selected]="activeTab() === 'vehicle'"
+        (click)="setActiveTab('vehicle')"
+        role="tab"
+        [attr.aria-selected]="activeTab() === 'vehicle'"
+      >
+        Vehicle Types
+        <span class="tab-badge" [class.badge-active]="activeTab() === 'vehicle'">{{ filteredVehicleTypes().length }}</span>
+      </button>
+    </div>
+  </header>
+
+  <!-- TAB 1: INSURANCE TYPES -->
+  @if (activeTab() === 'insurance') {
+    <section class="carbon-card-section" id="section-insurance-types" aria-labelledby="insurance-types-heading">
+      <!-- Mobile Section Title -->
+      <div class="mobile-section-header">
+        <div class="title-with-badge">
+          <h1 class="section-title">Insurance Types</h1>
+          <span class="carbon-count-tag">{{ filteredInsuranceTypes().length }} total</span>
+        </div>
+      </div>
+
+      <!-- Mobile Single-Row Toolbar -->
+      <div class="mobile-toolbar-row">
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            type="search"
+            class="carbon-input search-input"
+            [value]="insuranceSearch()"
+            (input)="insuranceSearch.set($any($event.target).value); visibleInsuranceCount.set(batchSize)"
+            placeholder="Search insurance type..."
+            aria-label="Search insurance types"
+          />
+          @if (insuranceSearch()) {
+            <button type="button" class="search-clear-btn" (click)="insuranceSearch.set(''); visibleInsuranceCount.set(batchSize)" aria-label="Clear search">&times;</button>
+          }
+        </div>
+
+        <div class="status-filter-wrapper">
+          <select
+            class="carbon-select status-select"
+            [value]="insuranceStatusFilter()"
+            (change)="insuranceStatusFilter.set($any($event.target).value); visibleInsuranceCount.set(batchSize)"
+            aria-label="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          class="refresh-btn"
+          (click)="loadInsuranceTypes()"
+          [disabled]="loadingInsurance()"
+          title="Refresh insurance types"
+        >
+          <svg class="btn-svg" [class.spinning]="loadingInsurance()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span class="btn-label-text">Refresh</span>
+        </button>
+
+        <button
+          type="button"
+          class="add-btn"
+          (click)="openCreateInsurance()"
+          title="Add insurance type"
+        >
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          <span class="btn-label-text">Add Insurance Type</span>
+        </button>
+      </div>
+
+      <!-- Desktop Toolbar -->
+      <div class="section-toolbar desktop-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 id="insurance-types-heading" class="section-title">Insurance Types</h2>
+            <span class="carbon-count-tag">{{ insuranceTypes().length }} configured</span>
+          </div>
+        </div>
+        <div class="section-actions-group">
+          <div class="carbon-search-box desktop-search">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="search"
+              class="carbon-input search-input"
+              [value]="insuranceSearch()"
+              (input)="insuranceSearch.set($any($event.target).value)"
+              placeholder="Search insurance type..."
+            />
+          </div>
+          <select
+            class="carbon-select"
+            [value]="insuranceStatusFilter()"
+            (change)="insuranceStatusFilter.set($any($event.target).value)"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button type="button" class="carbon-btn-secondary" (click)="loadInsuranceTypes()" [disabled]="loadingInsurance()">
+            <span [class.spinning]="loadingInsurance()">↻</span> Refresh
+          </button>
+          <button type="button" class="carbon-btn-primary" (click)="openCreateInsurance()">
+            <span aria-hidden="true">＋</span> Add Insurance Type
+          </button>
+        </div>
+      </div>
+
+      <div class="carbon-table-container">
+        @if (loadingInsurance() && insuranceTypes().length === 0) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Loading insurance types…</span>
+          </div>
+        } @else if (filteredInsuranceTypes().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+              </svg>
+            </div>
+            <h3 class="empty-title">No insurance types found</h3>
+            <p class="empty-desc">
+              @if (insuranceSearch() || insuranceStatusFilter() !== 'all') {
+                No insurance types match your search criteria.
+              } @else {
+                Get started by adding an insurance type.
+              }
+            </p>
+            <button type="button" class="carbon-btn-primary" (click)="openCreateInsurance()">＋ Add Insurance Type</button>
+          </div>
+        } @else {
+          <!-- Desktop Table (hidden on mobile) -->
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table">
+              <thead>
+                <tr>
+                  <th scope="col">Name</th>
+                  <th scope="col">Display Order</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Enable</th>
+                  <th scope="col" class="th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredInsuranceTypes(); track item.id) {
+                  <tr class="carbon-table-row">
+                    <td class="primary-cell">{{ item.name }}</td>
+                    <td>{{ item.displayOrder ?? '—' }}</td>
+                    <td>
+                      <span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">
+                        {{ item.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="switch-action-cell">
+                        <button
+                          type="button"
+                          class="carbon-toggle-switch"
+                          [class.checked]="item.isActive"
+                          [disabled]="togglingId() === item.id"
+                          (click)="toggleInsuranceStatus(item, $event)"
+                          role="switch"
+                          [attr.aria-checked]="item.isActive"
+                          [attr.aria-label]="'Toggle ' + item.name"
+                        >
+                          <span class="toggle-slider"></span>
+                        </button>
+                      </div>
+                    </td>
+                    <td class="td-actions">
+                      <button type="button" class="carbon-btn-secondary row-edit" (click)="openEditInsurance(item, $event)">Edit</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="carbon-pagination-bar desktop-pagination">
+            <span class="pagination-info">Showing <strong>{{ filteredInsuranceTypes().length }}</strong> insurance types</span>
+          </div>
+
+          <!-- Mobile Exact Card View (matching specified design) -->
+          <div class="mobile-cards-list" aria-label="Insurance types list">
+            @for (item of displayedInsuranceTypes(); track item.id) {
+              <article class="exact-mobile-card" tabindex="0" (click)="openEditInsurance(item)" (keydown.enter)="openEditInsurance(item)">
+                <div class="card-primary-col">
+                  <span class="card-title-text">{{ item.name }}</span>
+                </div>
+
+                <div class="card-actions-col" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="carbon-toggle-switch"
+                    [class.checked]="item.isActive"
+                    (click)="toggleInsuranceStatus(item, $event)"
+                    role="switch"
+                    [attr.aria-checked]="item.isActive"
+                    [title]="item.isActive ? 'Active' : 'Inactive'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-edit-btn"
+                    (click)="openEditInsurance(item)"
+                    title="Edit insurance type"
+                    aria-label="Edit insurance type"
+                  >
+                    <svg class="edit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            }
+
+            @if (hasMoreInsurance()) {
+              <div class="scroll-loading-indicator">
+                <span class="spinner tiny-spinner"></span>
+                <span>Loading more insurance types...</span>
+              </div>
+            } @else if (filteredInsuranceTypes().length > batchSize) {
+              <div class="scroll-end-indicator">
+                <span>Showing all {{ filteredInsuranceTypes().length }} insurance types</span>
+              </div>
+            }
+            <div #scrollSentinelInsurance class="scroll-sentinel" aria-hidden="true"></div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- TAB 2: VEHICLE TYPES -->
+  @if (activeTab() === 'vehicle') {
+    <section class="carbon-card-section" id="section-vehicle-types" aria-labelledby="vehicle-types-heading">
+      <!-- Mobile Section Title -->
+      <div class="mobile-section-header">
+        <div class="title-with-badge">
+          <h1 class="section-title">Vehicle Types</h1>
+          <span class="carbon-count-tag">{{ filteredVehicleTypes().length }} total</span>
+        </div>
+      </div>
+
+      <!-- Mobile Single-Row Toolbar -->
+      <div class="mobile-toolbar-row">
+        <div class="carbon-search-box">
+          <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+          </svg>
+          <input
+            type="search"
+            class="carbon-input search-input"
+            [value]="vehicleSearch()"
+            (input)="vehicleSearch.set($any($event.target).value); visibleVehicleCount.set(batchSize)"
+            placeholder="Search vehicle type..."
+            aria-label="Search vehicle types"
+          />
+          @if (vehicleSearch()) {
+            <button type="button" class="search-clear-btn" (click)="vehicleSearch.set(''); visibleVehicleCount.set(batchSize)" aria-label="Clear search">&times;</button>
+          }
+        </div>
+
+        <div class="status-filter-wrapper">
+          <select
+            class="carbon-select status-select"
+            [value]="vehicleStatusFilter()"
+            (change)="vehicleStatusFilter.set($any($event.target).value); visibleVehicleCount.set(batchSize)"
+            aria-label="Filter by status"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+        </div>
+
+        <button
+          type="button"
+          class="refresh-btn"
+          (click)="loadVehicleTypes()"
+          [disabled]="loadingVehicle()"
+          title="Refresh vehicle types"
+        >
+          <svg class="btn-svg" [class.spinning]="loadingVehicle()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M23 4v6h-6"></path>
+            <path d="M1 20v-6h6"></path>
+            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+          </svg>
+          <span class="btn-label-text">Refresh</span>
+        </button>
+
+        <button
+          type="button"
+          class="add-btn"
+          (click)="openCreateVehicle()"
+          title="Add vehicle type"
+        >
+          <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+          </svg>
+          <span class="btn-label-text">Add Vehicle Type</span>
+        </button>
+      </div>
+
+      <!-- Desktop Toolbar -->
+      <div class="section-toolbar desktop-toolbar">
+        <div class="section-title-group">
+          <div class="title-with-badge">
+            <h2 id="vehicle-types-heading" class="section-title">Vehicle Types</h2>
+            <span class="carbon-count-tag">{{ vehicleTypes().length }} configured</span>
+          </div>
+        </div>
+        <div class="section-actions-group">
+          <div class="carbon-search-box desktop-search">
+            <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+              <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+            </svg>
+            <input
+              type="search"
+              class="carbon-input search-input"
+              [value]="vehicleSearch()"
+              (input)="vehicleSearch.set($any($event.target).value)"
+              placeholder="Search vehicle type..."
+            />
+          </div>
+          <select
+            class="carbon-select"
+            [value]="vehicleStatusFilter()"
+            (change)="vehicleStatusFilter.set($any($event.target).value)"
+          >
+            <option value="all">All statuses</option>
+            <option value="active">Active</option>
+            <option value="inactive">Inactive</option>
+          </select>
+          <button type="button" class="carbon-btn-secondary" (click)="loadVehicleTypes()" [disabled]="loadingVehicle()">
+            <span [class.spinning]="loadingVehicle()">↻</span> Refresh
+          </button>
+          <button type="button" class="carbon-btn-primary" (click)="openCreateVehicle()">
+            <span aria-hidden="true">＋</span> Add Vehicle Type
+          </button>
+        </div>
+      </div>
+
+      <div class="carbon-table-container">
+        @if (loadingVehicle() && vehicleTypes().length === 0) {
+          <div class="table-loading-state">
+            <div class="carbon-spinner"></div>
+            <span class="loading-label">Loading vehicle types…</span>
+          </div>
+        } @else if (filteredVehicleTypes().length === 0) {
+          <div class="table-empty-state">
+            <div class="empty-icon-wrap">
+              <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                <rect x="1" y="3" width="15" height="13"/>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"/>
+                <circle cx="5.5" cy="18.5" r="2.5"/>
+                <circle cx="18.5" cy="18.5" r="2.5"/>
+              </svg>
+            </div>
+            <h3 class="empty-title">No vehicle types found</h3>
+            <p class="empty-desc">
+              @if (vehicleSearch() || vehicleStatusFilter() !== 'all') {
+                No vehicle types match your search criteria.
+              } @else {
+                Get started by adding a vehicle type.
+              }
+            </p>
+            <button type="button" class="carbon-btn-primary" (click)="openCreateVehicle()">＋ Add Vehicle Type</button>
+          </div>
+        } @else {
+          <!-- Desktop Table (hidden on mobile) -->
+          <div class="table-scroll-wrapper">
+            <table class="carbon-table">
+              <thead>
+                <tr>
+                  <th scope="col">Type Name</th>
+                  <th scope="col">Description</th>
+                  <th scope="col">Status</th>
+                  <th scope="col">Enable</th>
+                  <th scope="col" class="th-actions">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (item of filteredVehicleTypes(); track item.id) {
+                  <tr class="carbon-table-row">
+                    <td class="primary-cell">{{ item.typeName }}</td>
+                    <td>{{ item.description || '—' }}</td>
+                    <td>
+                      <span class="carbon-tag" [class.tag-active]="item.isActive" [class.tag-inactive]="!item.isActive">
+                        {{ item.isActive ? 'Active' : 'Inactive' }}
+                      </span>
+                    </td>
+                    <td>
+                      <div class="switch-action-cell">
+                        <button
+                          type="button"
+                          class="carbon-toggle-switch"
+                          [class.checked]="item.isActive"
+                          [disabled]="togglingId() === item.id"
+                          (click)="toggleVehicleStatus(item, $event)"
+                          role="switch"
+                          [attr.aria-checked]="item.isActive"
+                          [attr.aria-label]="'Toggle ' + item.typeName"
+                        >
+                          <span class="toggle-slider"></span>
+                        </button>
+                      </div>
+                    </td>
+                    <td class="td-actions">
+                      <button type="button" class="carbon-btn-secondary row-edit" (click)="openEditVehicle(item, $event)">Edit</button>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+          <div class="carbon-pagination-bar desktop-pagination">
+            <span class="pagination-info">Showing <strong>{{ filteredVehicleTypes().length }}</strong> vehicle types</span>
+          </div>
+
+          <!-- Mobile Exact Card View (matching specified design) -->
+          <div class="mobile-cards-list" aria-label="Vehicle types list">
+            @for (item of displayedVehicleTypes(); track item.id) {
+              <article class="exact-mobile-card" tabindex="0" (click)="openEditVehicle(item)" (keydown.enter)="openEditVehicle(item)">
+                <div class="card-primary-col">
+                  <span class="card-title-text">{{ item.typeName }}</span>
+                </div>
+
+                <div class="card-col-divider" aria-hidden="true"></div>
+
+                <div class="card-secondary-col">
+                  <span class="card-sub-text">{{ item.description || 'General' }}</span>
+                </div>
+
+                <div class="card-actions-col" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="carbon-toggle-switch"
+                    [class.checked]="item.isActive"
+                    (click)="toggleVehicleStatus(item, $event)"
+                    role="switch"
+                    [attr.aria-checked]="item.isActive"
+                    [title]="item.isActive ? 'Active' : 'Inactive'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                  <button
+                    type="button"
+                    class="action-edit-btn"
+                    (click)="openEditVehicle(item)"
+                    title="Edit vehicle type"
+                    aria-label="Edit vehicle type"
+                  >
+                    <svg class="edit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                      <path d="M12 20h9"/>
+                      <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                    </svg>
+                  </button>
+                </div>
+              </article>
+            }
+
+            @if (hasMoreVehicle()) {
+              <div class="scroll-loading-indicator">
+                <span class="spinner tiny-spinner"></span>
+                <span>Loading more vehicle types...</span>
+              </div>
+            } @else if (filteredVehicleTypes().length > batchSize) {
+              <div class="scroll-end-indicator">
+                <span>Showing all {{ filteredVehicleTypes().length }} vehicle types</span>
+              </div>
+            }
+            <div #scrollSentinelVehicle class="scroll-sentinel" aria-hidden="true"></div>
+          </div>
+        }
+      </div>
+    </section>
+  }
+
+  <!-- INSURANCE TYPE MODAL -->
+  @if (isInsuranceModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeInsuranceModal()" role="presentation">
+      <section class="carbon-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="insurance-modal-title" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="header-titles">
+            <span class="carbon-eyebrow">Insurance Catalog</span>
+            <h2 id="insurance-modal-title" class="modal-headline">{{ editingInsuranceId() ? 'Edit Insurance Type' : 'Add Insurance Type' }}</h2>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeInsuranceModal()" [disabled]="submitting()" aria-label="Close dialog">&times;</button>
+        </header>
+
+        <form [formGroup]="insuranceForm" (ngSubmit)="saveInsurance()" class="modal-form" novalidate>
+          <div class="modal-body">
+            @if (modalError()) {
+              <div class="inline-error" role="alert">{{ modalError() }}</div>
+            }
+            <div class="form-grid">
+              <label class="form-field full-col">
+                <span>Insurance Type Name <b>*</b></span>
+                <input type="text" formControlName="name" placeholder="e.g. Motor Insurance" maxlength="100" />
+                @if (insuranceForm.controls.name.touched && insuranceForm.controls.name.invalid) {
+                  <small class="field-error">Enter a valid insurance type name.</small>
+                }
+              </label>
+
+              <label class="form-field full-col">
+                <span>Display Order</span>
+                <input type="number" formControlName="displayOrder" min="1" step="1" />
+                @if (insuranceForm.controls.displayOrder.touched && insuranceForm.controls.displayOrder.invalid) {
+                  <small class="field-error">Display order must be at least 1.</small>
+                }
+              </label>
+            </div>
+          </div>
+
+          <footer class="modal-actions">
+            <button type="button" class="carbon-btn-secondary" (click)="closeInsuranceModal()" [disabled]="submitting()">Cancel</button>
+            <button type="submit" class="carbon-btn-primary" [disabled]="submitting()">
+              {{ submitting() ? 'Saving…' : (editingInsuranceId() ? 'Save Changes' : 'Create Insurance Type') }}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+
+  <!-- VEHICLE TYPE MODAL -->
+  @if (isVehicleModalOpen()) {
+    <div class="carbon-modal-overlay" (click)="closeVehicleModal()" role="presentation">
+      <section class="carbon-modal-dialog" role="dialog" aria-modal="true" aria-labelledby="vehicle-modal-title" (click)="$event.stopPropagation()">
+        <header class="modal-header">
+          <div class="header-titles">
+            <span class="carbon-eyebrow">Vehicle Catalog</span>
+            <h2 id="vehicle-modal-title" class="modal-headline">{{ editingVehicleId() ? 'Edit Vehicle Type' : 'Add Vehicle Type' }}</h2>
+          </div>
+          <button type="button" class="modal-close-btn" (click)="closeVehicleModal()" [disabled]="submitting()" aria-label="Close dialog">&times;</button>
+        </header>
+
+        <form [formGroup]="vehicleForm" (ngSubmit)="saveVehicle()" class="modal-form" novalidate>
+          <div class="modal-body">
+            @if (modalError()) {
+              <div class="inline-error" role="alert">{{ modalError() }}</div>
+            }
+            <div class="form-grid">
+              <label class="form-field full-col">
+                <span>Vehicle Type Name <b>*</b></span>
+                <input type="text" formControlName="typeName" placeholder="e.g. Private Car" maxlength="100" />
+                @if (vehicleForm.controls.typeName.touched && vehicleForm.controls.typeName.invalid) {
+                  <small class="field-error">Enter a valid vehicle type name.</small>
+                }
+              </label>
+
+              <label class="form-field full-col">
+                <span>Description</span>
+                <input type="text" formControlName="description" placeholder="e.g. 4-Wheeler Passenger Vehicles" maxlength="250" />
+              </label>
+            </div>
+          </div>
+
+          <footer class="modal-actions">
+            <button type="button" class="carbon-btn-secondary" (click)="closeVehicleModal()" [disabled]="submitting()">Cancel</button>
+            <button type="submit" class="carbon-btn-primary" [disabled]="submitting()">
+              {{ submitting() ? 'Saving…' : (editingVehicleId() ? 'Save Changes' : 'Create Vehicle Type') }}
+            </button>
+          </footer>
+        </form>
+      </section>
+    </div>
+  }
+</div>

@@ -31,23 +31,23 @@
         type="button"
         class="product-tab"
         [class.product-tab-selected]="activeTab() === 'upi'"
-        (click)="activeTab.set('upi')"
+        (click)="setActiveTab('upi')"
         role="tab"
         [attr.aria-selected]="activeTab() === 'upi'"
       >
         UPI IDs
-        <span class="tab-badge">{{ upiTotalRecords() }}</span>
+        <span class="tab-badge" [class.badge-active]="activeTab() === 'upi'">{{ upiTotalRecords() }}</span>
       </button>
       <button
         type="button"
         class="product-tab"
         [class.product-tab-selected]="activeTab() === 'mappings'"
-        (click)="activeTab.set('mappings')"
+        (click)="setActiveTab('mappings')"
         role="tab"
         [attr.aria-selected]="activeTab() === 'mappings'"
       >
         QR Mapping
-        <span class="tab-badge">{{ qrMappingTotalRecords() }}</span>
+        <span class="tab-badge" [class.badge-active]="activeTab() === 'mappings'">{{ qrMappingTotalRecords() }}</span>
       </button>
     </div>
   </header>
@@ -73,7 +73,7 @@
             <input
               type="text"
               class="carbon-input search-input"
-              placeholder="Search UPI ID, name, bank..."
+              placeholder="Search UPI ID..."
               [ngModel]="upiSearchQuery()"
               (ngModelChange)="onUpiSearchChange($event)"
             />
@@ -82,10 +82,24 @@
             }
           </div>
 
+          <div class="status-filter-wrapper">
+            <label for="upi-status-filter" class="filter-label">Status:</label>
+            <select
+              id="upi-status-filter"
+              class="carbon-select status-select"
+              [value]="upiStatusFilter()"
+              (change)="setUpiStatusFilter($any($event.target).value)"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
           <!-- Refresh Button -->
           <button
             type="button"
-            class="carbon-btn-secondary"
+            class="carbon-btn-secondary refresh-btn"
             (click)="refreshUpiMasters()"
             [disabled]="isUpiLoading()"
             title="Refresh UPI IDs"
@@ -95,20 +109,20 @@
               <path d="M1 20v-6h6"></path>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <span>Refresh</span>
+            <span class="btn-label-text">Refresh</span>
           </button>
 
           <!-- Add Button -->
           <button
             type="button"
-            class="carbon-btn-primary"
+            class="carbon-btn-primary add-btn"
             (click)="openAddUpiModal()"
-            title="Add new UPI ID"
+            title="Add UPI ID"
           >
             <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
             </svg>
-            <span>Add UPI ID</span>
+            <span class="btn-label-text">Add UPI ID</span>
           </button>
         </div>
       </div>
@@ -231,54 +245,56 @@
             </table>
           </div>
 
-          <!-- Pagination Bar -->
-          <div class="carbon-pagination-bar">
-            <div class="pagination-info">
-              Showing <strong>{{ filteredUpiItems().length }}</strong> of <strong>{{ upiTotalRecords() }}</strong> items
-            </div>
-
-            <div class="pagination-controls">
-              <div class="page-size-selector">
-                <label for="upi-page-size" class="page-size-label">Items per page:</label>
-                <select
-                  id="upi-page-size"
-                  class="carbon-select"
-                  [ngModel]="upiPageSize()"
-                  (ngModelChange)="onUpiPageSizeChange($event)"
-                >
-                  <option [value]="10">10</option>
-                  <option [value]="25">25</option>
-                  <option [value]="50">50</option>
-                </select>
-              </div>
-
-              <div class="page-nav-buttons">
-                <span class="page-number-display">Page {{ upiPageNumber() }} of {{ upiTotalPages() }}</span>
-                <button
-                  type="button"
-                  class="carbon-page-btn"
-                  [disabled]="upiPageNumber() <= 1 || isUpiLoading()"
-                  (click)="onUpiPageChange(upiPageNumber() - 1)"
-                  aria-label="Previous page"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          <!-- Mobile Exact Card View (matching screenshot) -->
+          <div class="qr-mobile-list" aria-label="UPI IDs list">
+            @for (item of filteredUpiItems(); track item.id) {
+              <article class="qr-mobile-card" tabindex="0" (click)="openEditUpiModal(item)" (keydown)="onUpiRowKeydown($event, item)">
+                <div class="card-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <path d="M3 21h18M3 10h18M5 10v11M9 10v11M15 10v11M19 10v11M12 3l10 7H2l10-7z" stroke-linecap="round" stroke-linejoin="round"/>
                   </svg>
-                </button>
-                <button
-                  type="button"
-                  class="carbon-page-btn"
-                  [disabled]="upiPageNumber() >= upiTotalPages() || isUpiLoading()"
-                  (click)="onUpiPageChange(upiPageNumber() + 1)"
-                  aria-label="Next page"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
+                </div>
+
+                <div class="card-primary-col">
+                  <span class="card-title-text">{{ item.upiId }}</span>
+                </div>
+
+                <div class="card-divider" aria-hidden="true"></div>
+
+                <div class="card-secondary-col">
+                  <span class="card-sub-text">{{ item.upiName }}</span>
+                </div>
+
+                <div class="card-action-col" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="carbon-toggle-switch"
+                    [class.checked]="item.isActive"
+                    [disabled]="togglingUpiId() === item.id"
+                    (click)="onToggleUpiStatus(item, $event)"
+                    role="switch"
+                    [attr.aria-checked]="item.isActive"
+                    [title]="item.isActive ? 'Disable UPI ID' : 'Enable UPI ID'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                </div>
+              </article>
+            }
           </div>
+
+          @if (isUpiLoading() && upiItems().length > 0) {
+            <div class="scroll-loading-indicator">
+              <span class="carbon-spinner tiny-spinner"></span>
+              <span>Loading more UPI IDs...</span>
+            </div>
+          }
+          @if (!hasMoreUpi() && upiItems().length > 0) {
+            <div class="scroll-end-indicator">
+              <span>Showing all {{ filteredUpiItems().length }} UPI IDs</span>
+            </div>
+          }
+          <div #scrollSentinelUpi class="scroll-sentinel" aria-hidden="true"></div>
         }
       </div>
     </section>
@@ -308,7 +324,7 @@
             <input
               type="text"
               class="carbon-input search-input"
-              placeholder="Search QR, bank, insurance, vehicle..."
+              placeholder="Search QR Mapping..."
               [ngModel]="qrMappingSearchQuery()"
               (ngModelChange)="onQrMappingSearchChange($event)"
             />
@@ -317,10 +333,25 @@
             }
           </div>
 
+          <!-- Status Filter -->
+          <div class="status-filter-wrapper">
+            <label for="mapping-status-filter" class="filter-label">Status:</label>
+            <select
+              id="mapping-status-filter"
+              class="carbon-select status-select"
+              [value]="qrMappingStatusFilter()"
+              (change)="setQrMappingStatusFilter($any($event.target).value)"
+            >
+              <option value="all">All statuses</option>
+              <option value="active">Active</option>
+              <option value="inactive">Inactive</option>
+            </select>
+          </div>
+
           <!-- Refresh Button -->
           <button
             type="button"
-            class="carbon-btn-secondary"
+            class="carbon-btn-secondary refresh-btn"
             (click)="refreshQrMappings()"
             [disabled]="isQrMappingLoading()"
             title="Refresh QR Mappings"
@@ -330,20 +361,20 @@
               <path d="M1 20v-6h6"></path>
               <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <span>Refresh</span>
+            <span class="btn-label-text">Refresh</span>
           </button>
 
           <!-- Add Button -->
           <button
             type="button"
-            class="carbon-btn-primary"
+            class="carbon-btn-primary add-btn"
             (click)="openAddQrMappingModal()"
-            title="Add new QR Mapping"
+            title="Add QR Mapping"
           >
             <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
               <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
             </svg>
-            <span>Add QR Mapping</span>
+            <span class="btn-label-text">Add QR Mapping</span>
           </button>
         </div>
       </div>
@@ -457,54 +488,62 @@
             </table>
           </div>
 
-          <!-- Pagination Bar -->
-          <div class="carbon-pagination-bar">
-            <div class="pagination-info">
-              Showing <strong>{{ filteredQrMappingItems().length }}</strong> of <strong>{{ qrMappingTotalRecords() }}</strong> items
-            </div>
-
-            <div class="pagination-controls">
-              <div class="page-size-selector">
-                <label for="mapping-page-size" class="page-size-label">Items per page:</label>
-                <select
-                  id="mapping-page-size"
-                  class="carbon-select"
-                  [ngModel]="qrMappingPageSize()"
-                  (ngModelChange)="onQrMappingPageSizeChange($event)"
-                >
-                  <option [value]="10">10</option>
-                  <option [value]="25">25</option>
-                  <option [value]="50">50</option>
-                </select>
-              </div>
-
-              <div class="page-nav-buttons">
-                <span class="page-number-display">Page {{ qrMappingPageNumber() }} of {{ qrMappingTotalPages() }}</span>
-                <button
-                  type="button"
-                  class="carbon-page-btn"
-                  [disabled]="qrMappingPageNumber() <= 1 || isQrMappingLoading()"
-                  (click)="onQrMappingPageChange(qrMappingPageNumber() - 1)"
-                  aria-label="Previous page"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M11.354 1.646a.5.5 0 0 1 0 .708L5.707 8l5.647 5.646a.5.5 0 0 1-.708.708l-6-6a.5.5 0 0 1 0-.708l6-6a.5.5 0 0 1 .708 0z"/>
+          <!-- Mobile Exact Card View (matching screenshot) -->
+          <div class="qr-mobile-list" aria-label="QR Mappings list">
+            @for (item of filteredQrMappingItems(); track item.id) {
+              <article class="qr-mobile-card" tabindex="0" (click)="openEditQrMappingModal(item)" (keydown)="onQrMappingRowKeydown($event, item)">
+                <div class="card-icon-box" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+                    <rect x="3" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="3" width="7" height="7"></rect>
+                    <rect x="14" y="14" width="7" height="7"></rect>
+                    <rect x="3" y="14" width="7" height="7"></rect>
                   </svg>
-                </button>
-                <button
-                  type="button"
-                  class="carbon-page-btn"
-                  [disabled]="qrMappingPageNumber() >= qrMappingTotalPages() || isQrMappingLoading()"
-                  (click)="onQrMappingPageChange(qrMappingPageNumber() + 1)"
-                  aria-label="Next page"
-                >
-                  <svg viewBox="0 0 16 16" fill="currentColor">
-                    <path fill-rule="evenodd" d="M4.646 1.646a.5.5 0 0 1 .708 0l6 6a.5.5 0 0 1 0 .708l-6 6a.5.5 0 0 1-.708-.708L10.293 8 4.646 2.354a.5.5 0 0 1 0-.708z"/>
-                  </svg>
-                </button>
-              </div>
-            </div>
+                </div>
+
+                <div class="card-primary-col">
+                  <span class="card-title-text">{{ item.qrName }}</span>
+                  @if (item.bankName) {
+                    <span class="card-meta-text">{{ item.bankName }}</span>
+                  }
+                </div>
+
+                <div class="card-divider" aria-hidden="true"></div>
+
+                <div class="card-secondary-col">
+                  <span class="card-sub-text">{{ item.insuranceType || item.vehicleType || 'All' }}</span>
+                </div>
+
+                <div class="card-action-col" (click)="$event.stopPropagation()">
+                  <button
+                    type="button"
+                    class="carbon-toggle-switch"
+                    [class.checked]="item.isActive"
+                    [disabled]="togglingQrMappingId() === item.id"
+                    (click)="onToggleQrMappingStatus(item, $event)"
+                    role="switch"
+                    [attr.aria-checked]="item.isActive"
+                    [title]="item.isActive ? 'Disable QR Mapping' : 'Enable QR Mapping'"
+                  >
+                    <span class="toggle-slider"></span>
+                  </button>
+                </div>
+              </article>
+            }
           </div>
+
+          @if (isQrMappingLoading() && qrMappingItems().length > 0) {
+            <div class="scroll-loading-indicator">
+              <span class="carbon-spinner tiny-spinner"></span>
+              <span>Loading more QR Mappings...</span>
+            </div>
+          }
+          @if (!hasMoreQrMapping() && qrMappingItems().length > 0) {
+            <div class="scroll-end-indicator">
+              <span>Showing all {{ filteredQrMappingItems().length }} QR Mappings</span>
+            </div>
+          }
+          <div #scrollSentinelMapping class="scroll-sentinel" aria-hidden="true"></div>
         }
       </div>
     </section>

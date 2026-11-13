@@ -325,6 +325,78 @@
   color: #161616;
 }
 
+/* Status Filter (Desktop) */
+.status-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  color: #525252;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.carbon-select.status-select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #8d8d8d;
+  border-radius: 0;
+  outline: none;
+  background: #ffffff;
+  color: #161616;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.carbon-select.status-select:focus {
+  border-color: #0f62fe;
+}
+
+/* Mobile List (Hidden by default on desktop) */
+.qr-mobile-list {
+  display: none;
+}
+
+/* Infinite Scroll Loading & Sentinel */
+.scroll-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #525252;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.scroll-loading-indicator .tiny-spinner {
+  margin: 0;
+}
+
+.scroll-end-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  border-top: 1px dashed #e5e7eb;
+  margin-top: 4px;
+}
+
+.scroll-sentinel {
+  width: 100%;
+  height: 2px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 /* Buttons */
 .carbon-btn-primary {
   display: inline-flex;
@@ -1118,6 +1190,486 @@
 @keyframes carbonModalScaleUp {
   from { opacity: 0; transform: scale(0.97); }
   to { opacity: 1; transform: scale(1); }
+}
+
+/* ========================================================================= */
+/* TABLET (768px - 1023px)                                                   */
+/* ========================================================================= */
+@media (max-width: 1023px) {
+  :host {
+    padding: 24px 20px 48px;
+  }
+  .section-toolbar {
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  .carbon-search-box {
+    width: 240px;
+  }
+  .carbon-table {
+    min-width: 680px;
+  }
+}
+
+/* ========================================================================= */
+/* SMALL / MOBILE SCREENS (<= 767px) - EXACT UI MATCHING SPECIFIED DESIGN   */
+/* ========================================================================= */
+@media (max-width: 767px) {
+  :host {
+    padding: 16px 14px 40px;
+    background: #ffffff;
+  }
+
+  .carbon-toast {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  /* 1. Page Header & Tabs matching screenshot */
+  .page-header {
+    margin-bottom: 16px;
+  }
+
+  .tabs-bar {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+    border-bottom: 1px solid #e5e7eb;
+    margin-top: 0;
+    padding: 0 4px;
+  }
+
+  .product-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 0 10px;
+    background: transparent;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: #64748b;
+    font-size: 15px;
+    font-weight: 600;
+    cursor: pointer;
+    box-sizing: border-box;
+    transition: all 0.15s ease;
+  }
+
+  .product-tab.product-tab-selected {
+    color: #111827;
+    font-weight: 700;
+    border-bottom: 2px solid #0052fe;
+  }
+
+  .tab-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    border: 1px solid #e2e8f0;
+    background: #f8fafc;
+    color: #64748b;
+    box-sizing: border-box;
+  }
+
+  .product-tab.product-tab-selected .tab-badge,
+  .tab-badge.badge-active {
+    border: 1.5px solid #0052fe;
+    background: transparent;
+    color: #0052fe;
+  }
+
+  /* 2. Hide Section Header Title / Count on mobile (tabs show the count) */
+  .carbon-card-section {
+    border: none;
+    background: transparent;
+    margin-bottom: 24px;
+  }
+
+  .section-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0 0 14px 0;
+    background: transparent;
+    border: none;
+  }
+
+  .section-title-group {
+    display: none !important;
+  }
+
+  /* 3. Toolbar Row (Search, Status, Refresh, Add) in a single flex row matching screenshot */
+  .section-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .carbon-search-box {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    position: relative;
+    height: 42px;
+  }
+
+  .carbon-search-box .search-svg {
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: #64748b;
+  }
+
+  .carbon-input.search-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 28px 0 36px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .carbon-input.search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .carbon-input.search-input:focus {
+    border-color: #0052fe;
+    outline: none;
+  }
+
+  .search-clear-btn {
+    right: 8px;
+    font-size: 16px;
+  }
+
+  .status-filter-wrapper {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .filter-label {
+    display: none !important;
+  }
+
+  .carbon-select.status-select {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 28px 0 12px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .carbon-select.status-select:focus {
+    border-color: #0052fe;
+    outline: none;
+  }
+
+  /* Square icon-only action buttons matching screenshot */
+  .refresh-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 8px;
+    background: #262626;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    background: #383838;
+  }
+
+  .refresh-btn .btn-label-text {
+    display: none !important;
+  }
+
+  .refresh-btn .btn-svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .add-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 8px;
+    background: #0052fe;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .add-btn:hover:not(:disabled) {
+    background: #0045d8;
+  }
+
+  .add-btn .btn-label-text {
+    display: none !important;
+  }
+
+  .add-btn .btn-svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* 4. Table vs Mobile Cards */
+  .carbon-table-container {
+    background: transparent;
+  }
+
+  .table-scroll-wrapper {
+    display: none !important;
+  }
+
+  /* Exact Mobile QR / UPI Card Layout */
+  .qr-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .qr-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+  }
+
+  .card-icon-box {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background: #eaf2ff;
+    color: #0052fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .card-icon-box svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .card-primary-col {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .card-title-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.3;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-meta-text {
+    font-size: 12px;
+    font-weight: 500;
+    color: #64748b;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .card-divider {
+    width: 1px;
+    height: 26px;
+    background: #e5e7eb;
+    flex-shrink: 0;
+    margin: 0 4px;
+  }
+
+  .card-secondary-col {
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+    flex: 0 1 auto;
+  }
+
+  .card-sub-text {
+    font-size: 14px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.3;
+    white-space: nowrap;
+  }
+
+  .card-action-col {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    flex-shrink: 0;
+  }
+
+  /* Rounded Toggle Switch matching screenshot */
+  .carbon-toggle-switch {
+    width: 38px;
+    height: 22px;
+    border-radius: 9999px;
+    background: #cbd5e1;
+    border: none;
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .carbon-toggle-switch .toggle-slider {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .carbon-toggle-switch.checked {
+    background: #22c55e;
+  }
+
+  .carbon-toggle-switch.checked .toggle-slider {
+    transform: translateX(16px);
+  }
+
+  /* Modal on Mobile */
+  .carbon-modal-overlay {
+    padding: 12px 10px;
+    align-items: center;
+  }
+
+  .carbon-modal-dialog {
+    max-height: calc(100dvh - 24px);
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-headline {
+    font-size: 18px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100dvh - 130px);
+  }
+
+  .form-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .col-span-2 {
+    grid-column: span 1;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+}
+
+/* ========================================================================= */
+/* EXTRA SMALL SCREENS (<= 480px)                                            */
+/* ========================================================================= */
+@media (max-width: 480px) {
+  :host {
+    padding: 12px 10px 32px;
+  }
+  .section-actions-group {
+    gap: 6px;
+  }
+  .carbon-select.status-select {
+    padding: 0 20px 0 8px;
+    font-size: 12px;
+  }
+  .refresh-btn, .add-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+  }
+  .qr-mobile-card {
+    padding: 10px 10px;
+    gap: 8px;
+  }
+  .card-icon-box {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+  .card-icon-box svg {
+    width: 16px;
+    height: 16px;
+  }
+  .card-title-text {
+    font-size: 13px;
+  }
+  .card-sub-text {
+    font-size: 13px;
+  }
 }
 
 

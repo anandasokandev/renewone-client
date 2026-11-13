@@ -1,5 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { finalize } from 'rxjs';
@@ -13,7 +25,7 @@ import { AdminAgentClassService } from '../../../services/admin-agent-class/admi
   templateUrl: './admin-agent-class.html',
   styleUrl: './admin-agent-class.css',
 })
-export class AdminAgentClass implements OnInit {
+export class AdminAgentClass implements OnInit, AfterViewInit, OnDestroy {
   private readonly service = inject(AdminAgentClassService);
   private readonly fb = inject(FormBuilder);
   private readonly destroyRef = inject(DestroyRef);
@@ -30,12 +42,83 @@ export class AdminAgentClass implements OnInit {
   readonly modalError = signal<string | null>(null);
   readonly notice = signal<string | null>(null);
 
+  // Search & Mobile Infinite Scroll
+  readonly search = signal('');
+  readonly batchSize = 10;
+  readonly visibleCount = signal(this.batchSize);
+
+  readonly filteredClasses = computed(() => {
+    const q = this.search().trim().toLowerCase();
+    const all = this.classes();
+    if (!q) return all;
+    return all.filter(c => c.className.toLowerCase().includes(q));
+  });
+
+  readonly displayedClasses = computed(() =>
+    this.filteredClasses().slice(0, this.visibleCount())
+  );
+
+  readonly hasMore = computed(() =>
+    this.visibleCount() < this.filteredClasses().length
+  );
+
+  @ViewChild('scrollSentinel') scrollSentinel?: ElementRef<HTMLDivElement>;
+  private observer?: IntersectionObserver;
+
   readonly form = this.fb.nonNullable.group({
     className: ['', [Validators.required, Validators.maxLength(100)]],
     commSharePercentage: [0, [Validators.required, Validators.min(0), Validators.max(100)]],
   });
 
   ngOnInit(): void { this.loadClasses(); }
+
+  ngAfterViewInit(): void {
+    this.setupIntersectionObserver();
+  }
+
+  ngOnDestroy(): void {
+    if (this.observer) {
+      this.observer.disconnect();
+    }
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (!this.hasMore() || this.loading()) return;
+    const scrollPos = window.innerHeight + window.scrollY;
+    const bodyHeight = document.documentElement.scrollHeight;
+    if (bodyHeight - scrollPos < 200) {
+      this.loadMore();
+    }
+  }
+
+  private setupIntersectionObserver(): void {
+    if (typeof IntersectionObserver === 'undefined') return;
+    if (this.observer) this.observer.disconnect();
+
+    this.observer = new IntersectionObserver(
+      entries => {
+        if (entries[0]?.isIntersecting) {
+          this.loadMore();
+        }
+      },
+      { root: null, rootMargin: '100px', threshold: 0.1 }
+    );
+
+    if (this.scrollSentinel?.nativeElement) {
+      this.observer.observe(this.scrollSentinel.nativeElement);
+    }
+  }
+
+  loadMore(): void {
+    if (!this.hasMore()) return;
+    this.visibleCount.update(c => c + this.batchSize);
+    setTimeout(() => {
+      if (this.scrollSentinel?.nativeElement && this.observer) {
+        this.observer.observe(this.scrollSentinel.nativeElement);
+      }
+    }, 50);
+  }
 
   loadClasses(): void {
     this.loading.set(true);
@@ -47,6 +130,7 @@ export class AdminAgentClass implements OnInit {
       next: response => {
         if (!response.isSuccess) { this.pageError.set(response.message || 'Could not load agent classes.'); return; }
         this.classes.set(response.data ?? []);
+        this.visibleCount.set(this.batchSize);
       },
       error: error => {
         if (error?.status === 404) this.classes.set([]);

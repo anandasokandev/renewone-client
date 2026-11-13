@@ -123,6 +123,172 @@
   margin: 2px 0 0;
 }
 
+/* ========================================================================= */
+/* SUMMARY STATS ROW (Active / Inactive)                                     */
+/* ========================================================================= */
+.summary-cards-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px;
+  margin-bottom: 28px;
+}
+
+.carbon-mini-card {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 18px 24px;
+  background-color: #ffffff;
+  border: 1px solid #e0e0e0;
+  border-radius: 0px;
+  box-sizing: border-box;
+}
+
+.mini-card-icon-wrap {
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.mini-card-icon-wrap.icon-active {
+  background-color: #edf5ff;
+  color: #0f62fe;
+}
+
+.mini-card-icon-wrap.icon-inactive {
+  background-color: #f4f4f4;
+  color: #525252;
+}
+
+.mini-card-icon-wrap svg {
+  width: 22px;
+  height: 22px;
+}
+
+.mini-card-content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.mini-card-label {
+  font-size: 12px;
+  font-weight: 500;
+  color: #525252;
+  letter-spacing: 0.16px;
+}
+
+.mini-card-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.mini-card-value {
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1;
+  color: #161616;
+}
+
+.mini-card-badge {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 2px 6px;
+  letter-spacing: 0.2px;
+}
+
+.mini-card-badge.badge-active {
+  background-color: #defbe6;
+  color: #0e6027;
+}
+
+.mini-card-badge.badge-inactive {
+  background-color: #f4f4f4;
+  color: #525252;
+}
+
+/* Status Filter (Desktop) */
+.status-filter-wrapper {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.filter-label {
+  color: #525252;
+  font-size: 12px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.carbon-select.status-select {
+  height: 38px;
+  padding: 0 12px;
+  border: 1px solid #8d8d8d;
+  border-radius: 0;
+  outline: none;
+  background: #ffffff;
+  color: #161616;
+  font-family: inherit;
+  font-size: 13px;
+  cursor: pointer;
+  box-sizing: border-box;
+}
+
+.carbon-select.status-select:focus {
+  border-color: #0f62fe;
+}
+
+/* Mobile Transaction Link (Hidden on Desktop) */
+.mobile-tx-link {
+  display: none;
+}
+
+/* Mobile Card Layout (Hidden by default on desktop) */
+.bank-mobile-list {
+  display: none;
+}
+
+/* Infinite Scroll Loading & Sentinel */
+.scroll-loading-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 16px;
+  color: #525252;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.scroll-loading-indicator .tiny-spinner {
+  margin: 0;
+}
+
+.scroll-end-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14px;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 500;
+  border-top: 1px dashed #e5e7eb;
+  margin-top: 4px;
+}
+
+.scroll-sentinel {
+  width: 100%;
+  height: 2px;
+  pointer-events: none;
+  visibility: hidden;
+}
+
 /* Main Card Section */
 .carbon-card-section {
   background-color: #ffffff;
@@ -1075,16 +1241,653 @@
   to { opacity: 1; transform: scale(1); }
 }
 
-@media (max-width: 600px) {
-  .form-grid-2col {
-    grid-template-columns: 1fr;
-  }
-  .col-span-2 {
-    grid-column: span 1;
-  }
-}
-
-
 .account-click-row { cursor: pointer; }
 .account-click-row:hover { background: #f4f4f4; }
 .account-click-row:focus-visible { outline: 2px solid #0f62fe; outline-offset: -2px; }
+
+/* ========================================================================= */
+/* TABLET (768px - 1023px)                                                   */
+/* ========================================================================= */
+@media (max-width: 1023px) {
+  :host {
+    padding: 24px 20px 48px;
+  }
+  .summary-cards-grid {
+    gap: 16px;
+    margin-bottom: 20px;
+  }
+  .carbon-mini-card {
+    padding: 16px 20px;
+  }
+  .section-toolbar {
+    padding: 14px 16px;
+    gap: 14px;
+  }
+  .carbon-search-box {
+    width: 240px;
+  }
+  .carbon-table {
+    min-width: 680px;
+  }
+}
+
+/* ========================================================================= */
+/* SMALL / MOBILE SCREENS (<= 767px) - EXACT UI MATCHING SPECIFIED DESIGN   */
+/* ========================================================================= */
+@media (max-width: 767px) {
+  :host {
+    padding: 16px 14px 40px;
+    background: #ffffff;
+  }
+
+  .carbon-toast {
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    min-width: 0;
+    width: auto;
+    max-width: none;
+    padding: 10px 14px;
+    font-size: 12px;
+    border-radius: 8px;
+  }
+
+  /* 1. Summary Cards Row matching exact design */
+  .summary-cards-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .carbon-mini-card {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    padding: 14px 18px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    box-shadow: none;
+  }
+
+  .carbon-mini-card:hover {
+    border-color: #d1d5db;
+  }
+
+  .mini-card-icon-wrap {
+    width: 44px;
+    height: 44px;
+    min-width: 44px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .mini-card-icon-wrap.icon-active {
+    background: #eaf2ff;
+    color: #0052fe;
+  }
+
+  .mini-card-icon-wrap.icon-inactive {
+    background: #f1f3f7;
+    color: #64748b;
+  }
+
+  .mini-card-icon-wrap svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .mini-card-label,
+  .mini-card-badge {
+    display: none !important;
+  }
+
+  .mini-card-content {
+    display: flex;
+    align-items: center;
+  }
+
+  .mini-card-val-row {
+    display: block;
+  }
+
+  .mini-card-value {
+    color: #111827;
+    font-size: 26px;
+    font-weight: 700;
+    line-height: 1;
+  }
+
+  /* 2. Title & Toolbar Section */
+  .carbon-card-section {
+    border: none;
+    background: transparent;
+    margin-bottom: 24px;
+  }
+
+  .section-toolbar {
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 14px;
+    padding: 0 0 14px 0;
+    background: transparent;
+    border: none;
+  }
+
+  .section-title-group {
+    width: 100%;
+    margin: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title {
+    margin: 0;
+    color: #111827;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+  }
+
+  .carbon-count-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #eceff1;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  .mobile-tx-link {
+    display: inline-flex;
+    align-items: center;
+    font-size: 13px;
+    font-weight: 600;
+    color: #0052fe;
+    text-decoration: none;
+  }
+
+  .mobile-tx-link:hover {
+    text-decoration: underline;
+  }
+
+  /* 3. Toolbar Row (Search, Status, Refresh, Add) in a single flex row matching screenshot */
+  .section-actions-group {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    flex-wrap: nowrap;
+  }
+
+  .all-tx-btn {
+    display: none !important;
+  }
+
+  .carbon-search-box {
+    flex: 1 1 auto;
+    min-width: 0;
+    width: auto;
+    position: relative;
+    height: 42px;
+  }
+
+  .carbon-search-box .search-svg {
+    left: 12px;
+    width: 16px;
+    height: 16px;
+    color: #64748b;
+  }
+
+  .carbon-input.search-input {
+    width: 100%;
+    height: 42px;
+    padding: 0 28px 0 36px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    outline: none;
+    box-sizing: border-box;
+  }
+
+  .carbon-input.search-input::placeholder {
+    color: #9ca3af;
+  }
+
+  .carbon-input.search-input:focus {
+    border-color: #0052fe;
+    outline: none;
+  }
+
+  .search-clear-btn {
+    right: 8px;
+    font-size: 16px;
+  }
+
+  .status-filter-wrapper {
+    flex: 0 0 auto;
+    margin: 0;
+  }
+
+  .filter-label {
+    display: none !important;
+  }
+
+  .carbon-select.status-select {
+    height: 42px;
+    border-radius: 8px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    color: #111827;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 0 28px 0 12px;
+    appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 20 20' fill='%2364748b'%3E%3Cpath fill-rule='evenodd' d='M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z' clip-rule='evenodd'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 8px center;
+    background-size: 16px;
+    cursor: pointer;
+    box-sizing: border-box;
+  }
+
+  .carbon-select.status-select:focus {
+    border-color: #0052fe;
+    outline: none;
+  }
+
+  /* Square icon-only action buttons matching screenshot */
+  .refresh-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 8px;
+    background: #262626;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .refresh-btn:hover:not(:disabled) {
+    background: #383838;
+  }
+
+  .refresh-btn .btn-label-text {
+    display: none !important;
+  }
+
+  .refresh-btn .btn-svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .add-btn {
+    width: 42px;
+    height: 42px;
+    min-width: 42px;
+    padding: 0;
+    border-radius: 8px;
+    background: #0052fe;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    flex-shrink: 0;
+  }
+
+  .add-btn:hover:not(:disabled) {
+    background: #0045d8;
+  }
+
+  .add-btn .btn-label-text {
+    display: none !important;
+  }
+
+  .add-btn .btn-svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  /* 4. Table vs Mobile Cards */
+  .carbon-table-container {
+    background: transparent;
+  }
+
+  .table-scroll-wrapper {
+    display: none !important;
+  }
+
+  /* Exact Mobile Bank Account Card Layout */
+  .bank-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    width: 100%;
+  }
+
+  .bank-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    width: 100%;
+    box-sizing: border-box;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+  }
+
+  .bank-card-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background: #eaf2ff;
+    color: #0052fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .bank-card-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .bank-card-primary {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1 1 auto;
+    max-width: 125px;
+  }
+
+  .name-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+  }
+
+  .bank-name-text {
+    font-size: 13px;
+    font-weight: 700;
+    color: #111827;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .primary-pill {
+    font-size: 9px;
+    font-weight: 700;
+    text-transform: uppercase;
+    color: #0052fe;
+    background: #eaf2ff;
+    padding: 1px 4px;
+    border-radius: 4px;
+    flex-shrink: 0;
+  }
+
+  .bank-sub-code {
+    font-size: 12px;
+    font-weight: 700;
+    color: #0052fe;
+    line-height: 1.2;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .bank-card-divider {
+    width: 1px;
+    height: 32px;
+    background: #e5e7eb;
+    flex-shrink: 0;
+    margin: 0 2px;
+  }
+
+  .bank-card-details {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    min-width: 0;
+    flex: 1 1 auto;
+  }
+
+  .detail-item {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    font-size: 12px;
+    line-height: 1.2;
+    min-width: 0;
+  }
+
+  .detail-label {
+    color: #64748b;
+    font-weight: 500;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  .detail-value {
+    color: #374151;
+    font-size: 12px;
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .detail-value.mono {
+    font-family: "IBM Plex Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+    font-weight: 600;
+    color: #111827;
+  }
+
+  .bank-card-actions {
+    margin-left: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  /* Rounded Toggle Switch matching screenshot */
+  .carbon-toggle-switch {
+    width: 38px;
+    height: 22px;
+    border-radius: 9999px;
+    background: #cbd5e1;
+    border: none;
+    padding: 0;
+    position: relative;
+    cursor: pointer;
+    outline: none;
+    transition: background-color 0.15s ease;
+  }
+
+  .carbon-toggle-switch .toggle-slider {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: #ffffff;
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    transition: transform 0.15s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+
+  .carbon-toggle-switch.checked {
+    background: #22c55e;
+  }
+
+  .carbon-toggle-switch.checked .toggle-slider {
+    transform: translateX(16px);
+  }
+
+  .bank-edit-btn {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid #22c55e;
+    background: #ffffff;
+    color: #16a34a;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    padding: 0;
+    transition: all 0.15s ease;
+  }
+
+  .bank-edit-btn:hover:not(:disabled) {
+    background: #f0fdf4;
+    border-color: #15803d;
+    color: #15803d;
+  }
+
+  .edit-svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  /* Modal on Mobile */
+  .carbon-modal-overlay {
+    padding: 12px 10px;
+    align-items: center;
+  }
+
+  .carbon-modal-dialog {
+    max-height: calc(100dvh - 24px);
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .modal-header {
+    padding: 14px 16px;
+  }
+
+  .modal-headline {
+    font-size: 18px;
+  }
+
+  .modal-body {
+    padding: 16px;
+    max-height: calc(100dvh - 130px);
+  }
+
+  .form-grid-2col {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+
+  .col-span-2 {
+    grid-column: span 1;
+  }
+
+  .modal-footer {
+    padding: 12px 16px;
+  }
+}
+
+/* ========================================================================= */
+/* EXTRA SMALL SCREENS (<= 480px)                                            */
+/* ========================================================================= */
+@media (max-width: 480px) {
+  :host {
+    padding: 12px 10px 32px;
+  }
+
+  .section-actions-group {
+    gap: 6px;
+  }
+
+  .carbon-select.status-select {
+    padding: 0 20px 0 8px;
+    font-size: 12px;
+  }
+
+  .refresh-btn,
+  .add-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+  }
+
+  .bank-mobile-card {
+    padding: 10px 8px;
+    gap: 6px;
+  }
+
+  .bank-card-icon {
+    width: 32px;
+    height: 32px;
+    min-width: 32px;
+  }
+
+  .bank-card-icon svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  .bank-name-text {
+    font-size: 12px;
+  }
+
+  .bank-sub-code {
+    font-size: 11px;
+  }
+
+  .detail-item {
+    font-size: 11px;
+  }
+
+  .carbon-toggle-switch {
+    width: 34px;
+    height: 20px;
+  }
+
+  .carbon-toggle-switch .toggle-slider {
+    width: 14px;
+    height: 14px;
+  }
+
+  .carbon-toggle-switch.checked .toggle-slider {
+    transform: translateX(14px);
+  }
+
+  .bank-edit-btn {
+    width: 26px;
+    height: 26px;
+  }
+}

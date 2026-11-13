@@ -11,7 +11,7 @@
       <p class="eyebrow">ADMINISTRATION / CATALOG</p>
       <h1>Pricing master</h1>
     </div>
-    <button type="button" class="button-primary" (click)="openCreate()"
+    <button type="button" class="button-primary header-add-btn" (click)="openCreate()"
       [disabled]="lookupLoading() || companies().length === 0 || agentClasses().length === 0 || vehicleTypes().length === 0">
       <span aria-hidden="true">＋</span> Add pricing rule
     </button>
@@ -22,18 +22,120 @@
       (click)="loadLookups()">Retry lookups</button></div>
   }
 
-  <section class="summary-grid" aria-label="Pricing summary">
-    <article class="summary-tile"><span class="summary-label">Matching rules</span><strong>{{ totalRecords()
-        }}</strong><small>Based on current filters</small></article>
-    <article class="summary-tile"><span class="summary-label">Active on this page</span><strong>{{ pageActiveCount()
-        }}</strong><small>Of {{ items().length }} visible rules</small></article>
-    <article class="summary-tile"><span class="summary-label">Admin profit on this page</span><strong>{{
-        pageAdminProfit() | currency:'INR':'symbol':'1.0-2' }}</strong><small>Sum of visible rule values</small>
+  <!-- Summary Cards Row (Active / Inactive) matching exact design -->
+  <section class="summary-cards-grid" aria-label="Pricing summary">
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-active" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Active Rules</span>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ pageActiveCount() }}</span>
+          <span class="mini-card-badge badge-active">Available</span>
+        </div>
+      </div>
+    </article>
+    <article class="carbon-mini-card">
+      <div class="mini-card-icon-wrap icon-inactive" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8">
+          <circle cx="12" cy="12" r="9"/>
+          <path d="M9 9l6 6M15 9l-6 6" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </div>
+      <div class="mini-card-content">
+        <span class="mini-card-label">Inactive Rules</span>
+        <div class="mini-card-val-row">
+          <span class="mini-card-value">{{ pageInactiveCount() }}</span>
+          <span class="mini-card-badge badge-inactive">Unavailable</span>
+        </div>
+      </div>
     </article>
   </section>
 
   <section class="pricing-panel" aria-labelledby="pricing-table-title">
-    <div class="filters-grid">
+    <!-- Title Row on Mobile -->
+    <div class="section-title-group">
+      <div class="title-with-badge">
+        <h2 class="section-title">Pricing Rules</h2>
+        <span class="carbon-count-tag">{{ totalRecords() }} total</span>
+      </div>
+      @if (extraFiltersCount() > 0) {
+        <button type="button" class="mobile-filter-badge-btn" (click)="toggleMobileFilters()">
+          Filters ({{ extraFiltersCount() }})
+        </button>
+      }
+    </div>
+
+    <!-- Mobile Single-Row Toolbar matching exact design -->
+    <div class="mobile-toolbar-row">
+      <!-- Search Box -->
+      <div class="carbon-search-box">
+        <svg class="search-svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd"/>
+        </svg>
+        <input
+          type="search"
+          class="carbon-input search-input"
+          [value]="search()"
+          (input)="onSearchChange($any($event.target).value)"
+          placeholder="Search pricing rule..."
+          aria-label="Search pricing rules"
+        />
+        @if (search()) {
+          <button type="button" class="search-clear-btn" (click)="onSearchChange('')" aria-label="Clear search">&times;</button>
+        }
+      </div>
+
+      <!-- Status Filter -->
+      <div class="status-filter-wrapper">
+        <select
+          class="carbon-select status-select"
+          [value]="activeFilter()"
+          (change)="setFilter('active', $any($event.target).value)"
+          aria-label="Filter by status"
+        >
+          <option value="all">All statuses</option>
+          <option value="active">Active</option>
+          <option value="inactive">Inactive</option>
+        </select>
+      </div>
+
+      <!-- Refresh Button -->
+      <button
+        type="button"
+        class="refresh-btn"
+        (click)="refresh()"
+        [disabled]="isLoading()"
+        title="Refresh pricing rules"
+      >
+        <svg class="btn-svg" [class.spinning]="isLoading()" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M23 4v6h-6"></path>
+          <path d="M1 20v-6h6"></path>
+          <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
+        </svg>
+        <span class="btn-label-text">Refresh</span>
+      </button>
+
+      <!-- Add Button -->
+      <button
+        type="button"
+        class="add-btn"
+        (click)="openCreate()"
+        [disabled]="lookupLoading() || companies().length === 0 || agentClasses().length === 0 || vehicleTypes().length === 0"
+        title="Add pricing rule"
+      >
+        <svg class="btn-svg" viewBox="0 0 20 20" fill="currentColor">
+          <path fill-rule="evenodd" d="M10 3a1 1 0 011 1v5h5a1 1 0 110 2h-5v5a1 1 0 11-2 0v-5H4a1 1 0 110-2h5V4a1 1 0 011-1z" clip-rule="evenodd"/>
+        </svg>
+        <span class="btn-label-text">Add pricing rule</span>
+      </button>
+    </div>
+
+    <!-- Filters Grid (Desktop view & Mobile collapsible) -->
+    <div class="filters-grid" [class.mobile-expanded]="isMobileFilterExpanded()">
       <label class="filter-search"><span>Search</span><input type="search" [value]="search()"
           (input)="onSearchChange($any($event.target).value)" placeholder="Company, class, vehicle, fuel…" /></label>
       <label><span>Insurance company</span><select [value]="insuranceCompanyId()"
@@ -55,7 +157,7 @@
           <option value="">All fuel types</option>@for (fuel of fuelTypes; track fuel) { <option [value]="fuel">{{ fuel
             }}</option> }
         </select></label>
-      <label><span>Status</span><select [value]="activeFilter()"
+      <label class="desktop-status-filter"><span>Status</span><select [value]="activeFilter()"
           (change)="setFilter('active', $any($event.target).value)">
           <option value="all">All statuses</option>
           <option value="active">Active</option>
@@ -114,22 +216,69 @@
         </tbody>
       </table>
     </div>
-    <footer class="pagination-bar">
-      <span>Showing {{ firstRecord() }}–{{ lastRecord() }} of {{ totalRecords() }} rules</span>
-      <div class="pagination-controls">
-        <label>Rows per page<select [value]="pageSize()" (change)="changePageSize($any($event.target).value)">
-            <option value="10">10</option>
-            <option value="25">25</option>
-            <option value="50">50</option>
-            <option value="100">100</option>
-          </select></label>
-        <button type="button" class="page-button" (click)="changePage(pageNumber() - 1)" [disabled]="pageNumber() <= 1"
-          aria-label="Previous page">‹</button>
-        <span>Page {{ pageNumber() }} of {{ totalPages() }}</span>
-        <button type="button" class="page-button" (click)="changePage(pageNumber() + 1)"
-          [disabled]="pageNumber() >= totalPages()" aria-label="Next page">›</button>
+
+    <!-- Mobile Exact Card View (matching specified design) -->
+    <div class="pricing-mobile-list" aria-label="Pricing rules list">
+      @for (item of items(); track item.id) {
+        <article class="pricing-mobile-card" tabindex="0" (click)="openEdit(item)" (keydown.enter)="openEdit(item)">
+          
+
+          <div class="pricing-card-primary">
+            <span class="pricing-title-text">{{ item.insuranceCompanyName }}</span>
+          </div>
+
+          <div class="pricing-card-divider" aria-hidden="true"></div>
+
+          <div class="pricing-card-secondary">
+            <span class="pricing-sub-text">{{ item.vehicleTypeName }} · {{ item.agentClassName }}</span>
+          </div>
+
+          <div class="pricing-card-actions" (click)="$event.stopPropagation()">
+            <button
+              type="button"
+              class="carbon-toggle-switch"
+              [class.checked]="item.isActive"
+              (click)="onToggleStatus(item, $event)"
+              role="switch"
+              [attr.aria-checked]="item.isActive"
+              [title]="item.isActive ? 'Active' : 'Inactive'"
+            >
+              <span class="toggle-slider"></span>
+            </button>
+            <button
+              type="button"
+              class="pricing-edit-btn"
+              (click)="openEdit(item)"
+              [disabled]="loadingEditId() === item.id"
+              title="Edit pricing rule"
+              aria-label="Edit pricing rule"
+            >
+              @if (loadingEditId() === item.id) {
+                <span class="tiny-spinner"></span>
+              } @else {
+                <svg class="edit-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M12 20h9"/>
+                  <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/>
+                </svg>
+              }
+            </button>
+          </div>
+        </article>
+      }
+    </div>
+
+    @if (isLoading() && items().length > 0) {
+      <div class="scroll-loading-indicator">
+        <span class="spinner tiny-spinner"></span>
+        <span>Loading more pricing rules...</span>
       </div>
-    </footer>
+    }
+    @if (!hasMorePricing() && items().length > 0) {
+      <div class="scroll-end-indicator">
+        <span>Showing all {{ totalRecords() }} pricing rules</span>
+      </div>
+    }
+    <div #scrollSentinel class="scroll-sentinel" aria-hidden="true"></div>
     }
   </section>
 
@@ -139,13 +288,11 @@
       aria-labelledby="pricing-modal-title">
       <header class="modal-header">
         <div>
-          <p class="eyebrow">PRICING MATRIX</p>
           <h2 id="pricing-modal-title">{{ editingId() ? 'Edit pricing rule' : 'Add pricing rule' }}</h2>
-          <p>Set the cost and commission values used when preparing quotes.</p>
         </div><button type="button" class="modal-close" (click)="closeModal()" [disabled]="isSubmitting()"
           aria-label="Close dialog">×</button>
       </header>
-      <form [formGroup]="form" (ngSubmit)="submit()" novalidate>
+      <form [formGroup]="form" (ngSubmit)="submit()" class="modal-form" novalidate>
         <div class="modal-body">
           @if (modalError()) { <div class="inline-error" role="alert">{{ modalError() }}</div> }
           <div class="form-grid">
@@ -177,7 +324,10 @@
               form.controls.maxCC.invalid) { <small class="field-error">Enter a CC value above zero.</small> }@if
               (form.controls.maxCC.touched && form.controls.maxCC.value <= form.controls.minCC.value) { <small
                 class="field-error">Maximum CC must exceed minimum CC.</small> }</label>
-            <div class="form-divider">Financial values <small>Enter non-negative amounts in INR.</small></div>
+            <div class="form-divider">
+              <span class="divider-title">Financial values</span>
+              <span class="divider-subtitle">Enter non-negative amounts in INR.</span>
+            </div>
             <label class="form-field"><span>Total premium <b>*</b></span><input type="number"
                 formControlName="totalPremium" min="0" step="0.01" />@if (form.controls.totalPremium.touched &&
               form.controls.totalPremium.invalid) { <small class="field-error">Enter a non-negative premium.</small>
@@ -196,10 +346,10 @@
                 amount.</small> }</label>
           </div>
         </div>
-        <footer class="modal-actions"><button type="button" class="button-tertiary" (click)="closeModal()"
-            [disabled]="isSubmitting()">Cancel</button><button type="submit" class="button-primary"
-            [disabled]="isSubmitting()">{{ isSubmitting() ? 'Saving…' : (editingId() ? 'Save changes' : 'Create pricing
-            rule') }}</button></footer>
+        <footer class="modal-actions">
+          <button type="button" class="carbon-btn-secondary" (click)="closeModal()" [disabled]="isSubmitting()">Cancel</button>
+          <button type="submit" class="carbon-btn-primary" [disabled]="isSubmitting()">{{ isSubmitting() ? 'Saving…' : (editingId() ? 'Save Changes' : 'Create Pricing Rule') }}</button>
+        </footer>
       </form>
     </section>
   </div>

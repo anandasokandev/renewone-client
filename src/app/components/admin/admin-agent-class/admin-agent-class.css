@@ -88,20 +88,371 @@ button:disabled { opacity: .55; cursor: not-allowed; }
 .quick-view-loading { position: fixed; right: 24px; bottom: 24px; z-index: 10000; display: flex; align-items: center; gap: 12px; padding: 16px; border: 1px solid #e0e0e0; background: #fff; color: #525252; font-size: 13px; }
 .quick-view-loading .carbon-spinner { width: 20px; height: 20px; margin: 0; }
 button:focus-visible, input:focus-visible { outline: 2px solid #0f62fe; outline-offset: 2px; }
+
+/* Desktop Defaults for Mobile-Only Elements */
+.mobile-section-header,
+.mobile-toolbar-row,
+.agent-class-mobile-list {
+  display: none;
+}
+
+/* Base Mobile Toolbar Styles (used when visible on <= 767px) */
+.carbon-search-box {
+  position: relative;
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+}
+
+.search-svg {
+  position: absolute;
+  left: 12px;
+  width: 16px;
+  height: 16px;
+  color: #9ca3af;
+  pointer-events: none;
+}
+
+.carbon-input.search-input {
+  width: 100%;
+  height: 40px;
+  padding: 0 32px 0 36px;
+  border: 1px solid #d1d5db;
+  border-radius: 8px;
+  background: #ffffff;
+  color: #111827;
+  font-size: 13px;
+  outline: none;
+  box-sizing: border-box;
+}
+
+.carbon-input.search-input:focus {
+  border-color: #0f62fe;
+}
+
+.search-clear-btn {
+  position: absolute;
+  right: 10px;
+  width: 20px;
+  height: 20px;
+  border: none;
+  background: transparent;
+  color: #9ca3af;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.refresh-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #374151;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+}
+
+.refresh-btn:hover:not(:disabled) {
+  background: #1f2937;
+}
+
+.refresh-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.add-btn {
+  width: 40px;
+  height: 40px;
+  min-width: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #0f62fe;
+  color: #ffffff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+  transition: background 0.15s ease;
+}
+
+.add-btn:hover:not(:disabled) {
+  background: #0050e6;
+}
+
+.btn-svg {
+  width: 18px;
+  height: 18px;
+}
+
+.btn-label-text {
+  display: none;
+}
+
+.spinning {
+  animation: spin 0.8s linear infinite;
+}
+
+/* Mobile Empty Search */
+.mobile-empty-search {
+  padding: 32px 16px;
+  text-align: center;
+  color: #6b7280;
+  font-size: 13px;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 12px;
+}
+
+/* Scroll Indicators */
+.scroll-loading-indicator,
+.scroll-end-indicator {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 14px 12px;
+  color: #6b7280;
+  font-size: 12px;
+}
+
+.spinner.tiny-spinner {
+  width: 14px;
+  height: 14px;
+  border: 2px solid #e5e7eb;
+  border-top-color: #0f62fe;
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+}
+
+.scroll-sentinel {
+  width: 100%;
+  height: 4px;
+  pointer-events: none;
+}
+
 @media (max-width: 991px) {
   :host { padding: 24px 20px 48px; }
   .section-toolbar { align-items: flex-start; flex-direction: column; gap: 16px; }
   .section-actions-group { width: 100%; justify-content: flex-start; }
 }
-@media (max-width: 650px) {
-  :host { padding: 20px 12px 32px; }
-  .carbon-headline { font-size: 27px; }
-  .section-actions-group { align-items: stretch; flex-direction: column; }
-  .section-actions-group button { justify-content: center; }
-  .carbon-table { min-width: 780px; }
-  .drawer-agent-row { grid-template-columns: 1fr auto; }
-  .agent-contact { grid-column: 1 / -1; }
-  .agent-drawer .modal-header { padding: 18px 16px; }
-  .drawer-agent-list { padding: 0 16px; }
-  .class-form { padding: 20px 16px; }
+
+/* ========================================================================= */
+/* SMALL / MOBILE SCREENS (<= 767px) - EXACT SAME DESIGN UI                 */
+/* ========================================================================= */
+@media (max-width: 767px) {
+  :host {
+    padding: 16px 14px 40px;
+    background: #ffffff;
+  }
+
+  .carbon-card-section {
+    border: none;
+    background: transparent;
+    margin-bottom: 24px;
+  }
+
+  .desktop-toolbar,
+  .table-scroll-wrapper,
+  .desktop-pagination {
+    display: none !important;
+  }
+
+  /* 1. Mobile Section Header */
+  .mobile-section-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 0 0 14px 0;
+  }
+
+  .title-with-badge {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .section-title {
+    margin: 0;
+    color: #111827;
+    font-size: 22px;
+    font-weight: 800;
+    line-height: 1.2;
+    letter-spacing: -0.3px;
+  }
+
+  .carbon-count-tag {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 8px;
+    border-radius: 6px;
+    border: none;
+    background: #eceff1;
+    color: #374151;
+    font-size: 12px;
+    font-weight: 600;
+  }
+
+  /* 2. Mobile Toolbar Row */
+  .mobile-toolbar-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 14px;
+    width: 100%;
+  }
+
+  /* 3. Mobile Cards List */
+  .agent-class-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .agent-class-mobile-card {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px 14px;
+    background: #ffffff;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.15s ease;
+    box-sizing: border-box;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .agent-class-mobile-card:hover,
+  .agent-class-mobile-card:focus-visible {
+    border-color: #0f62fe;
+    box-shadow: 0 2px 8px rgba(15, 98, 254, 0.08);
+  }
+
+  .agent-class-mobile-card:active {
+    background: #f9fafb;
+    transform: scale(0.995);
+  }
+
+  .agent-class-card-icon {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+    border-radius: 8px;
+    background: #eaf2ff;
+    color: #0052fe;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .agent-class-card-icon svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .agent-class-card-primary {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .agent-class-title-text {
+    font-size: 15px;
+    font-weight: 700;
+    color: #111827;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .agent-class-card-divider {
+    width: 1px;
+    height: 20px;
+    min-width: 1px;
+    background: #e5e7eb;
+  }
+
+  .agent-class-card-secondary {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    align-items: center;
+  }
+
+  .agent-class-sub-text {
+    font-size: 13px;
+    font-weight: 500;
+    color: #4b5563;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* Modal on Mobile */
+  .carbon-modal-dialog {
+    max-height: calc(100dvh - 24px);
+    width: 100%;
+    max-width: 100%;
+    border-radius: 12px;
+  }
+
+  .class-form {
+    padding: 16px;
+    gap: 14px;
+  }
+
+  .modal-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+    width: 100%;
+    padding-top: 12px;
+  }
+
+  .modal-actions .carbon-btn-secondary,
+  .modal-actions .carbon-btn-primary {
+    width: 100%;
+    height: 40px;
+    min-height: 40px;
+    padding: 0 12px;
+    border-radius: 6px;
+  }
+}
+
+/* ========================================================================= */
+/* EXTRA SMALL SCREENS (<= 480px)                                            */
+/* ========================================================================= */
+@media (max-width: 480px) {
+  :host {
+    padding: 12px 10px 32px;
+  }
+
+  .mobile-toolbar-row {
+    gap: 6px;
+  }
+
+  .refresh-btn,
+  .add-btn {
+    width: 38px;
+    height: 38px;
+    min-width: 38px;
+  }
 }

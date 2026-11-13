@@ -1,320 +1,712 @@
 <main class="agent-detail-page">
-  <a routerLink="/admin/agents" class="back-link">← Back to agents</a>
-  @if (loading()) { <div class="state">Loading agent profile…</div> }
-  @else if (error()) { <div class="state error" role="alert">{{ error() }}</div> }
-  @else if (agent(); as a) {
-  <header class="profile-header">
-    <div>
-      <p class="eyebrow">AGENT PROFILE · {{ a.agentCode }}</p>
-      <h1>{{ a.agencyName || a.agentName }}</h1>
-      <p class="subtitle">{{ a.agentName }} · {{ a.agentClassName || 'Unclassified' }}</p>
+  <div class="top-nav-row">
+    <a routerLink="/admin/agents" class="back-link">
+      <svg class="back-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M9.707 16.707a1 1 0 01-1.414 0l-6-6a1 1 0 010-1.414l6-6a1 1 0 011.414 1.414L5.414 9H17a1 1 0 110 2H5.414l4.293 4.293a1 1 0 010 1.414z" clip-rule="evenodd"/>
+      </svg>
+      <span>Back to agents</span>
+    </a>
+  </div>
+
+  @if (loading()) {
+    <div class="state-loading">
+      <div class="carbon-spinner" aria-hidden="true"></div>
+      <span>Loading agent profile…</span>
     </div>
-    <div class="profile-actions">
-      <span class="status" [class.inactive]="!a.isActive">{{ a.isActive ? 'Active' : 'Inactive' }}</span>
-      @if (canManageAgent()) {
-        <button type="button" class="secondary-action" (click)="beginEditDetails(a)">Edit details</button>
-        <button type="button" class="secondary-action" [disabled]="credentialBusy() !== null" (click)="resetAgentPassword()">Reset agent password</button>
-      }
+  } @else if (error()) {
+    <div class="state-error" role="alert">
+      <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+        <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+      </svg>
+      <span>{{ error() }}</span>
     </div>
-  </header>
-  <section class="contact-grid">
-    <div><span>EMAIL</span><strong>{{ a.email || '—' }}</strong></div>
-    <div><span>PHONE</span><strong>{{ a.phoneNumber || '—' }}</strong></div>
-    <div><span>JOINED</span><strong>{{ a.joinedDate | date:'dd MMM yyyy' }}</strong></div>
-    <div><span>ADDRESS</span><strong>{{ a.address || '—' }}</strong></div>
-  </section>
-  @if (editingDetails()) {
-    <section class="edit-agent-panel" aria-labelledby="edit-agent-title">
-      <div class="section-heading"><div><p class="eyebrow">AGENT ACCOUNT</p><h2 id="edit-agent-title">Edit agent details</h2></div></div>
-      <form #agentDetailsForm="ngForm" class="agent-details-form" (ngSubmit)="saveAgentDetails()" novalidate>
-        <label>Agent / agency name<input [(ngModel)]="editDetails.agentName" name="agentName" required minlength="2" maxlength="100" autocomplete="organization"></label>
-        <label>Email<input [(ngModel)]="editDetails.email" name="email" type="email" required maxlength="254" email autocomplete="email"></label>
-        <label>Phone number<input [(ngModel)]="editDetails.phoneNumber" name="phoneNumber" type="tel" required pattern="[0-9]{10}" maxlength="10" inputmode="numeric" autocomplete="tel-national"><small>Enter 10 digits.</small></label>
-        <label>Pincode<input [(ngModel)]="editDetails.pincode" name="pincode" pattern="^$|^[0-9]{6}$" maxlength="6" inputmode="numeric" autocomplete="postal-code"><small>Optional; enter 6 digits.</small></label>
-        <label class="wide-field">Address<textarea [(ngModel)]="editDetails.address" name="address" maxlength="500" rows="3" autocomplete="street-address"></textarea></label>
-        @if (editDetailsError()) { <p class="form-error" role="alert">{{ editDetailsError() }}</p> }
-        <div class="form-actions"><button type="submit" [disabled]="savingDetails() || agentDetailsForm.invalid">{{ savingDetails() ? 'Saving…' : 'Save details' }}</button><button type="button" class="cancel-action" (click)="cancelEditDetails()" [disabled]="savingDetails()">Cancel</button></div>
-      </form>
-    </section>
-  }
-  @if (credentialActionError()) { <p class="notice error" role="alert">{{ credentialActionError() }}</p> }
-  <nav class="tabs" aria-label="Agent details">
-    @for (item of
-    [{id:'overview',label:'Overview'},{id:'staff',label:'Staff'},{id:'finance',label:'Finance'},{id:'activity',label:'Activity'}];
-    track item.id) {
-    <button type="button" [class.selected]="tab() === item.id" (click)="selectTab($any(item.id))">{{ item.label
-      }}</button>
-    }
-  </nav>
-  @if (tab() === 'overview') {
-  <section class="content-panel">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">PERFORMANCE</p>
-        <h2>Business performance</h2>
-      </div><span class="period">This month · compared with last month</span>
-    </div>
-    @if (overview(); as o) {
-    @if (canViewProfitability()) {
-    <section class="profitability-panel" aria-labelledby="agent-profitability-title">
-      <div class="profitability-heading">
-        <div>
-          <p class="eyebrow">ISSUED POLICY PROFIT</p>
-          <h3 id="agent-profitability-title">Financial contribution</h3>
-          <p class="profitability-note">Admin margin and agent earnings from this agency, including staff activity.</p>
+  } @else if (agent(); as a) {
+    <!-- Main Profile Header Card -->
+    <header class="profile-header">
+      <div class="profile-identity">
+        <div class="profile-title-row">
+          <h1 class="profile-name">{{ a.agencyName || a.agentName }}</h1>
+          <span class="agent-code-badge">{{ a.agentCode }}</span>
+          <span class="status-badge" [class.inactive]="!a.isActive">{{ a.isActive ? 'Active' : 'Inactive' }}</span>
         </div>
-        <div class="profit-periods" role="group" aria-label="Profit period">
-          <button type="button" [class.selected]="profitPeriod() === 'today'" [attr.aria-pressed]="profitPeriod() === 'today'" (click)="setProfitPeriod('today')">Today</button>
-          <button type="button" [class.selected]="profitPeriod() === 'week'" [attr.aria-pressed]="profitPeriod() === 'week'" (click)="setProfitPeriod('week')">This week</button>
-          <button type="button" [class.selected]="profitPeriod() === 'year'" [attr.aria-pressed]="profitPeriod() === 'year'" (click)="setProfitPeriod('year')">This year</button>
+        <p class="profile-sub">{{ a.agentName }} · <span class="class-pill">{{ a.agentClassName || 'Unclassified' }}</span></p>
+      </div>
+
+      <div class="profile-actions">
+        @if (canManageAgent()) {
+          <button type="button" class="btn-action btn-edit" (click)="beginEditDetails(a)">
+            <svg viewBox="0 0 16 16" fill="currentColor" aria-hidden="true">
+              <path d="M12.146.146a.5.5 0 0 1 .708 0l3 3a.5.5 0 0 1 0 .708l-10 10a.5.5 0 0 1-.168.11l-5 2a.5.5 0 0 1-.65-.65l2-5a.5.5 0 0 1 .11-.168l10-10zM11.207 2.5L13.5 4.793 14.793 3.5 12.5 1.207 11.207 2.5zm1.586 3L10.5 3.207 4 9.707V10h.5a.5.5 0 0 1 .5.5v.5h.5a.5.5 0 0 1 .5.5v.5h.293l6.5-6.5zm-9.761 5.175l-.886 2.215 2.215-.886.707-.707-1.329-1.329-.707.707z"/>
+            </svg>
+            <span>Edit details</span>
+          </button>
+          <button type="button" class="btn-action btn-reset" [disabled]="credentialBusy() !== null" (click)="resetAgentPassword()">
+            <svg viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+              <path fill-rule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clip-rule="evenodd"/>
+            </svg>
+            <span>{{ credentialBusy() === 'agent' ? 'Resetting…' : 'Reset password' }}</span>
+          </button>
+        }
+      </div>
+    </header>
+
+    <!-- Compact Contact Info Grid -->
+    <section class="contact-grid" aria-label="Agent contact information">
+      <div class="contact-card">
+        <div class="contact-icon email-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+            <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+          </svg>
+        </div>
+        <div class="contact-data">
+          <span class="contact-label">Email</span>
+          <strong class="contact-val" [title]="a.email">{{ a.email || '—' }}</strong>
         </div>
       </div>
-      @if (profitabilityLoading()) {
-        <p class="financial-state">Loading profitability…</p>
-      } @else if (profitabilityError()) {
-        <p class="financial-state error" role="alert">{{ profitabilityError() }}</p>
-      } @else if (selectedProfitSnapshot(); as fp) {
-        <div class="financial-kpis">
-          <article><span>Admin profit</span><strong>{{ fp.adminProfit | currency:'INR':'symbol':'1.0-0' }}</strong><small>{{ profitChangeLabel(fp.adminProfitChangePercentage) }}</small></article>
-          <article><span>Agent earnings · points</span><strong>{{ fp.agentEarnings | currency:'INR':'symbol':'1.0-0' }}</strong><small>{{ profitChangeLabel(fp.agentEarningsChangePercentage) }}</small></article>
-          <article><span>Premium volume</span><strong>{{ fp.premiumVolume | currency:'INR':'symbol':'1.0-0' }}</strong></article>
-          <article><span>Policies issued</span><strong>{{ fp.policiesIssued | number }}</strong></article>
+
+      <div class="contact-card">
+        <div class="contact-icon phone-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+          </svg>
         </div>
-        <div class="profit-chart-layout">
-          <div class="profit-chart" [style.background]="profitPieBackground()" role="img" [attr.aria-label]="'Admin profit ' + (adminProfitShare() | number:'1.0-1') + ' percent; agent earnings ' + (agentProfitShare() | number:'1.0-1') + ' percent'">
-            <div class="profit-chart-center"><span>Combined<br>contribution</span><strong>{{ combinedProfit() | currency:'INR':'symbol':'1.0-0' }}</strong></div>
-          </div>
-          <div class="profit-legend" aria-label="Profit split">
-            <div><span class="legend-swatch admin"></span><span>Admin profit</span><strong>{{ fp.adminProfit | currency:'INR':'symbol':'1.0-0' }} · {{ adminProfitShare() | number:'1.0-1' }}%</strong></div>
-            <div><span class="legend-swatch agent"></span><span>Agent earnings (points)</span><strong>{{ fp.agentEarnings | currency:'INR':'symbol':'1.0-0' }} · {{ agentProfitShare() | number:'1.0-1' }}%</strong></div>
-            @if (fp.policiesIssued === 0) { <p class="financial-state">No issued policies in this period.</p> }
-          </div>
+        <div class="contact-data">
+          <span class="contact-label">Phone</span>
+          <strong class="contact-val">{{ a.phoneNumber || '—' }}</strong>
         </div>
-        <p class="financial-footnote">Based on issued policies in the selected period. Change compares today to the same time yesterday, this week to the same point last week, and year to date to the same date last year.</p>
-      }
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon date-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M6 2a1 1 0 00-1 1v1H4a2 2 0 00-2 2v10a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-1V3a1 1 0 10-2 0v1H7V3a1 1 0 00-1-1zm0 5a1 1 0 000 2h8a1 1 0 100-2H6z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="contact-data">
+          <span class="contact-label">Joined</span>
+          <strong class="contact-val">{{ a.joinedDate | date:'dd MMM yyyy' }}</strong>
+        </div>
+      </div>
+
+      <div class="contact-card">
+        <div class="contact-icon address-icon" aria-hidden="true">
+          <svg viewBox="0 0 20 20" fill="currentColor">
+            <path fill-rule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clip-rule="evenodd"/>
+          </svg>
+        </div>
+        <div class="contact-data">
+          <span class="contact-label">Address</span>
+          <strong class="contact-val" [title]="a.address">{{ a.address || '—' }}</strong>
+        </div>
+      </div>
     </section>
+
+    <!-- Edit Agent Details Modal Popup -->
+    @if (editingDetails()) {
+      <div class="modal-backdrop" (click)="cancelEditDetails()" role="presentation">
+        <section
+          class="modal-dialog"
+          (click)="$event.stopPropagation()"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-agent-title"
+          tabindex="-1"
+          (keydown.escape)="cancelEditDetails()"
+        >
+          <header class="modal-header">
+            <div>
+              <p class="modal-eyebrow">AGENT PROFILE</p>
+              <h2 id="edit-agent-title">Edit Agent Details</h2>
+            </div>
+            <button
+              type="button"
+              class="modal-close"
+              (click)="cancelEditDetails()"
+              [disabled]="savingDetails()"
+              aria-label="Close dialog"
+            >
+              &times;
+            </button>
+          </header>
+
+          <form #agentDetailsForm="ngForm" class="modal-form" (ngSubmit)="saveAgentDetails()" novalidate>
+            <div class="modal-body">
+              @if (editDetailsError()) {
+                <div class="modal-error-banner" role="alert">
+                  <svg class="error-icon" viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+                    <path fill-rule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z" clip-rule="evenodd"/>
+                  </svg>
+                  <span>{{ editDetailsError() }}</span>
+                </div>
+              }
+
+              <div class="form-grid">
+                <label class="form-field full-width">
+                  <span>Agent / Agency Name <span class="required-mark">*</span></span>
+                  <input
+                    class="form-input"
+                    [(ngModel)]="editDetails.agentName"
+                    name="agentName"
+                    required
+                    minlength="2"
+                    maxlength="100"
+                    placeholder="Enter agent or agency name"
+                    autocomplete="organization"
+                  />
+                </label>
+
+                <label class="form-field">
+                  <span>Email Address <span class="required-mark">*</span></span>
+                  <input
+                    class="form-input"
+                    [(ngModel)]="editDetails.email"
+                    name="email"
+                    type="email"
+                    required
+                    maxlength="254"
+                    email
+                    placeholder="agent@example.com"
+                    autocomplete="email"
+                  />
+                </label>
+
+                <label class="form-field">
+                  <span>Phone Number <span class="required-mark">*</span></span>
+                  <input
+                    class="form-input"
+                    [(ngModel)]="editDetails.phoneNumber"
+                    name="phoneNumber"
+                    type="tel"
+                    required
+                    pattern="[0-9]{10}"
+                    maxlength="10"
+                    inputmode="numeric"
+                    placeholder="10-digit number"
+                    autocomplete="tel-national"
+                  />
+                  <small class="field-hint">10 digits</small>
+                </label>
+
+                <label class="form-field">
+                  <span>Pincode (Optional)</span>
+                  <input
+                    class="form-input"
+                    [(ngModel)]="editDetails.pincode"
+                    name="pincode"
+                    pattern="^$|^[0-9]{6}$"
+                    maxlength="6"
+                    inputmode="numeric"
+                    placeholder="6 digits"
+                    autocomplete="postal-code"
+                  />
+                  <small class="field-hint">Optional 6 digits</small>
+                </label>
+
+                <label class="form-field full-width">
+                  <span>Address (Optional)</span>
+                  <textarea
+                    class="form-input textarea-input"
+                    [(ngModel)]="editDetails.address"
+                    name="address"
+                    maxlength="500"
+                    rows="3"
+                    placeholder="Street, City, State"
+                    autocomplete="street-address"
+                  ></textarea>
+                </label>
+              </div>
+            </div>
+
+            <footer class="modal-footer">
+              <button
+                type="button"
+                class="btn-cancel-action"
+                (click)="cancelEditDetails()"
+                [disabled]="savingDetails()"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                class="btn-primary-action"
+                [disabled]="savingDetails() || agentDetailsForm.invalid"
+              >
+                @if (savingDetails()) {
+                  <span>Saving…</span>
+                } @else {
+                  <span>Save changes</span>
+                }
+              </button>
+            </footer>
+          </form>
+        </section>
+      </div>
     }
-    <div class="metrics">
-      <article><span>Enquiries</span><strong>{{ o.businessSummary.totalEnquiries | number }}</strong><small>{{
-          o.businessSummary.growthPercentage | number:'1.0-1' }}% vs last month</small></article>
-      <article><span>Policies issued</span><strong>{{ o.businessSummary.policiesCompleted | number }}</strong></article>
-      <article><span>Quotes in progress</span><strong>{{ o.businessSummary.quoteInProgress | number }}</strong>
-      </article>
-      <article><span>Policies in progress</span><strong>{{ o.businessSummary.policyInProgress | number }}</strong>
-      </article>
-      <article><span>Monthly premium</span><strong>{{ o.revenueSummary.monthlySales | currency:'INR':'symbol':'1.0-0'
-          }}</strong></article>
-      <article><span>Lifetime premium</span><strong>{{ o.revenueSummary.lifetimeSales | currency:'INR':'symbol':'1.0-0'
-          }}</strong></article>
-    </div>
-    <h3>Recent enquiries</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Customer</th>
-            <th>Insurance</th>
-            <th>Status</th>
-            <th>Premium</th>
-          </tr>
-        </thead>
-        <tbody>@for (e of o.recentEnquiries; track e.id) {<tr>
-            <td>{{ e.customerName }}</td>
-            <td>{{ e.insuranceType }}</td>
-            <td>{{ e.status }}</td>
-            <td>{{ e.premium ? (e.premium | currency:'INR':'symbol':'1.0-0') : '—' }}</td>
-          </tr>} @empty {<tr>
-            <td colspan="4" class="empty">No recent enquiries.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-    } @else { <p class="empty">Business overview is not available.</p> }
-  </section>
-  }
-  @if (tabLoading()) { <div class="state">Loading {{ tab() }}…</div> }
-  @if (actionMessage()) { <p class="notice" role="status">{{ actionMessage() }}</p> }
-  @if (tab() === 'staff' && staffData(); as s) {
-  <section class="content-panel">
-    <div class="section-heading">
-      <div>
-        <p class="eyebrow">TEAM PERFORMANCE</p>
-        <h2>Staff team</h2>
-      </div><span class="period">30-day cohorts · data through {{ s.cohortCutoffUtc | date:'dd MMM yyyy' }}</span>
-    </div>
-    <div class="metrics">
-      <article><span>Total staff</span><strong>{{ s.totalStaff }}</strong></article>
-      <article><span>Active</span><strong>{{ s.activeStaff }}</strong></article>
-      <article><span>Inactive</span><strong>{{ s.inactiveStaff }}</strong></article>
-      <article><span>Mature enquiries</span><strong>{{ s.matureEnquiries }}</strong></article>
-      <article><span>Issued within 30 days</span><strong>{{ s.issuedWithin30Days }}</strong></article>
-      <article><span>30-day conversion</span><strong>{{ s.conversionRate | number:'1.0-1' }}%</strong></article>
-    </div>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Staff member</th>
-            <th>Status</th>
-            <th>Assigned enquiries</th>
-            <th>Mature enquiries</th>
-            <th>Issued within 30 days</th>
-            <th>Conversion</th>
-            @if (canManageAgent()) { <th>Actions</th> }
-          </tr>
-        </thead>
-        <tbody>@for (member of s.staff; track member.staffId) {<tr>
-            <td>{{ member.fullName }}<small class="subtext">{{ member.userName }}</small></td>
-            <td>{{ member.isActive ? 'Active' : 'Inactive' }}</td>
-            <td>{{ member.assignedEnquiries }}</td>
-            <td>{{ member.matureEnquiries }}</td>
-            <td>{{ member.issuedWithin30Days }}</td>
-            <td>{{ member.conversionRate | number:'1.0-1' }}%</td>
-            @if (canManageAgent()) { <td><button type="button" class="table-action" [disabled]="credentialBusy() !== null" (click)="resetStaffPassword(member.staffId, member.fullName)">{{ credentialBusy() === member.staffId ? 'Resetting…' : 'Reset password' }}</button></td> }
-          </tr>} @empty {<tr>
-            <td [attr.colspan]="canManageAgent() ? 7 : 6" class="empty">No staff members found.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-  </section>
-  }
-  @if (tab() === 'finance' && finance(); as f) {
-  <section class="content-panel">
-    <p class="eyebrow">ACCOUNT FINANCE</p>
-    <div class="metrics">
-      <article><span>Cashfree Wallet balance</span><strong>{{ f.wallet?.balance ?? 0 | currency:'INR':'symbol':'1.0-2'
-          }}</strong></article>
-      <article><span>Manual Wallet balance</span><strong>{{ f.manualWallet?.balance ?? 0 |
-          currency:'INR':'symbol':'1.0-2' }}</strong></article>
-    </div>
-    <div class="finance-actions">
-      <form (ngSubmit)="submitWalletAdjustment()">
-        <h3>Wallet adjustment</h3><label>Type<select [ngModel]="walletType()" (ngModelChange)="walletType.set($event)"
-            name="walletType">
-            <option value="Credit">Credit</option>
-            <option value="Debit">Debit</option>
-          </select></label><label>Amount<input type="number" min="0.01" step="0.01" [(ngModel)]="walletAmount"
-            name="walletAmount" required></label><label>Reason<input [(ngModel)]="walletReason" name="walletReason"
-            required maxlength="250"></label><button type="submit" [disabled]="tabLoading()">Apply wallet
-          adjustment</button>
-      </form>
-      <form (ngSubmit)="submitManualWalletAdjustment()">
-        <h3>Manual Wallet adjustment</h3><label>Type<select [ngModel]="manualWalletType()"
-            (ngModelChange)="manualWalletType.set($event)" name="manualWalletType">
-            <option value="Credit">Credit</option>
-            <option value="Debit">Debit</option>
-          </select></label><label>Amount<input type="number" min="0.01" step="0.01" [(ngModel)]="manualWalletAmount"
-            name="manualWalletAmount" required></label><label>Reason<input [(ngModel)]="manualWalletReason"
-            name="manualWalletReason" required maxlength="250"></label><button type="submit"
-          [disabled]="tabLoading()">Apply Manual Wallet adjustment</button>
-      </form>
-    </div>
-    <h3>Wallet transactions</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Balance after</th>
-            <th>Reason</th>
-            <th>Reference</th>
-          </tr>
-        </thead>
-        <tbody>@for (t of f.walletTransactions; track t.id) {<tr>
-            <td>{{ t.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
-            <td>{{ t.type }}</td>
-            <td>{{ t.amount | currency:'INR':'symbol':'1.0-2' }}</td>
-            <td>{{ t.balanceAfter | currency:'INR':'symbol':'1.0-2' }}</td>
-            <td>{{ t.remarks || '—' }}</td>
-            <td>{{ t.referenceNo || '—' }}</td>
-          </tr>} @empty {<tr>
-            <td colspan="6" class="empty">No wallet transactions.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-    <h3>Manual Wallet transactions</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Type</th>
-            <th>Amount</th>
-            <th>Balance after</th>
-            <th>Reason</th>
-          </tr>
-        </thead>
-        <tbody>@for (t of f.manualWalletTransactions; track t.id) {<tr>
-            <td>{{ t.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
-            <td>{{ t.transactionType }}</td>
-            <td>{{ t.amount | currency:'INR':'symbol':'1.0-2' }}</td>
-            <td>{{ t.balanceAfter | currency:'INR':'symbol':'1.0-2' }}</td>
-            <td>{{ t.remarks || '—' }}</td>
-          </tr>} @empty {<tr>
-            <td colspan="5" class="empty">No Manual Wallet transactions.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-  </section>
-  }
-  @if (generatedPassword(); as reset) {
-    <div class="password-dialog-backdrop">
-      <section class="password-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-password-title">
-        <p class="eyebrow">{{ reset.userType }} LOGIN</p>
-        <h2 id="reset-password-title">Password reset complete</h2>
-        <p>New password for <strong>{{ reset.userName }}</strong>. Copy it now; closing this dialog hides it.</p>
-        <label for="generated-password">Generated password</label>
-        <output id="generated-password" class="generated-password">{{ reset.generatedPassword }}</output>
-        <div class="form-actions"><button type="button" (click)="copyGeneratedPassword()">Copy password</button><button type="button" class="cancel-action" (click)="closeGeneratedPassword()">Close</button></div>
+
+    @if (credentialActionError()) { <p class="notice error" role="alert">{{ credentialActionError() }}</p> }
+
+    <!-- Modern Horizontally Scrollable / Responsive Tabs Nav -->
+    <nav class="tabs-nav" aria-label="Agent details navigation">
+      @for (item of [{id:'overview',label:'Overview'},{id:'staff',label:'Staff'},{id:'finance',label:'Finance'},{id:'activity',label:'Activity'}]; track item.id) {
+        <button
+          type="button"
+          class="tab-btn"
+          [class.selected]="tab() === item.id"
+          (click)="selectTab($any(item.id))"
+        >
+          {{ item.label }}
+        </button>
+      }
+    </nav>
+
+    <!-- 1. OVERVIEW TAB -->
+    @if (tab() === 'overview') {
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Business Performance</h2>
+          <span class="period">This month vs last month</span>
+        </div>
+
+        @if (overview(); as o) {
+          @if (canViewProfitability()) {
+            <section class="profitability-panel" aria-labelledby="agent-profitability-title">
+              <div class="profitability-heading">
+                <h3 id="agent-profitability-title">Financial Contribution</h3>
+                <div class="profit-periods" role="group" aria-label="Profit period">
+                  <button type="button" [class.selected]="profitPeriod() === 'today'" [attr.aria-pressed]="profitPeriod() === 'today'" (click)="setProfitPeriod('today')">Today</button>
+                  <button type="button" [class.selected]="profitPeriod() === 'week'" [attr.aria-pressed]="profitPeriod() === 'week'" (click)="setProfitPeriod('week')">This week</button>
+                  <button type="button" [class.selected]="profitPeriod() === 'year'" [attr.aria-pressed]="profitPeriod() === 'year'" (click)="setProfitPeriod('year')">This year</button>
+                </div>
+              </div>
+
+              @if (profitabilityLoading()) {
+                <p class="financial-state">Loading profitability…</p>
+              } @else if (profitabilityError()) {
+                <p class="financial-state error" role="alert">{{ profitabilityError() }}</p>
+              } @else if (selectedProfitSnapshot(); as fp) {
+                <div class="financial-kpis">
+                  <article class="kpi-card">
+                    <span class="kpi-label">Admin profit</span>
+                    <strong class="kpi-val">{{ fp.adminProfit | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <small class="kpi-trend">{{ profitChangeLabel(fp.adminProfitChangePercentage) }}</small>
+                  </article>
+                  <article class="kpi-card">
+                    <span class="kpi-label">Agent earnings (points)</span>
+                    <strong class="kpi-val">{{ fp.agentEarnings | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    <small class="kpi-trend">{{ profitChangeLabel(fp.agentEarningsChangePercentage) }}</small>
+                  </article>
+                  <article class="kpi-card">
+                    <span class="kpi-label">Premium volume</span>
+                    <strong class="kpi-val">{{ fp.premiumVolume | currency:'INR':'symbol':'1.0-0' }}</strong>
+                  </article>
+                  <article class="kpi-card">
+                    <span class="kpi-label">Policies issued</span>
+                    <strong class="kpi-val">{{ fp.policiesIssued | number }}</strong>
+                  </article>
+                </div>
+
+                <div class="profit-chart-layout">
+                  <div class="profit-chart" [style.background]="profitPieBackground()" role="img" [attr.aria-label]="'Admin profit ' + (adminProfitShare() | number:'1.0-1') + ' percent; agent earnings ' + (agentProfitShare() | number:'1.0-1') + ' percent'">
+                    <div class="profit-chart-center">
+                      <span>Combined</span>
+                      <strong>{{ combinedProfit() | currency:'INR':'symbol':'1.0-0' }}</strong>
+                    </div>
+                  </div>
+                  <div class="profit-legend" aria-label="Profit split">
+                    <div class="legend-row">
+                      <span class="legend-swatch admin" aria-hidden="true"></span>
+                      <span class="legend-title">Admin profit</span>
+                      <strong class="legend-amt">{{ fp.adminProfit | currency:'INR':'symbol':'1.0-0' }} · {{ adminProfitShare() | number:'1.0-1' }}%</strong>
+                    </div>
+                    <div class="legend-row">
+                      <span class="legend-swatch agent" aria-hidden="true"></span>
+                      <span class="legend-title">Agent earnings (points)</span>
+                      <strong class="legend-amt">{{ fp.agentEarnings | currency:'INR':'symbol':'1.0-0' }} · {{ agentProfitShare() | number:'1.0-1' }}%</strong>
+                    </div>
+                    @if (fp.policiesIssued === 0) {
+                      <p class="financial-state">No issued policies in this period.</p>
+                    }
+                  </div>
+                </div>
+              }
+            </section>
+          }
+
+          <!-- Business Performance Metrics Grid -->
+          <div class="metrics">
+            <article class="metric-card">
+              <span class="metric-label">Enquiries</span>
+              <strong class="metric-val">{{ o.businessSummary.totalEnquiries | number }}</strong>
+              <small class="metric-sub">{{ o.businessSummary.growthPercentage | number:'1.0-1' }}% vs last month</small>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Policies issued</span>
+              <strong class="metric-val">{{ o.businessSummary.policiesCompleted | number }}</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Quotes in progress</span>
+              <strong class="metric-val">{{ o.businessSummary.quoteInProgress | number }}</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Policies in progress</span>
+              <strong class="metric-val">{{ o.businessSummary.policyInProgress | number }}</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Monthly premium</span>
+              <strong class="metric-val">{{ o.revenueSummary.monthlySales | currency:'INR':'symbol':'1.0-0' }}</strong>
+            </article>
+            <article class="metric-card">
+              <span class="metric-label">Lifetime premium</span>
+              <strong class="metric-val">{{ o.revenueSummary.lifetimeSales | currency:'INR':'symbol':'1.0-0' }}</strong>
+            </article>
+          </div>
+
+          <h3 class="subsection-title">Recent Enquiries</h3>
+          <div class="table-wrap">
+            <table class="data-table">
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>Insurance</th>
+                  <th>Status</th>
+                  <th>Premium</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (e of o.recentEnquiries; track e.id) {
+                  <tr>
+                    <td class="font-medium">{{ e.customerName }}</td>
+                    <td>{{ e.insuranceType }}</td>
+                    <td><span class="table-tag">{{ e.status }}</span></td>
+                    <td class="font-mono">{{ e.premium ? (e.premium | currency:'INR':'symbol':'1.0-0') : '—' }}</td>
+                  </tr>
+                } @empty {
+                  <tr>
+                    <td colspan="4" class="empty">No recent enquiries.</td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        } @else {
+          <p class="empty">Business overview is not available.</p>
+        }
       </section>
-    </div>
-  }
-  @if (tab() === 'activity' && activity(); as a) {
-  <section class="content-panel">
-    <p class="eyebrow">ACCOUNT TIMELINE</p>
-    <h2>Recent activity</h2>
-    <h3>Enquiries</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Reference</th>
-            <th>Customer</th>
-            <th>Status</th>
-          </tr>
-        </thead>
-        <tbody>@for (e of a.enquiries; track e.id) {<tr>
-            <td>{{ e.occurredAt | date:'dd MMM yyyy, HH:mm' }}</td>
-            <td>{{ e.reference || '—' }}</td>
-            <td>{{ e.title }}</td>
-            <td>{{ e.status }}</td>
-          </tr>} @empty {<tr>
-            <td colspan="4" class="empty">No recent enquiries.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-    <h3>Issued policies</h3>
-    <div class="table-wrap">
-      <table>
-        <thead>
-          <tr>
-            <th>Date</th>
-            <th>Policy number</th>
-            <th>Customer</th>
-          </tr>
-        </thead>
-        <tbody>@for (p of a.policies; track p.id) {<tr>
-            <td>{{ p.occurredAt | date:'dd MMM yyyy, HH:mm' }}</td>
-            <td>{{ p.reference }}</td>
-            <td>{{ p.title }}</td>
-          </tr>} @empty {<tr>
-            <td colspan="3" class="empty">No issued policies.</td>
-          </tr>}</tbody>
-      </table>
-    </div>
-  </section>
-  }
+    }
+
+    @if (tabLoading()) {
+      <div class="state-loading">
+        <span class="carbon-spinner" aria-hidden="true"></span>
+        <span>Loading {{ tab() }}…</span>
+      </div>
+    }
+
+    @if (actionMessage()) {
+      <p class="notice" role="status">{{ actionMessage() }}</p>
+    }
+
+    <!-- 2. STAFF TAB -->
+    @if (tab() === 'staff' && staffData(); as s) {
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Staff Team</h2>
+          <span class="period">Through {{ s.cohortCutoffUtc | date:'dd MMM yyyy' }}</span>
+        </div>
+
+        <div class="metrics staff-metrics">
+          <article class="metric-card">
+            <span class="metric-label">Total staff</span>
+            <strong class="metric-val">{{ s.totalStaff }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Active</span>
+            <strong class="metric-val text-success">{{ s.activeStaff }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Inactive</span>
+            <strong class="metric-val text-muted">{{ s.inactiveStaff }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Mature enquiries</span>
+            <strong class="metric-val">{{ s.matureEnquiries }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">Issued (30 days)</span>
+            <strong class="metric-val">{{ s.issuedWithin30Days }}</strong>
+          </article>
+          <article class="metric-card">
+            <span class="metric-label">30-day conversion</span>
+            <strong class="metric-val">{{ s.conversionRate | number:'1.0-1' }}%</strong>
+          </article>
+        </div>
+
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Staff Member</th>
+                <th>Status</th>
+                <th>Assigned</th>
+                <th>Mature</th>
+                <th>Issued (30d)</th>
+                <th>Conversion</th>
+                @if (canManageAgent()) { <th>Action</th> }
+              </tr>
+            </thead>
+            <tbody>
+              @for (member of s.staff; track member.staffId) {
+                <tr>
+                  <td>
+                    <span class="member-name">{{ member.fullName }}</span>
+                    <small class="member-username">&#64;{{ member.userName }}</small>
+                  </td>
+                  <td>
+                    <span class="table-tag" [class.tag-active]="member.isActive" [class.tag-inactive]="!member.isActive">
+                      {{ member.isActive ? 'Active' : 'Inactive' }}
+                    </span>
+                  </td>
+                  <td>{{ member.assignedEnquiries }}</td>
+                  <td>{{ member.matureEnquiries }}</td>
+                  <td>{{ member.issuedWithin30Days }}</td>
+                  <td class="font-semibold">{{ member.conversionRate | number:'1.0-1' }}%</td>
+                  @if (canManageAgent()) {
+                    <td>
+                      <button
+                        type="button"
+                        class="btn-table-action"
+                        [disabled]="credentialBusy() !== null"
+                        (click)="resetStaffPassword(member.staffId, member.fullName)"
+                      >
+                        {{ credentialBusy() === member.staffId ? 'Resetting…' : 'Reset password' }}
+                      </button>
+                    </td>
+                  }
+                </tr>
+              } @empty {
+                <tr>
+                  <td [attr.colspan]="canManageAgent() ? 7 : 6" class="empty">No staff members found.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- 3. FINANCE TAB -->
+    @if (tab() === 'finance' && finance(); as f) {
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Account Finance</h2>
+        </div>
+
+        <div class="metrics finance-balances">
+          <article class="metric-card balance-card">
+            <span class="metric-label">Cashfree Wallet Balance</span>
+            <strong class="metric-val">{{ f.wallet?.balance ?? 0 | currency:'INR':'symbol':'1.0-2' }}</strong>
+          </article>
+          <article class="metric-card balance-card">
+            <span class="metric-label">Manual Wallet Balance</span>
+            <strong class="metric-val">{{ f.manualWallet?.balance ?? 0 | currency:'INR':'symbol':'1.0-2' }}</strong>
+          </article>
+        </div>
+
+        <div class="finance-actions">
+          <form class="finance-form" (ngSubmit)="submitWalletAdjustment()">
+            <h3 class="form-title">Cashfree Wallet Adjustment</h3>
+            <div class="finance-fields">
+              <label>
+                <span>Type</span>
+                <select [ngModel]="walletType()" (ngModelChange)="walletType.set($event)" name="walletType">
+                  <option value="Credit">Credit</option>
+                  <option value="Debit">Debit</option>
+                </select>
+              </label>
+              <label>
+                <span>Amount</span>
+                <input type="number" min="0.01" step="0.01" [(ngModel)]="walletAmount" name="walletAmount" placeholder="0.00" required>
+              </label>
+              <label class="full-field">
+                <span>Reason</span>
+                <input [(ngModel)]="walletReason" name="walletReason" placeholder="Enter reason" required maxlength="250">
+              </label>
+            </div>
+            <button type="submit" class="btn-primary-action" [disabled]="tabLoading()">Apply Wallet Adjustment</button>
+          </form>
+
+          <form class="finance-form" (ngSubmit)="submitManualWalletAdjustment()">
+            <h3 class="form-title">Manual Wallet Adjustment</h3>
+            <div class="finance-fields">
+              <label>
+                <span>Type</span>
+                <select [ngModel]="manualWalletType()" (ngModelChange)="manualWalletType.set($event)" name="manualWalletType">
+                  <option value="Credit">Credit</option>
+                  <option value="Debit">Debit</option>
+                </select>
+              </label>
+              <label>
+                <span>Amount</span>
+                <input type="number" min="0.01" step="0.01" [(ngModel)]="manualWalletAmount" name="manualWalletAmount" placeholder="0.00" required>
+              </label>
+              <label class="full-field">
+                <span>Reason</span>
+                <input [(ngModel)]="manualWalletReason" name="manualWalletReason" placeholder="Enter reason" required maxlength="250">
+              </label>
+            </div>
+            <button type="submit" class="btn-primary-action" [disabled]="tabLoading()">Apply Manual Adjustment</button>
+          </form>
+        </div>
+
+        <h3 class="subsection-title">Wallet Transactions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Reason</th>
+                <th>Reference</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of f.walletTransactions; track t.id) {
+                <tr>
+                  <td class="text-nowrap">{{ t.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
+                  <td>
+                    <span class="table-tag" [class.tag-credit]="t.type.toLowerCase() === 'credit'" [class.tag-debit]="t.type.toLowerCase() === 'debit'">
+                      {{ t.type }}
+                    </span>
+                  </td>
+                  <td class="font-semibold">{{ t.amount | currency:'INR':'symbol':'1.0-2' }}</td>
+                  <td class="font-mono">{{ t.balanceAfter | currency:'INR':'symbol':'1.0-2' }}</td>
+                  <td>{{ t.remarks || '—' }}</td>
+                  <td class="font-mono text-muted">{{ t.referenceNo || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="6" class="empty">No wallet transactions.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subsection-title">Manual Wallet Transactions</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Type</th>
+                <th>Amount</th>
+                <th>Balance After</th>
+                <th>Reason</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (t of f.manualWalletTransactions; track t.id) {
+                <tr>
+                  <td class="text-nowrap">{{ t.createdAt | date:'dd MMM yyyy, HH:mm' }}</td>
+                  <td>
+                    <span class="table-tag" [class.tag-credit]="t.transactionType.toLowerCase() === 'credit'" [class.tag-debit]="t.transactionType.toLowerCase() === 'debit'">
+                      {{ t.transactionType }}
+                    </span>
+                  </td>
+                  <td class="font-semibold">{{ t.amount | currency:'INR':'symbol':'1.0-2' }}</td>
+                  <td class="font-mono">{{ t.balanceAfter | currency:'INR':'symbol':'1.0-2' }}</td>
+                  <td>{{ t.remarks || '—' }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="5" class="empty">No Manual Wallet transactions.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- 4. ACTIVITY TAB -->
+    @if (tab() === 'activity' && activity(); as a) {
+      <section class="content-panel">
+        <div class="section-heading">
+          <h2>Recent Activity</h2>
+        </div>
+
+        <h3 class="subsection-title">Enquiries</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Reference</th>
+                <th>Customer</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (e of a.enquiries; track e.id) {
+                <tr>
+                  <td class="text-nowrap">{{ e.occurredAt | date:'dd MMM yyyy, HH:mm' }}</td>
+                  <td class="font-mono">{{ e.reference || '—' }}</td>
+                  <td class="font-medium">{{ e.title }}</td>
+                  <td><span class="table-tag">{{ e.status }}</span></td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="4" class="empty">No recent enquiries.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+
+        <h3 class="subsection-title">Issued Policies</h3>
+        <div class="table-wrap">
+          <table class="data-table">
+            <thead>
+              <tr>
+                <th>Date</th>
+                <th>Policy Number</th>
+                <th>Customer</th>
+              </tr>
+            </thead>
+            <tbody>
+              @for (p of a.policies; track p.id) {
+                <tr>
+                  <td class="text-nowrap">{{ p.occurredAt | date:'dd MMM yyyy, HH:mm' }}</td>
+                  <td class="font-mono font-semibold">{{ p.reference }}</td>
+                  <td class="font-medium">{{ p.title }}</td>
+                </tr>
+              } @empty {
+                <tr>
+                  <td colspan="3" class="empty">No issued policies.</td>
+                </tr>
+              }
+            </tbody>
+          </table>
+        </div>
+      </section>
+    }
+
+    <!-- Password Reset Complete Modal Dialog -->
+    @if (generatedPassword(); as reset) {
+      <div class="password-dialog-backdrop" role="presentation">
+        <section class="password-dialog" role="dialog" aria-modal="true" aria-labelledby="reset-password-title">
+          <h2 id="reset-password-title">Password Reset Complete</h2>
+          <p>New credentials generated for <strong>{{ reset.userName }}</strong>. Copy and store securely.</p>
+          <label for="generated-password">Generated Password</label>
+          <output id="generated-password" class="generated-password">{{ reset.generatedPassword }}</output>
+          <div class="dialog-actions">
+            <button type="button" class="btn-primary-action" (click)="copyGeneratedPassword()">Copy Password</button>
+            <button type="button" class="btn-cancel-action" (click)="closeGeneratedPassword()">Close</button>
+          </div>
+        </section>
+      </div>
+    }
   }
 </main>

@@ -230,4 +230,163 @@ describe('AdminAgents', () => {
     expect(component.toastMessage()).toBe('Agent account already verified or invalid.');
     expect(component.approvingAccountId()).toBeNull();
   });
+
+  it('should render mobile card view matching small screen requirements', async () => {
+    fixture.detectChanges();
+    await fixture.whenStable();
+
+    const compiled = fixture.nativeElement as HTMLElement;
+    const cards = compiled.querySelectorAll('.agent-mobile-card');
+    expect(cards.length).toBe(2);
+
+    const firstCard = cards[0];
+    expect(firstCard.querySelector('.agent-title-text')?.textContent).toContain('altrsync');
+    expect(firstCard.querySelector('.agent-id-sub')?.textContent).toContain('altrsync-101');
+    expect(firstCard.querySelector('.agent-contact-text')?.textContent).toContain('9846645576');
+    expect(firstCard.querySelector('.carbon-toggle-switch')).toBeTruthy();
+
+    const secondCard = cards[1];
+    expect(secondCard.querySelector('.mini-approve-btn')).toBeTruthy();
+  });
+
+  it('should support loadMoreAgents by appending items to existing agents', () => {
+    component.totalPages.set(2);
+    component.pageNumber.set(1);
+
+    const moreAgentsResponse: ApiResponse<AgentsResponseData> = {
+      isSuccess: true,
+      data: {
+        summary: { activeAgents: 11, pendingApprovals: 1 },
+        agents: {
+          items: [
+            {
+              accountId: '40168d46-8432-434a-8583-46e704ad2e08',
+              agentId: 'kiran-303',
+              agentName: 'Kiran Kumar',
+              agencyName: 'KK Agency',
+              email: 'kiran@gmail.com',
+              phoneNumber: '9847123456',
+              address: null,
+              pincode: '682025',
+              isApproved: true,
+              status: 'Active',
+              joinedOn: '2026-08-01T10:00:00.0000000',
+            },
+          ],
+          pageNumber: 2,
+          pageSize: 5,
+          totalRecords: 3,
+          totalPages: 2,
+          hasPreviousPage: true,
+          hasNextPage: false,
+        },
+      },
+      message: 'Success',
+      statusCode: 200,
+      errors: null,
+    };
+
+    vi.spyOn(accountService, 'getAgents').mockReturnValue(of(moreAgentsResponse));
+
+    component.loadMoreAgents();
+
+    expect(component.pageNumber()).toBe(2);
+    expect(component.agents().length).toBe(3);
+    expect(component.agents()[2].agentName).toBe('Kiran Kumar');
+  });
+
+  it('should open and close Add Agent modal', () => {
+    expect(component.isAddModalOpen()).toBe(false);
+
+    component.openAddAgentModal();
+    expect(component.isAddModalOpen()).toBe(true);
+    expect(component.addAgentForm.value.agentName).toBe('');
+
+    component.closeAddAgentModal();
+    expect(component.isAddModalOpen()).toBe(false);
+  });
+
+  it('should toggle password visibility in Add Agent modal', () => {
+    expect(component.showPassword()).toBe(false);
+    component.togglePasswordVisibility();
+    expect(component.showPassword()).toBe(true);
+    component.togglePasswordVisibility();
+    expect(component.showPassword()).toBe(false);
+  });
+
+  it('should not submit if form is invalid and should mark controls as touched', () => {
+    const registerSpy = vi.spyOn(accountService, 'registerAgent');
+    component.openAddAgentModal();
+
+    component.submitAddAgent();
+
+    expect(registerSpy).not.toHaveBeenCalled();
+    expect(component.addAgentForm.controls.agentName.touched).toBe(true);
+    expect(component.addAgentForm.controls.contactNumber.touched).toBe(true);
+    expect(component.addAgentForm.controls.email.touched).toBe(true);
+    expect(component.addAgentForm.controls.password.touched).toBe(true);
+  });
+
+  it('should submit valid form, call registerAgent API, show success toast, close modal and reload agents', () => {
+    const registerSpy = vi.spyOn(accountService, 'registerAgent').mockReturnValue(
+      of({
+        isSuccess: true,
+        data: null,
+        message: 'Agent created successfully',
+        statusCode: 200,
+        errors: null,
+      })
+    );
+    const loadSpy = vi.spyOn(component, 'loadAgents');
+
+    component.openAddAgentModal();
+    component.addAgentForm.setValue({
+      agentName: 'Apex Insurance',
+      userName: 'apex_agent',
+      contactNumber: '9876543210',
+      email: 'apex@agency.com',
+      password: 'password123',
+      address: 'Kochi, Kerala',
+      pincode: '682001',
+    });
+
+    component.submitAddAgent();
+
+    expect(registerSpy).toHaveBeenCalledWith({
+      agentName: 'Apex Insurance',
+      userName: 'apex_agent',
+      contactNumber: '9876543210',
+      email: 'apex@agency.com',
+      password: 'password123',
+      address: 'Kochi, Kerala',
+      pincode: '682001',
+    });
+    expect(component.toastMessage()).toBe('Agent created successfully');
+    expect(component.isAddModalOpen()).toBe(false);
+    expect(loadSpy).toHaveBeenCalled();
+  });
+
+  it('should set addError when registerAgent API returns an error', () => {
+    vi.spyOn(accountService, 'registerAgent').mockReturnValue(
+      throwError(() => ({
+        error: { message: 'Username is already taken' },
+      }))
+    );
+
+    component.openAddAgentModal();
+    component.addAgentForm.setValue({
+      agentName: 'Apex Insurance',
+      userName: 'apex_agent',
+      contactNumber: '9876543210',
+      email: 'apex@agency.com',
+      password: 'password123',
+      address: '',
+      pincode: '',
+    });
+
+    component.submitAddAgent();
+
+    expect(component.addError()).toBe('Username is already taken');
+    expect(component.isAddModalOpen()).toBe(true);
+  });
 });

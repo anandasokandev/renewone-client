@@ -1,5 +1,17 @@
 import { CommonModule } from '@angular/common';
-import { Component, computed, DestroyRef, inject, OnInit, signal } from '@angular/core';
+import {
+  AfterViewInit,
+  Component,
+  computed,
+  DestroyRef,
+  ElementRef,
+  HostListener,
+  inject,
+  OnDestroy,
+  OnInit,
+  signal,
+  ViewChild,
+} from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { debounceTime, distinctUntilChanged, finalize, forkJoin, Subject } from 'rxjs';
@@ -23,7 +35,7 @@ type ActiveFilter = 'all' | 'active' | 'inactive';
   templateUrl: './pricing-master.html',
   styleUrl: './pricing-master.css',
 })
-export class PricingMaster implements OnInit {
+export class PricingMaster implements OnInit, AfterViewInit, OnDestroy {
   readonly fuelTypes = ['Petrol', 'Diesel', 'CNG', 'Electric', 'Hybrid'];
   private readonly service = inject(PricingMasterService);
   private readonly destroyRef = inject(DestroyRef);
@@ -55,6 +67,31 @@ export class PricingMaster implements OnInit {
   readonly isSubmitting = signal(false);
   readonly editingId = signal<string | null>(null);
   readonly loadingEditId = signal<string | null>(null);
+  readonly isMobileFilterExpanded = signal(false);
+
+  // Infinite Scroll & Metrics
+  readonly pageActiveCount = computed(() => this.items().filter(item => item.isActive).length);
+  readonly pageInactiveCount = computed(() => this.items().filter(item => !item.isActive).length);
+  readonly pageAdminProfit = computed(() => this.items().reduce((total, item) => total + item.adminProfit, 0));
+  readonly hasMorePricing = computed(() => this.pageNumber() < this.totalPages());
+  readonly firstRecord = computed(() => this.totalRecords() ? (this.pageNumber() - 1) * this.pageSize() + 1 : 0);
+  readonly lastRecord = computed(() => Math.min(this.pageNumber() * this.pageSize(), this.totalRecords()));
+  readonly pageOptions = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
+  readonly extraFiltersCount = computed(() => {
+    let count = 0;
+    if (this.insuranceCompanyId()) count++;
+    if (this.agentClassId()) count++;
+    if (this.vehicleTypeId()) count++;
+    if (this.fuelType()) count++;
+    return count;
+  });
+
+  @ViewChild('scrollSentinel') set scrollSentinelRef(el: ElementRef<HTMLElement> | undefined) {
+    if (el?.nativeElement && this.scrollObserver) {
+      this.scrollObserver.observe(el.nativeElement);
+    }
+  }
+  private scrollObserver?: IntersectionObserver;
 
   readonly form = this.fb.nonNullable.group({
     insuranceCompanyId: ['', Validators.required],
@@ -69,12 +106,6 @@ export class PricingMaster implements OnInit {
     adminProfit: [0, [Validators.required, Validators.min(0)]],
   });
 
-  readonly pageActiveCount = computed(() => this.items().filter(item => item.isActive).length);
-  readonly pageAdminProfit = computed(() => this.items().reduce((total, item) => total + item.adminProfit, 0));
-  readonly firstRecord = computed(() => this.totalRecords() ? (this.pageNumber() - 1) * this.pageSize() + 1 : 0);
-  readonly lastRecord = computed(() => Math.min(this.pageNumber() * this.pageSize(), this.totalRecords()));
-  readonly pageOptions = computed(() => Array.from({ length: this.totalPages() }, (_, i) => i + 1));
-
   ngOnInit(): void {
     this.searchChanges.pipe(
       debounceTime(300),
@@ -87,6 +118,44 @@ export class PricingMaster implements OnInit {
     });
     this.loadLookups();
     this.loadPricing();
+  }
+
+  ngAfterViewInit(): void {
+    this.setupScrollObserver();
+  }
+
+  ngOnDestroy(): void {
+    this.scrollObserver?.disconnect();
+  }
+
+  @HostListener('window:scroll')
+  onWindowScroll(): void {
+    if (typeof window === 'undefined') return;
+    const scrollHeight = document.documentElement.scrollHeight;
+    const scrollTop = window.scrollY || document.documentElement.scrollTop;
+    const clientHeight = window.innerHeight || document.documentElement.clientHeight;
+
+    if (scrollHeight - scrollTop - clientHeight < 250) {
+      this.loadMorePricing();
+    }
+  }
+
+  private setupScrollObserver(): void {
+    if (typeof window === 'undefined' || !('IntersectionObserver' in window)) return;
+    this.scrollObserver = new IntersectionObserver(
+      entries => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            this.loadMorePricing();
+          }
+        }
+      },
+      { root: null, rootMargin: '200px', threshold: 0.1 },
+    );
+  }
+
+  toggleMobileFilters(): void {
+    this.isMobileFilterExpanded.update(v => !v);
   }
 
   loadLookups(): void {
@@ -114,7 +183,7 @@ export class PricingMaster implements OnInit {
     });
   }
 
-  loadPricing(): void {
+  loadPricing(isAppend: boolean = false): void {
     this.isLoading.set(true);
     this.pageError.set(null);
     this.service.getPricing(this.getFilters()).pipe(
@@ -126,13 +195,22 @@ export class PricingMaster implements OnInit {
           this.pageError.set(response.message || 'Unable to load pricing records.');
           return;
         }
-        this.applyPage(response.data);
+        this.applyPage(response.data, isAppend);
       },
       error: error => this.pageError.set(error?.error?.message || 'Unable to load pricing records.'),
     });
   }
 
-  refresh(): void { this.loadPricing(); }
+  loadMorePricing(): void {
+    if (!this.hasMorePricing() || this.isLoading()) return;
+    this.pageNumber.update(p => p + 1);
+    this.loadPricing(true);
+  }
+
+  refresh(): void {
+    this.pageNumber.set(1);
+    this.loadPricing(false);
+  }
 
   onSearchChange(value: string): void { this.searchChanges.next(value); }
 
@@ -143,7 +221,7 @@ export class PricingMaster implements OnInit {
     if (key === 'fuel') this.fuelType.set(value);
     if (key === 'active') this.activeFilter.set(value as ActiveFilter);
     this.pageNumber.set(1);
-    this.loadPricing();
+    this.loadPricing(false);
   }
 
   clearFilters(): void {
@@ -154,7 +232,19 @@ export class PricingMaster implements OnInit {
     this.fuelType.set('');
     this.activeFilter.set('all');
     this.pageNumber.set(1);
-    this.loadPricing();
+    this.loadPricing(false);
+  }
+
+  onToggleStatus(item: PricingMasterItem, event?: Event): void {
+    if (event) event.stopPropagation();
+    const newStatus = !item.isActive;
+    this.items.update(items =>
+      items.map(i => (i.id === item.id ? { ...i, isActive: newStatus } : i))
+    );
+    this.showNotice(
+      `Pricing rule for "${item.insuranceCompanyName}" is now ${newStatus ? 'Active' : 'Inactive'}.`,
+      'success'
+    );
   }
 
   changePage(page: number): void {
@@ -280,8 +370,17 @@ export class PricingMaster implements OnInit {
     };
   }
 
-  private applyPage(page: PricingMasterPage): void {
-    this.items.set(page.items || []);
+  private applyPage(page: PricingMasterPage, isAppend: boolean = false): void {
+    const newItems = page.items || [];
+    if (isAppend) {
+      this.items.update(prev => {
+        const existingIds = new Set(prev.map(i => i.id));
+        const unique = newItems.filter(i => !existingIds.has(i.id));
+        return [...prev, ...unique];
+      });
+    } else {
+      this.items.set(newItems);
+    }
     this.totalRecords.set(page.totalRecords || 0);
     this.totalPages.set(Math.max(1, page.totalPages || 1));
     this.pageNumber.set(page.pageNumber || 1);

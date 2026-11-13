@@ -444,4 +444,143 @@ describe('QrManagement', () => {
       expect(component.isSubmittingMapping()).toBe(false);
     });
   });
+
+  describe('Status Filtering & Mobile View & Scroll Loading', () => {
+    it('should filter UPI IDs by status', () => {
+      expect(component.upiItems().length).toBe(2);
+      expect(component.filteredUpiItems().length).toBe(2);
+
+      component.setUpiStatusFilter('active');
+      expect(component.filteredUpiItems().length).toBe(1);
+      expect(component.filteredUpiItems()[0].isActive).toBe(true);
+
+      component.setUpiStatusFilter('inactive');
+      expect(component.filteredUpiItems().length).toBe(1);
+      expect(component.filteredUpiItems()[0].isActive).toBe(false);
+
+      component.setUpiStatusFilter('all');
+      expect(component.filteredUpiItems().length).toBe(2);
+    });
+
+    it('should filter QR Mappings by status', () => {
+      component.activeTab.set('mappings');
+      expect(component.qrMappingItems().length).toBe(1);
+      expect(component.filteredQrMappingItems().length).toBe(1);
+
+      component.setQrMappingStatusFilter('active');
+      expect(component.filteredQrMappingItems().length).toBe(1);
+
+      component.setQrMappingStatusFilter('inactive');
+      expect(component.filteredQrMappingItems().length).toBe(0);
+
+      component.setQrMappingStatusFilter('all');
+      expect(component.filteredQrMappingItems().length).toBe(1);
+    });
+
+    it('should render mobile cards for UPI IDs', async () => {
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const mobileList = compiled.querySelector('#section-upi-ids .qr-mobile-list');
+      expect(mobileList).toBeTruthy();
+
+      const cards = mobileList?.querySelectorAll('.qr-mobile-card');
+      expect(cards?.length).toBe(2);
+      expect(cards?.[0].textContent).toContain('9744510308@upi');
+      expect(cards?.[0].textContent).toContain('CAR');
+    });
+
+    it('should render mobile cards for QR Mappings', async () => {
+      component.activeTab.set('mappings');
+      fixture.detectChanges();
+      await fixture.whenStable();
+
+      const compiled = fixture.nativeElement as HTMLElement;
+      const mobileList = compiled.querySelector('#section-qr-mappings .qr-mobile-list');
+      expect(mobileList).toBeTruthy();
+
+      const cards = mobileList?.querySelectorAll('.qr-mobile-card');
+      expect(cards?.length).toBe(1);
+      expect(cards?.[0].textContent).toContain('CAR');
+      expect(cards?.[0].textContent).toContain('ICICI');
+    });
+
+    it('should append records when loadMoreUpi is called', () => {
+      const nextPageData: ApiResponse<PagedResult<UpiMasterItem>> = {
+        isSuccess: true,
+        data: {
+          items: [
+            {
+              id: 'ffe469',
+              bankAccountId: 'b66b80',
+              bankAccount: 'Truck UPI',
+              upiId: '9999999999@upi',
+              upiName: 'TRUCK',
+              isActive: true,
+            },
+          ],
+          pageNumber: 2,
+          pageSize: 10,
+          totalRecords: 3,
+          totalPages: 2,
+          hasPreviousPage: true,
+          hasNextPage: false,
+        },
+        message: 'OK',
+        statusCode: 200,
+        errors: null,
+      };
+
+      const upiSpy = vi.spyOn(qrService, 'getQrMasters').mockReturnValue(of(nextPageData));
+      component.upiTotalPages.set(2);
+      component.upiPageNumber.set(1);
+
+      component.loadMoreUpi();
+
+      expect(upiSpy).toHaveBeenCalledWith({ pageNumber: 2, pageSize: 10 });
+      expect(component.upiItems().length).toBe(3);
+      expect(component.upiItems()[2].upiName).toBe('TRUCK');
+    });
+
+    it('should append records when loadMoreQrMappings is called', () => {
+      const nextPageData: ApiResponse<PagedResult<QrMappingItem>> = {
+        isSuccess: true,
+        data: {
+          items: [
+            {
+              id: 'new-mapping-id',
+              qrMasterId: 'ffe462d2-908c-4a83-ad5f-2ae94960acf7',
+              qrName: 'BIKE QR',
+              insuranceTypeId: 'c3f8d2ab-67f9-45e0-a0dc-6967910d9c02',
+              insuranceType: 'Two Wheeler',
+              vehicleTypeId: 'dd1d65f6-367b-4ee4-be5f-38b18159f968',
+              vehicleType: 'Scooter',
+              bankName: 'HDFC',
+              isActive: true,
+            },
+          ],
+          pageNumber: 2,
+          pageSize: 10,
+          totalRecords: 2,
+          totalPages: 2,
+          hasPreviousPage: true,
+          hasNextPage: false,
+        },
+        message: 'OK',
+        statusCode: 200,
+        errors: null,
+      };
+
+      const mappingSpy = vi.spyOn(qrService, 'getQrMappings').mockReturnValue(of(nextPageData));
+      component.qrMappingTotalPages.set(2);
+      component.qrMappingPageNumber.set(1);
+
+      component.loadMoreQrMappings();
+
+      expect(mappingSpy).toHaveBeenCalledWith({ pageNumber: 2, pageSize: 10 });
+      expect(component.qrMappingItems().length).toBe(2);
+      expect(component.qrMappingItems()[1].qrName).toBe('BIKE QR');
+    });
+  });
 });
